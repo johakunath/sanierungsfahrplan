@@ -213,6 +213,8 @@ export const MASSNAHMENPAKETE = [
   {
     id: "P1", nummer: 1, titel: "Sofortmaßnahmen", zeitraum: "Heute – 2026", farbe: "rot",
     begruendung: "Geringe Investition, schnelle Wirkung. Voraussetzung für weitere BEG-Anträge.",
+    zu_beachten: "Hydraulischer Abgleich erfordert Bestandspläne der Heizungsanlage. Terminkoordination mit Heizungsbauer mind. 4 Wochen im Voraus. BEG-Antrag muss vor Beauftragung gestellt werden.",
+    komfortsteigerung: "Gleichmäßigere Wärmeverteilung im gesamten Gebäude. Kein Überheizen einzelner Räume. Geringere Geräuschentwicklung durch niedrigere Pumpenleistung.",
     massnahmen: [
       { id: "M1", titel: "Hydraulischer Abgleich + Heizungsoptimierung",
         beschreibung: "Verfahren B nach VdZ, Pumpentausch, Voreinstellung Thermostatventile, Heizkurvenanpassung.",
@@ -225,6 +227,8 @@ export const MASSNAHMENPAKETE = [
   {
     id: "P2", nummer: 2, titel: "Hülle & Fenster", zeitraum: "2027 – 2029", farbe: "orange",
     begruendung: "Dach ist bei EFH der größte Wärmeverlustbereich. Fenster im Paket mindert Wärmebrücken.",
+    zu_beachten: "Dachdämmung erfordert statische Prüfung bei alter Dachkonstruktion. Fenstertausch koordiniert mit Dachabdichtung planen. Baugenehmigung je nach Denkmalzone erforderlich. Schimmelrisiko durch erhöhte Luftdichtheit prüfen.",
+    komfortsteigerung: "Deutlich wärmere Wandoberflächen und Fenster — keine Kaltluftabfälle mehr. Spürbare Reduktion von Lärmdurchdringung durch neue Fenster (Schallschutz Rw ≥ 33 dB). Kein Zugluft-Effekt durch Fensterfugen.",
     massnahmen: [
       { id: "M2", titel: "Dachdämmung Obergeschoss-Decke (22 cm Mineralwolle)",
         beschreibung: "Aufsparren- oder Zwischensparrendämmung, neue Dampfbremse, Luftdichtheitsschicht.",
@@ -243,6 +247,8 @@ export const MASSNAHMENPAKETE = [
   {
     id: "P3", nummer: 3, titel: "Wärmeerzeugung & Fassade", zeitraum: "2030 – 2032", farbe: "gelb",
     begruendung: "Umstieg auf Wärmepumpe wirtschaftlich erst nach Hüllsanierung sinnvoll. KfW 458 verfügbar.",
+    zu_beachten: "Wärmepumpe benötigt ausreichend Aufstellfläche außen (mind. 2 m² Abstand zu Grundstücksgrenze, je nach Bundesland). Schallschutzgutachten empfohlen. Heizkörper auf Niedertemperatur-Tauglichkeit prüfen. GEG §71 ab 2026 zwingend bei Heizungstausch.",
+    komfortsteigerung: "Wärmepumpe liefert konstante Vorlauftemperaturen — kein Aufheizen nach Nachtabsenkung spürbar. Fassade schützt vor Sommerhitze (Phasenverschiebung). Wertsteigerung durch modernes Erscheinungsbild.",
     massnahmen: [
       { id: "M4", titel: "Luft-Wasser-Wärmepumpe (12 kW, monovalent)",
         beschreibung: "Monoblock-WP außen, neuer Pufferspeicher 300 L, Heizkörpertausch wo nötig.",
@@ -261,6 +267,8 @@ export const MASSNAHMENPAKETE = [
   {
     id: "P4", nummer: 4, titel: "Eigenstrom", zeitraum: "2030 – 2033", farbe: "gruen",
     begruendung: "PV senkt Strombezug der Wärmepumpe signifikant. Unabhängig von Hüllsanierung umsetzbar.",
+    zu_beachten: "Statik des Dachs für PV-Zusatzlast prüfen (ca. 15 kg/m²). Netzanmeldung beim Netzbetreiber mind. 8 Wochen vor Inbetriebnahme. Speicher erfordert separaten Zählerschrank. Marktstammdatenregister-Anmeldung Pflicht.",
+    komfortsteigerung: "Weitgehende Unabhängigkeit von Strompreissteigerungen. Wallbox ermöglicht Laden mit Eigenstrom. Monitoring-System gibt Überblick über Energieflüsse in Echtzeit.",
     massnahmen: [
       { id: "M6", titel: "PV-Anlage (10 kWp, Aufdach) + 8 kWh Speicher",
         beschreibung: "Süd- oder Ost-West-Ausrichtung, Lithium-Speicher, Wallbox-Vorbereitung.",
