@@ -59,9 +59,9 @@ const SparkleIcon = ({ size = 14 }) => (
 const PaketHaus = ({ farbe, aktiv, nummer, size = 68 }) => {
   const f = PAKET_FARBEN[farbe] || PAKET_FARBEN.rot;
   return (
-    <svg width={size} height={size * 1.05} viewBox="0 0 80 84" style={{ opacity: aktiv ? 1 : 0.28 }}>
-      <path d="M8 72 L8 36 L40 12 L72 36 L72 72 Z" fill={f.bg} stroke="#1E1A15" strokeWidth="1.5" strokeLinejoin="round"/>
-      <text x="40" y="56" textAnchor="middle" fontFamily="'Fraunces', serif" fontSize="26" fontWeight="500" fill={f.text}>{nummer}</text>
+    <svg width={size} height={size} viewBox="0 0 80 80" style={{ opacity: aktiv ? 1 : 0.28 }}>
+      <path d="M8 70 L8 36 L40 12 L72 36 L72 70 Z" fill={f.bg} stroke="#1E1A15" strokeWidth="1.5" strokeLinejoin="round"/>
+      <text x="40" y="55" textAnchor="middle" fontFamily="'Fraunces', serif" fontSize="26" fontWeight="500" fill={f.text}>{nummer}</text>
     </svg>
   );
 };
@@ -521,39 +521,16 @@ const PaketBlock = ({ paket, aktiv, onToggle }) => {
               <div className="text-[13px] leading-relaxed" style={{ color: "#3A332B" }}>{m.beschreibung}</div>
             </div>
 
-            <div style={{ maxWidth: 560, fontFamily: "'Geist Mono', monospace", fontSize: 13 }}>
-              <div className="flex justify-between items-baseline" style={{ padding: "7px 0", borderBottom: "1px dotted #D3CAB9" }}>
-                <span style={{ color: "#3A332B" }}>Investitionskosten</span>
-                <span style={{ color: "#1E1A15", fontVariantNumeric: "tabular-nums" }}>{fmtEur(m.investition)}</span>
-              </div>
-              <div className="flex justify-between items-baseline" style={{ padding: "7px 0", borderBottom: "1px dotted #D3CAB9" }}>
-                <span className="flex items-center gap-1.5" style={{ color: "#3A332B" }}>
-                  Davon förderfähige Kosten
-                  <Tooltip content="Von der Gesamtinvestition werden die sowieso fälligen Erneuerungskosten abgezogen (z.B. Fassadenanstrich, Fenster-Lebenszyklus, Dachneueindeckung). Nur die 'energetische Mehrinvestition' ist BEG-förderfähig. Dies ist nicht zu verwechseln mit jährlichen Wartungs-/Instandhaltungskosten im Betrieb.">
-                    <span style={{ color: "#B5623E" }}><InfoIcon size={11} /></span>
-                  </Tooltip>
-                </span>
-                <span style={{ color: "#1E1A15", fontVariantNumeric: "tabular-nums" }}>{fmtEur(foerderfaehig)}</span>
-              </div>
+            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1" style={{ fontFamily: "'Geist Mono', monospace", fontSize: 13 }}>
+              <span style={{ color: "#1E1A15", fontVariantNumeric: "tabular-nums", fontWeight: 500 }}>{fmtEur(m.investition)}</span>
+              <span style={{ color: "#D3CAB9" }}>·</span>
               {m.foerderquote > 0 ? (
-                <div className="flex justify-between items-baseline" style={{ padding: "7px 0", borderBottom: "1px dotted #D3CAB9" }}>
-                  <span style={{ color: "#00843D" }}>Förderung ({Math.round(quote * 100)} % · {m.foerderung_stelle})</span>
-                  <span style={{ color: "#00843D", fontVariantNumeric: "tabular-nums" }}>− {fmtEur(foerderung)}</span>
-                </div>
+                <span style={{ color: "#00843D" }}>{Math.round(quote * 100)} % BEG-Förderung ({m.foerderung_stelle})</span>
               ) : (
-                <div className="flex justify-between items-baseline" style={{ padding: "7px 0", borderBottom: "1px dotted #D3CAB9" }}>
-                  <span style={{ color: "#6B6259" }}>Keine BEG-Förderung ({m.foerderung_rechtsgrundlage})</span>
-                  <span style={{ color: "#6B6259", fontVariantNumeric: "tabular-nums" }}>—</span>
-                </div>
+                <span style={{ color: "#6B6259" }}>Keine BEG-Förderung ({m.foerderung_rechtsgrundlage})</span>
               )}
-              <div className="flex justify-between items-baseline" style={{ padding: "10px 0", borderTop: "1.5px solid #1E1A15", marginTop: 2 }}>
-                <span style={{ color: "#1E1A15", fontSize: 14, fontWeight: 500 }}>Ihr Kostenanteil</span>
-                <span style={{ color: "#1E1A15", fontSize: 15, fontWeight: 500, fontVariantNumeric: "tabular-nums" }}>{fmtEur(eigenanteil)}</span>
-              </div>
-            </div>
-
-            <div className="mt-3 text-[11.5px]" style={{ color: "#6B6259", fontFamily: "'Geist Mono', monospace" }}>
-              CO₂-Einsparung: <span style={{ color: "#1E1A15" }}>−{m.co2_reduktion} kg/(m²·a)</span>
+              <span style={{ color: "#D3CAB9" }}>·</span>
+              <span style={{ color: "#6B6259" }}>CO₂ −{m.co2_reduktion} kg/(m²·a)</span>
             </div>
           </div>
           );
