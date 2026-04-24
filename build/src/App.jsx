@@ -799,7 +799,7 @@ const EnergyBar = ({ label, value, maxValue, unit, note }) => {
   const pct = Math.round(Math.min(100, (value / maxValue) * 100));
   return (
     <div style={{ marginBottom: 8 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 3, fontSize: 10, color: "rgba(255,255,255,0.88)" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 3, fontSize: 10, color: "#FFF" }}>
         <span>{label}</span>
         <span style={{ fontFamily: "'Geist Mono', monospace", fontWeight: 500 }}>{fmt(value)} {unit}{note ? "  " + note : ""}</span>
       </div>
@@ -845,15 +845,15 @@ const ISFPPrintReport = ({ ist, k, heizkostenIst, aktivePakete, gebaeude, kumuli
             <span style={{ fontSize: 8.5, letterSpacing: "0.38em", writingMode: "vertical-rl", transform: "rotate(180deg)", color: "#FFF", fontWeight: 600, fontFamily: "'Geist Mono', monospace" }}>H E U T E</span>
           </div>
           <div style={{ width: 68, display: "flex", alignItems: "center", justifyContent: "center", padding: "13px 6px", flexShrink: 0 }}>
-            <div style={{ width: 52, height: 52, background: "#FFF", borderRadius: 3, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column" }}>
-              <span style={{ fontSize: 26, fontWeight: 700, fontFamily: "'Fraunces', serif", color: EFFIZIENZ_FARBEN[istKlasse], lineHeight: 1 }}>{istKlasse}</span>
-              <span style={{ fontSize: 6.5, color: "#9B8E82", letterSpacing: "0.12em", marginTop: 1 }}>EEK</span>
+            <div style={{ width: 52, height: 52, background: EFFIZIENZ_FARBEN[istKlasse] || "#C0392B", borderRadius: 3, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", border: "2px solid rgba(255,255,255,0.35)" }}>
+              <span style={{ fontSize: 26, fontWeight: 700, fontFamily: "'Fraunces', serif", color: textColorFor(istKlasse), lineHeight: 1 }}>{istKlasse}</span>
+              <span style={{ fontSize: 6.5, color: textColorFor(istKlasse), letterSpacing: "0.12em", marginTop: 1, opacity: 0.75 }}>EEK</span>
             </div>
           </div>
           <div style={{ flex: 1, padding: "13px 16px 11px" }}>
             <EnergyBar label="Jährliche Energiekosten" value={heizkostenIst} maxValue={heizkostenIst} unit="€/a" />
             <EnergyBar label={`CO₂-Emissionen (${fmt(gebaeude.gebaeudenutzflaeche)} m² AN)`} value={co2Gesamt} maxValue={co2Gesamt} unit="kg/a" />
-            <div style={{ display: "flex", gap: 18, marginTop: 5, fontSize: 9, color: "rgba(255,255,255,0.82)", fontFamily: "'Geist Mono', monospace" }}>
+            <div style={{ display: "flex", gap: 18, marginTop: 5, fontSize: 9, color: "#EEE", fontFamily: "'Geist Mono', monospace" }}>
               <span>Primärenergie: <b>{ist.primaerenergie} kWh/(m²·a)</b></span>
               <span>Endenergie: <b>{ist.endenergie} kWh/(m²·a)</b></span>
               <span>CO₂: <b>{ist.co2} kg/(m²·a)</b></span>
@@ -944,15 +944,15 @@ const ISFPPrintReport = ({ ist, k, heizkostenIst, aktivePakete, gebaeude, kumuli
             <span style={{ fontSize: 8.5, letterSpacing: "0.38em", writingMode: "vertical-rl", transform: "rotate(180deg)", color: "#FFF", fontWeight: 600, fontFamily: "'Geist Mono', monospace" }}>Z I E L</span>
           </div>
           <div style={{ width: 68, display: "flex", alignItems: "center", justifyContent: "center", padding: "13px 6px", flexShrink: 0 }}>
-            <div style={{ width: 52, height: 52, background: "#FFF", borderRadius: 3, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column" }}>
-              <span style={{ fontSize: 26, fontWeight: 700, fontFamily: "'Fraunces', serif", color: EFFIZIENZ_FARBEN[k.effizienzklasse], lineHeight: 1 }}>{k.effizienzklasse}</span>
-              <span style={{ fontSize: 6.5, color: "#9B8E82", letterSpacing: "0.12em", marginTop: 1 }}>EEK</span>
+            <div style={{ width: 52, height: 52, background: EFFIZIENZ_FARBEN[k.effizienzklasse] || "#27AE60", borderRadius: 3, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", border: "2px solid rgba(255,255,255,0.35)" }}>
+              <span style={{ fontSize: 26, fontWeight: 700, fontFamily: "'Fraunces', serif", color: textColorFor(k.effizienzklasse), lineHeight: 1 }}>{k.effizienzklasse}</span>
+              <span style={{ fontSize: 6.5, color: textColorFor(k.effizienzklasse), letterSpacing: "0.12em", marginTop: 1, opacity: 0.75 }}>EEK</span>
             </div>
           </div>
           <div style={{ flex: 1, padding: "13px 16px 11px" }}>
             <EnergyBar label="Jährliche Energiekosten (Ziel)" value={k.heizkosten_gesamt} maxValue={heizkostenIst} unit="€/a" note={`−${kostenEinsparPct} %`} />
             <EnergyBar label="CO₂-Emissionen (Ziel)" value={co2Ziel} maxValue={co2Gesamt} unit="kg/a" note={co2Gesamt > 0 ? `−${Math.round((1 - co2Ziel / co2Gesamt) * 100)} %` : ""} />
-            <div style={{ display: "flex", gap: 18, marginTop: 5, fontSize: 9, color: "rgba(255,255,255,0.82)", fontFamily: "'Geist Mono', monospace" }}>
+            <div style={{ display: "flex", gap: 18, marginTop: 5, fontSize: 9, color: "#EEE", fontFamily: "'Geist Mono', monospace" }}>
               <span>Primärenergie: <b>{k.primaerenergie} kWh/(m²·a)</b></span>
               <span>Endenergie: <b>{k.endenergie} kWh/(m²·a)</b></span>
               <span>CO₂: <b>{k.co2} kg/(m²·a)</b></span>
