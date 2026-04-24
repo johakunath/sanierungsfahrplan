@@ -810,12 +810,139 @@ const EnergyBar = ({ label, value, maxValue, unit, note }) => {
   );
 };
 
+const textColorFor = (klasse) => ["B", "C", "D"].includes(klasse) ? "#1E1A15" : "#FFF";
+
+const EEK_ZONEN = [
+  { klasse: "A+", von: 0,   bis: 30   },
+  { klasse: "A",  von: 30,  bis: 50   },
+  { klasse: "B",  von: 50,  bis: 75   },
+  { klasse: "C",  von: 75,  bis: 100  },
+  { klasse: "D",  von: 100, bis: 130  },
+  { klasse: "E",  von: 130, bis: 160  },
+  { klasse: "F",  von: 160, bis: 200  },
+  { klasse: "G",  von: 200, bis: 250  },
+  { klasse: "H",  von: 250, bis: 9999 },
+];
+
+const EnergieVerlaufChart = ({ ist, kumuliert }) => {
+  const W = 620, H = 260;
+  const PAD = { top: 44, right: 36, bottom: 44, left: 52 };
+  const pw = W - PAD.left - PAD.right;
+  const ph = H - PAD.top - PAD.bottom;
+
+  const punkte = [
+    { label: "Heute", sub: null, pe: ist.primaerenergie, bg: "#6E2E1E", klasse: berechneEffizienzklasse(ist.primaerenergie) },
+    ...kumuliert.map(r => ({
+      label: `P${r.paket.nummer}`,
+      sub: r.paket.zeitraum,
+      pe: r.nachher.primaerenergie,
+      bg: PAKET_FARBEN[r.paket.farbe].bg,
+      klasse: r.nachher.effizienzklasse,
+    })),
+  ];
+
+  const yMax = Math.max(Math.ceil(ist.primaerenergie * 1.18 / 25) * 25, 100);
+  const toY = v => PAD.top + ph * (1 - Math.min(v, yMax) / yMax);
+  const toX = i => PAD.left + (punkte.length > 1 ? pw * i / (punkte.length - 1) : pw / 2);
+
+  const visibleZonen = EEK_ZONEN.filter(z => z.von < yMax).map(z => ({ ...z, bis: Math.min(z.bis, yMax) }));
+  const gridLines = [0, 30, 50, 75, 100, 130, 160, 200, 250].filter(v => v > 0 && v <= yMax);
+
+  const pathD = punkte.map((p, i) =>
+    i === 0 ? `M ${toX(i)} ${toY(p.pe)}` : `H ${toX(i)} V ${toY(p.pe)}`
+  ).join(" ");
+  const areaD = pathD + ` V ${toY(0)} H ${toX(0)} Z`;
+
+  return (
+    <div style={{ background: "#FFFFFF", border: "1.25px solid #D3CAB9", borderRadius: 3, padding: "24px 28px", marginTop: 32 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 14 }}>
+        <div style={{ fontSize: 11, letterSpacing: "0.22em", textTransform: "uppercase", color: "#B5623E", fontFamily: "'Geist Mono', monospace" }}>
+          Primärenergie-Verlauf
+        </div>
+        <div style={{ fontSize: 10, color: "#9B8E82", fontFamily: "'Geist Mono', monospace" }}>kWh/(m²·a)</div>
+      </div>
+      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", display: "block" }}>
+        <defs>
+          <clipPath id="evc-clip">
+            <rect x={PAD.left} y={PAD.top} width={pw} height={ph} />
+          </clipPath>
+        </defs>
+        {visibleZonen.map(z => (
+          <rect key={z.klasse}
+            x={PAD.left} y={toY(z.bis)} width={pw} height={toY(z.von) - toY(z.bis)}
+            fill={EFFIZIENZ_FARBEN[z.klasse]} opacity={0.13}
+            clipPath="url(#evc-clip)"
+          />
+        ))}
+        {gridLines.map(v => (
+          <line key={v}
+            x1={PAD.left} y1={toY(v)} x2={PAD.left + pw} y2={toY(v)}
+            stroke="#D3CAB9" strokeWidth={0.75} strokeDasharray="4 3"
+          />
+        ))}
+        {[0, ...gridLines].map(v => (
+          <text key={v} x={PAD.left - 6} y={toY(v) + 3.5}
+            textAnchor="end" fontSize={9} fill="#9B8E82"
+            fontFamily="'Geist Mono', monospace">{v}</text>
+        ))}
+        {visibleZonen.map(z => {
+          const yMid = (toY(z.von) + toY(z.bis)) / 2;
+          return (
+            <text key={z.klasse}
+              x={PAD.left + pw + 5} y={yMid + 4}
+              fontSize={9} fill={EFFIZIENZ_FARBEN[z.klasse]}
+              fontFamily="'Geist Mono', monospace" fontWeight={700}
+            >{z.klasse}</text>
+          );
+        })}
+        <line x1={PAD.left} y1={PAD.top} x2={PAD.left} y2={PAD.top + ph} stroke="#D3CAB9" strokeWidth={1} />
+        <line x1={PAD.left} y1={PAD.top + ph} x2={PAD.left + pw} y2={PAD.top + ph} stroke="#D3CAB9" strokeWidth={1} />
+        <path d={areaD} fill="#1E1A15" opacity={0.04} clipPath="url(#evc-clip)" />
+        <path d={pathD} fill="none" stroke="#1E1A15" strokeWidth={2}
+          strokeLinejoin="round" strokeLinecap="round" clipPath="url(#evc-clip)" />
+        {punkte.map((pt, i) => {
+          const x = toX(i), y = toY(pt.pe);
+          return (
+            <g key={i}>
+              <text x={x} y={y - 36} textAnchor="middle" fontSize={8.5} fill="#3A332B"
+                fontFamily="'Geist Mono', monospace" fontWeight={500}>{pt.pe}</text>
+              <rect x={x - 12} y={y - 33} width={24} height={20} rx={2}
+                fill={EFFIZIENZ_FARBEN[pt.klasse]} />
+              <text x={x} y={y - 18} textAnchor="middle" fontSize={12} fontWeight={700}
+                fontFamily="'Fraunces', serif" fill={textColorFor(pt.klasse)}>{pt.klasse}</text>
+              <circle cx={x} cy={y} r={5.5} fill={pt.bg} stroke="#FFF" strokeWidth={2} />
+              <text x={x} y={H - 26} textAnchor="middle" fontSize={10} fill={pt.bg}
+                fontFamily="'Geist Mono', monospace" fontWeight={600}>{pt.label}</text>
+              {pt.sub && (
+                <text x={x} y={H - 13} textAnchor="middle" fontSize={8} fill="#9B8E82"
+                  fontFamily="'Geist', sans-serif">{pt.sub}</text>
+              )}
+            </g>
+          );
+        })}
+      </svg>
+      <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 14, flexWrap: "wrap" }}>
+        {punkte.map((pt, i) => (
+          <React.Fragment key={i}>
+            {i > 0 && <span style={{ color: "#D3CAB9", fontSize: 16, lineHeight: 1 }}>→</span>}
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
+              <div style={{ width: 28, height: 23, background: EFFIZIENZ_FARBEN[pt.klasse], borderRadius: 2, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <span style={{ fontSize: 12, fontWeight: 700, fontFamily: "'Fraunces', serif", color: textColorFor(pt.klasse) }}>{pt.klasse}</span>
+              </div>
+              <span style={{ fontSize: 8, color: "#9B8E82", fontFamily: "'Geist Mono', monospace" }}>{pt.label}</span>
+            </div>
+          </React.Fragment>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 const ISFPPrintReport = ({ ist, k, heizkostenIst, aktivePakete, gebaeude, kumuliert }) => {
   const istKlasse = berechneEffizienzklasse(ist.primaerenergie);
   const aktivePaketeObj = MASSNAHMENPAKETE.filter(p => aktivePakete.includes(p.id));
   const co2Gesamt = Math.round(ist.co2 * gebaeude.gebaeudenutzflaeche);
   const co2Ziel = Math.round(k.co2 * gebaeude.gebaeudenutzflaeche);
-  const textColorFor = (klasse) => ["B","C","D"].includes(klasse) ? "#1E1A15" : "#FFF";
   const kostenEinsparPct = heizkostenIst > 0 ? Math.round((1 - k.heizkosten_gesamt / heizkostenIst) * 100) : 0;
 
   return (
@@ -1358,6 +1485,8 @@ export default function App() {
               <PaketBlock key={p.id} paket={p} aktiv={aktivePakete.includes(p.id)} onToggle={() => togglePaket(p.id)} />
             ))}
           </div>
+
+          <EnergieVerlaufChart ist={ist} kumuliert={kumuliert} />
         </Section>
 
         {/* Ergebnis (ehemals Cockpit + Zukunft) */}
