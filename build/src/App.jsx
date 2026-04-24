@@ -910,6 +910,34 @@ const ISFPPrintReport = ({ ist, k, heizkostenIst, aktivePakete, gebaeude, kumuli
           );
         })}
 
+        {/* SANIERUNG IN EINEM ZUG — optional Alternativ-Box */}
+        {aktivePaketeObj.length > 1 && (
+          <div style={{ display: "flex", alignItems: "center", gap: 0, background: "#F1EDE4", border: "1px solid #D3CAB9", marginTop: 5, marginBottom: 2 }}>
+            <div style={{ flex: 1, padding: "9px 14px" }}>
+              <div style={{ fontSize: 8.5, letterSpacing: "0.18em", color: "#6B6259", fontFamily: "'Geist Mono', monospace", textTransform: "uppercase", marginBottom: 3 }}>
+                Alternativ: Sanierung in einem Zug
+              </div>
+              <div style={{ fontSize: 10, color: "#3A332B", lineHeight: 1.45 }}>
+                Alle {aktivePaketeObj.length} Maßnahmen in einem Projekt — reduziert Baustellenkosten, vermeidet mehrfache Rüstzeiten und ermöglicht optimale Abstimmung der Gewerke aufeinander.
+              </div>
+            </div>
+            <div style={{ flexShrink: 0, fontFamily: "'Geist Mono', monospace", fontSize: 9.5, padding: "9px 14px", borderLeft: "1px solid #D3CAB9", minWidth: 180 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", gap: 12, marginBottom: 3 }}>
+                <span style={{ color: "#6B6259" }}>Gesamt-Invest</span>
+                <span style={{ color: "#1E1A15", fontWeight: 600 }}>{fmtEur(k.invest_gesamt)}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", gap: 12, marginBottom: 3 }}>
+                <span style={{ color: "#00843D" }}>Förderung</span>
+                <span style={{ color: "#00843D", fontWeight: 600 }}>− {fmtEur(k.foerderung_gesamt)}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", gap: 12, borderTop: "1px solid #D3CAB9", paddingTop: 3 }}>
+                <span style={{ color: "#1E1A15", fontWeight: 700 }}>Eigenanteil</span>
+                <span style={{ color: "#1E1A15", fontWeight: 700 }}>{fmtEur(k.eigenanteil)}</span>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* ZIEL BOX */}
         <div style={{ display: "flex", background: EFFIZIENZ_FARBEN[k.effizienzklasse] || "#27AE60", marginTop: 2, overflow: "hidden", borderRadius: "0 0 2px 2px" }}>
           <div style={{ width: 26, background: "rgba(0,0,0,0.20)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
