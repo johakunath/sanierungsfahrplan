@@ -432,7 +432,7 @@ const BauteilKachel = ({ bauteil, onNoteChange }) => {
 };
 
 // ═══ PAKET-BLOCK mit Kostenherleitung-Tooltip ═══════════════════════════
-const PaketBlock = ({ paket, aktiv, onToggle, aktiveMassnahmen, onToggleMassnahme, empfohleneMassnahmen = [] }) => {
+const PaketBlock = ({ paket, aktiv, onToggle, aktiveMassnahmen, onToggleMassnahme, empfohleneMassnahmen = [], nichtEmpfohleneMassnahmen = [] }) => {
   const f = PAKET_FARBEN[paket.farbe];
   const aktiveMassnahmenInPaket = paket.massnahmen.filter(m => aktiveMassnahmen.includes(m.id));
   const summe_invest = aktiveMassnahmenInPaket.reduce((s, m) => s + m.investition, 0);
@@ -517,6 +517,11 @@ const PaketBlock = ({ paket, aktiv, onToggle, aktiveMassnahmen, onToggleMassnahm
                 {empfohleneMassnahmen.includes(m.id) && (
                   <span className="print-hide" style={{ background: "#F6D400", color: "#1E1A15", padding: "1px 8px", borderRadius: 100, fontSize: 10, fontFamily: "'Geist Mono', monospace", fontWeight: 600, letterSpacing: "0.06em", flexShrink: 0 }}>
                     ★ Empfohlen
+                  </span>
+                )}
+                {nichtEmpfohleneMassnahmen.includes(m.id) && !empfohleneMassnahmen.includes(m.id) && (
+                  <span className="print-hide" style={{ background: "#E2DBD0", color: "#6B6259", padding: "1px 8px", borderRadius: 100, fontSize: 10, fontFamily: "'Geist Mono', monospace", fontWeight: 600, letterSpacing: "0.06em", flexShrink: 0 }}>
+                    ✕ Nicht empfohlen
                   </span>
                 )}
                 <Tooltip content={
@@ -1320,7 +1325,20 @@ export default function App() {
     PRESETS.efhNachkrieg.gebaeude.lueftung,
     PRESETS.efhNachkrieg.gebaeude.warmwasser,
   ));
-  const [aktiveMassnahmen, setAktiveMassnahmen] = useState(() => MASSNAHMENPAKETE.flatMap(p => p.massnahmen.map(m => m.id)));
+  const [aktiveMassnahmen, setAktiveMassnahmen] = useState(() => {
+    const bs = {};
+    ableiteBauteile(
+      PRESETS.efhNachkrieg.gebaeude.baujahr,
+      PRESETS.efhNachkrieg.gebaeude.heizung_typ,
+      PRESETS.efhNachkrieg.gebaeude.lueftung,
+      PRESETS.efhNachkrieg.gebaeude.warmwasser,
+    ).forEach(b => { bs[b.id] = b.note; });
+    return MASSNAHMENPAKETE.flatMap(p =>
+      p.massnahmen
+        .filter(m => Math.abs((m.impact ? m.impact(bs) : { primaerenergie_delta: m.primaerenergie_delta || 0 }).primaerenergie_delta) >= 3)
+        .map(m => m.id)
+    );
+  });
   const [massnahmenOverrides, setMassnahmenOverrides] = useState({});
   const [extraction, setExtraction] = useState(null);
   const [activeTab, setActiveTab] = useState("gebaeude");
@@ -1367,11 +1385,20 @@ export default function App() {
   const applyPreset = useCallback((id) => {
     const p = PRESETS[id];
     if (!p) return;
+    const neueBauteile = ableiteBauteile(p.gebaeude.baujahr, p.gebaeude.heizung_typ, p.gebaeude.lueftung, p.gebaeude.warmwasser);
+    const bs = {};
+    neueBauteile.forEach(b => { bs[b.id] = b.note; });
+    const defaultAktive = MASSNAHMENPAKETE.flatMap(pkg =>
+      pkg.massnahmen
+        .filter(m => Math.abs((m.impact ? m.impact(bs) : { primaerenergie_delta: m.primaerenergie_delta || 0 }).primaerenergie_delta) >= 3)
+        .map(m => m.id)
+    );
     setPresetId(id);
     setGebaeude(p.gebaeude);
     setIst(p.ist);
-    setBauteile(ableiteBauteile(p.gebaeude.baujahr, p.gebaeude.heizung_typ, p.gebaeude.lueftung, p.gebaeude.warmwasser));
-    setAktiveMassnahmen(MASSNAHMENPAKETE.flatMap(pkg => pkg.massnahmen.map(m => m.id)));
+    setBauteile(neueBauteile);
+    setAktiveMassnahmen(defaultAktive);
+    setMassnahmenOverrides({});
     setExtraction(null);
   }, []);
 
@@ -1428,13 +1455,23 @@ export default function App() {
     return bs;
   }, [bauteile]);
 
-  const effectivePakete = useMemo(() =>
-    MASSNAHMENPAKETE.map(p => ({
-      ...p,
-      massnahmen: p.massnahmen.map(m => ({ ...m, ...(massnahmenOverrides[m.id] || {}) })),
-    })),
-    [massnahmenOverrides]
-  );
+  const effectivePakete = useMemo(() => {
+    const allMerged = MASSNAHMENPAKETE.flatMap(p =>
+      p.massnahmen.map(m => ({ ...m, ...(massnahmenOverrides[m.id] || {}) }))
+    );
+    const scored = bewerteMassnahmen(allMerged, bauteile_state, gebaeude);
+    const scoreMap = Object.fromEntries(scored.map(s => [s.id, s.score]));
+    const pakete = MASSNAHMENPAKETE.map(p => {
+      const sortedM = p.massnahmen
+        .map(m => ({ ...m, ...(massnahmenOverrides[m.id] || {}) }))
+        .sort((a, b) => (scoreMap[a.id] ?? Infinity) - (scoreMap[b.id] ?? Infinity));
+      const bestScore = sortedM.length ? Math.min(...sortedM.map(m => scoreMap[m.id] ?? Infinity)) : Infinity;
+      return { ...p, massnahmen: sortedM, _bestScore: bestScore };
+    });
+    const [p1, ...rest] = pakete; // P1 always first (Sofortmaßnahmen / hydraulischer Abgleich)
+    const ordered = [p1, ...rest.sort((a, b) => a._bestScore - b._bestScore)];
+    return ordered.map((p, idx) => ({ ...p, nummer: idx + 1 }));
+  }, [massnahmenOverrides, bauteile_state, gebaeude]);
 
   const aktivePakete = useMemo(() =>
     effectivePakete.filter(p => p.massnahmen.some(m => aktiveMassnahmen.includes(m.id))).map(p => p.id),
@@ -1454,6 +1491,14 @@ export default function App() {
     const allM = effectivePakete.flatMap(p => p.massnahmen);
     return bewerteMassnahmen(allM, bauteile_state, gebaeude).slice(0, 3).map(m => m.id);
   }, [effectivePakete, bauteile_state, gebaeude]);
+
+  const nichtEmpfohleneMassnahmen = useMemo(() =>
+    effectivePakete.flatMap(p => p.massnahmen).filter(m => {
+      const imp = m.impact ? m.impact(bauteile_state) : { primaerenergie_delta: m.primaerenergie_delta || 0 };
+      return Math.abs(imp.primaerenergie_delta) < 3;
+    }).map(m => m.id),
+    [effectivePakete, bauteile_state]
+  );
 
   const handleExport = () => {
     exportAsPDF();
@@ -1581,8 +1626,8 @@ export default function App() {
         <Section id="fahrplan" eyebrow="Schritt 2 · Fahrplan" title="Empfohlene Maßnahmenpakete"
           subtitle="Die Pakete sind nach iSFP-Logik zeitlich sinnvoll gestaffelt (Hülle vor Technik). Pakete können für Szenarienvergleich ausgeblendet werden.">
           <div className="mb-10" style={{ overflowX: "auto", WebkitOverflowScrolling: "touch", marginLeft: -4, marginRight: -4 }}>
-            <div className="flex items-end justify-between gap-2 relative" style={{ padding: "0 12px", minWidth: 480 }}>
-              <div className="absolute" style={{ left: 60, right: 60, bottom: 38, height: 2, background: "linear-gradient(to right, #E30613, #F07D00, #F6D400, #00843D)" }} />
+            <div className="flex items-start justify-between gap-2 relative" style={{ padding: "0 12px", minWidth: 480 }}>
+              <div className="absolute" style={{ left: 60, right: 60, top: 28, height: 2, background: "linear-gradient(to right, #E30613, #F07D00, #F6D400, #00843D)" }} />
               <div className="flex flex-col items-center gap-2 relative">
                 <div style={{ width: 52, height: 56, background: "#6E2E1E", borderRadius: 3, border: "1.5px solid #1E1A15" }} />
                 <div className="text-[10.5px] tracking-[0.18em] uppercase text-center" style={{ color: "#6B6259", fontFamily: "'Geist Mono', monospace" }}>Heute</div>
@@ -1609,7 +1654,8 @@ export default function App() {
             {effectivePakete.map(p => (
               <PaketBlock key={p.id} paket={p} aktiv={aktivePakete.includes(p.id)} onToggle={() => togglePaket(p.id)}
                 aktiveMassnahmen={aktiveMassnahmen} onToggleMassnahme={toggleMassnahme}
-                empfohleneMassnahmen={empfohleneMassnahmen} />
+                empfohleneMassnahmen={empfohleneMassnahmen}
+                nichtEmpfohleneMassnahmen={nichtEmpfohleneMassnahmen} />
             ))}
           </div>
 

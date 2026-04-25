@@ -255,10 +255,10 @@ export const MASSNAHMENPAKETE = [
     ],
   },
   {
-    id: "P3", nummer: 3, titel: "Wärmeerzeugung & Fassade", zeitraum: "2030 – 2032", farbe: "gelb",
-    begruendung: "Umstieg auf Wärmepumpe wirtschaftlich erst nach Hüllsanierung sinnvoll. KfW 458 verfügbar.",
+    id: "P3", nummer: 3, titel: "Wärmeerzeugung", zeitraum: "2030 – 2032", farbe: "gelb",
+    begruendung: "Umstieg auf Wärmepumpe wirtschaftlich erst nach Hüllsanierung sinnvoll. KfW 458 mit bis zu 50 % Förderung verfügbar.",
     zu_beachten: "Wärmepumpe benötigt ausreichend Aufstellfläche außen (mind. 2 m² Abstand zu Grundstücksgrenze, je nach Bundesland). Schallschutzgutachten empfohlen. Heizkörper auf Niedertemperatur-Tauglichkeit prüfen. GEG §71 ab 2026 zwingend bei Heizungstausch.",
-    komfortsteigerung: "Wärmepumpe liefert konstante Vorlauftemperaturen — kein Aufheizen nach Nachtabsenkung spürbar. Fassade schützt vor Sommerhitze (Phasenverschiebung). Wertsteigerung durch modernes Erscheinungsbild.",
+    komfortsteigerung: "Wärmepumpe liefert konstante Vorlauftemperaturen — kein Aufheizen nach Nachtabsenkung spürbar. Keine Brennstofflieferung mehr nötig. Geringere Wartungskosten.",
     massnahmen: [
       { id: "M4", titel: "Luft-Wasser-Wärmepumpe (12 kW, monovalent)",
         beschreibung: "Monoblock-WP außen, neuer Pufferspeicher 300 L, Heizkörpertausch wo nötig.",
@@ -267,6 +267,14 @@ export const MASSNAHMENPAKETE = [
         foerderung_rechtsgrundlage: "BEG EM / KfW 458", foerderung_stelle: "KfW",
         kostenherleitung: "~2.700 €/kW Leistung EFH-typisch · 16 % davon sind Ersatz der alten Heizung (nicht förderfähig). Grundförderung 30 % + Klimageschwindigkeit 20 % möglich → max. 50 %",
         impact: bs => _imp([[-75,-60,24],[-70,-55,22],[-55,-43,17],[-40,-32,12],[-20,-16,6],[-8,-6,2],[0,0,0]], (bs||{}).heizung) },
+    ],
+  },
+  {
+    id: "P4", nummer: 4, titel: "Fassade", zeitraum: "2030 – 2034", farbe: "gruen",
+    begruendung: "Fassadendämmung lohnt sich nur bei ungedämmten oder schlecht gedämmten Wänden. Bei modernen Gebäuden oft nicht wirtschaftlich.",
+    zu_beachten: "Bei denkmalgeschützten Fassaden Innendämmung als Alternative prüfen. Fensterlaibungen und Sockel mit dämmen, sonst Wärmebrücken. Gerüststandzeit 6–10 Wochen einplanen.",
+    komfortsteigerung: "Deutlich wärmere Wandoberflächen — keine Kondensat- und Schimmelgefahr mehr. Schutz vor Sommerhitze (Phasenverschiebung). Wertsteigerung durch modernes Erscheinungsbild.",
+    massnahmen: [
       { id: "M5", titel: "Fassadendämmung (WDVS 18 cm Mineralwolle)",
         beschreibung: "Wärmedämmverbundsystem U<0,20, neue Fassadenfarbe, Fensterlaibungen.",
         investition: 38000, ohnehin_anteil: 12000, foerderquote: 0.15,
@@ -277,7 +285,7 @@ export const MASSNAHMENPAKETE = [
     ],
   },
   {
-    id: "P4", nummer: 4, titel: "Eigenstrom", zeitraum: "2030 – 2033", farbe: "gruen",
+    id: "P5", nummer: 5, titel: "Eigenstrom", zeitraum: "2030 – 2033", farbe: "blau",
     begruendung: "PV senkt Strombezug der Wärmepumpe signifikant. Unabhängig von Hüllsanierung umsetzbar.",
     zu_beachten: "Statik des Dachs für PV-Zusatzlast prüfen (ca. 15 kg/m²). Netzanmeldung beim Netzbetreiber mind. 8 Wochen vor Inbetriebnahme. Speicher erfordert separaten Zählerschrank. Marktstammdatenregister-Anmeldung Pflicht.",
     komfortsteigerung: "Weitgehende Unabhängigkeit von Strompreissteigerungen. Wallbox ermöglicht Laden mit Eigenstrom. Monitoring-System gibt Überblick über Energieflüsse in Echtzeit.",
@@ -421,4 +429,5 @@ export const PAKET_FARBEN = {
   orange: { bg: "#F07D00", text: "#FFFFFF", hell: "#FBE3CE" },
   gelb:   { bg: "#F6D400", text: "#1E1A15", hell: "#FBF2C2" },
   gruen:  { bg: "#00843D", text: "#FFFFFF", hell: "#D0E8D8" },
+  blau:   { bg: "#2563EB", text: "#FFFFFF", hell: "#DBEAFE" },
 };
