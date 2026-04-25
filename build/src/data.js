@@ -233,10 +233,10 @@ export const MASSNAHMENPAKETE = [
     ],
   },
   {
-    id: "P2", nummer: 2, titel: "Hülle & Fenster", zeitraum: "2027 – 2029", farbe: "orange",
-    begruendung: "Dach ist bei EFH der größte Wärmeverlustbereich. Fenster im Paket mindert Wärmebrücken.",
-    zu_beachten: "Dachdämmung erfordert statische Prüfung bei alter Dachkonstruktion. Fenstertausch koordiniert mit Dachabdichtung planen. Baugenehmigung je nach Denkmalzone erforderlich. Schimmelrisiko durch erhöhte Luftdichtheit prüfen.",
-    komfortsteigerung: "Deutlich wärmere Wandoberflächen und Fenster — keine Kaltluftabfälle mehr. Spürbare Reduktion von Lärmdurchdringung durch neue Fenster (Schallschutz Rw ≥ 33 dB). Kein Zugluft-Effekt durch Fensterfugen.",
+    id: "P2", nummer: 2, titel: "Dachdämmung", zeitraum: "2027 – 2029", farbe: "orange",
+    begruendung: "Dach ist bei EFH der größte Wärmeverlustbereich — oft 25–30 % der gesamten Transmissionswärmeverluste.",
+    zu_beachten: "Dachdämmung erfordert statische Prüfung bei alter Dachkonstruktion. Baugenehmigung je nach Denkmalzone erforderlich. Schimmelrisiko durch erhöhte Luftdichtheit prüfen.",
+    komfortsteigerung: "Deutlich wärmere Decken- und Wandoberflächen im OG — keine Kältestrahlung mehr. Geringerer Temperaturabfall über Nacht.",
     massnahmen: [
       { id: "M2", titel: "Dachdämmung Obergeschoss-Decke (22 cm Mineralwolle)",
         beschreibung: "Aufsparren- oder Zwischensparrendämmung, neue Dampfbremse, Luftdichtheitsschicht.",
@@ -245,6 +245,14 @@ export const MASSNAHMENPAKETE = [
         foerderung_rechtsgrundlage: "BEG EM", foerderung_stelle: "BAFA",
         kostenherleitung: "~180 €/m² Dachfläche (~120 m² EFH-Dach) · 20 % davon sind sowieso fällige Dachneueindeckung (nicht förderfähig)",
         impact: bs => _imp([[-26,-31,5.0],[-22,-26,4.2],[-14,-17,2.7],[-7,-8,1.3],[-2,-2,0.3],[-1,-1,0.1],[0,0,0]], (bs||{}).dach) },
+    ],
+  },
+  {
+    id: "P2b", nummer: 3, titel: "Fenster", zeitraum: "2027 – 2031", farbe: "lila",
+    begruendung: "Fenster lohnen sich vor allem bei Einfach- oder alter Isolierverglasung. Bei bereits modernisierten Fenstern (Stufe 5+) kaum Wirkung.",
+    zu_beachten: "Fenstertausch koordiniert mit Dachabdichtung planen, um Wärmebrücken zu minimieren. Baugenehmigung bei Denkmalschutz erforderlich.",
+    komfortsteigerung: "Keine Kaltluftabfälle mehr. Spürbare Reduktion von Lärmdurchdringung (Schallschutz Rw ≥ 33 dB). Kein Zugluft-Effekt durch Fensterfugen.",
+    massnahmen: [
       { id: "M3", titel: "Fenstertausch (3-fach Verglasung, Uw ≤ 0,95)",
         beschreibung: "Komplettaustausch, RC2-Beschlag, Einbruchhemmung.",
         investition: 19000, ohnehin_anteil: 6500, foerderquote: 0.15,
@@ -367,6 +375,11 @@ export function berechneNachMassnahmen(aktiveMassnahmen, ist, gebaeude, pakete =
 
   const hatWP = aktiveMassnahmen.includes("M4");
   const heizungTyp = hatWP ? "Wärmepumpe Luft/Wasser" : gebaeude.heizung_typ;
+  const heizkosten_ist = berechneHeizkosten(ist.endenergie, gebaeude.wohnflaeche, gebaeude.heizung_typ);
+  const heizkosten_gesamt = Math.min(
+    berechneHeizkosten(endenergie, gebaeude.wohnflaeche, heizungTyp),
+    heizkosten_ist
+  );
 
   return {
     endenergie: Math.round(endenergie),
@@ -377,7 +390,7 @@ export function berechneNachMassnahmen(aktiveMassnahmen, ist, gebaeude, pakete =
     instand_gesamt: Math.round(instand_gesamt),
     foerderung_gesamt: Math.round(foerderung_gesamt),
     eigenanteil: Math.round(invest_gesamt - foerderung_gesamt),
-    heizkosten_gesamt: berechneHeizkosten(endenergie, gebaeude.wohnflaeche, heizungTyp),
+    heizkosten_gesamt,
   };
 }
 
@@ -428,6 +441,7 @@ export const PAKET_FARBEN = {
   rot:    { bg: "#E30613", text: "#FFFFFF", hell: "#FADBD8" },
   orange: { bg: "#F07D00", text: "#FFFFFF", hell: "#FBE3CE" },
   gelb:   { bg: "#F6D400", text: "#1E1A15", hell: "#FBF2C2" },
+  lila:   { bg: "#7C3AED", text: "#FFFFFF", hell: "#EDE9FE" },
   gruen:  { bg: "#00843D", text: "#FFFFFF", hell: "#D0E8D8" },
   blau:   { bg: "#2563EB", text: "#FFFFFF", hell: "#DBEAFE" },
 };

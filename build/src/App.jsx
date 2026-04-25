@@ -445,7 +445,7 @@ const PaketBlock = ({ paket, aktiv, onToggle, aktiveMassnahmen, onToggleMassnahm
   const eigenanteil = summe_invest - summe_foerder;
 
   return (
-    <div className="transition-all" style={{
+    <div id={`paket-${paket.id}`} className="transition-all" style={{
       background: "#FFFFFF",
       border: aktiv ? "1.75px solid #1E1A15" : "1.25px solid #D3CAB9",
       borderRadius: 3, overflow: "hidden", opacity: aktiv ? 1 : 0.55,
@@ -920,19 +920,6 @@ const EnergieVerlaufChart = ({ ist, kumuliert }) => {
           );
         })}
       </svg>
-      <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 14, flexWrap: "wrap" }}>
-        {punkte.map((pt, i) => (
-          <React.Fragment key={i}>
-            {i > 0 && <span style={{ color: "#D3CAB9", fontSize: 16, lineHeight: 1 }}>→</span>}
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
-              <div style={{ width: 28, height: 23, background: EFFIZIENZ_FARBEN[pt.klasse], borderRadius: 2, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <span style={{ fontSize: 12, fontWeight: 700, fontFamily: "'Fraunces', serif", color: textColorFor(pt.klasse) }}>{pt.klasse}</span>
-              </div>
-              <span style={{ fontSize: 8, color: "#9B8E82", fontFamily: "'Geist Mono', monospace" }}>{pt.label}</span>
-            </div>
-          </React.Fragment>
-        ))}
-      </div>
     </div>
   );
 };
@@ -1521,9 +1508,6 @@ export default function App() {
                 <div className="font-serif" style={{ fontSize: 18, fontWeight: 500, color: "#1E1A15", lineHeight: 1.1 }}>
                   iSFP-Schnellcheck
                 </div>
-                <div className="text-[10.5px] tracking-[0.22em] uppercase mt-0.5" style={{ color: "#6B6259", fontFamily: "'Geist Mono', monospace" }}>
-                  Demonstrator · v3.1 · EFH
-                </div>
               </div>
             </div>
             <button onClick={handleExport}
@@ -1627,7 +1611,7 @@ export default function App() {
           subtitle="Die Pakete sind nach iSFP-Logik zeitlich sinnvoll gestaffelt (Hülle vor Technik). Pakete können für Szenarienvergleich ausgeblendet werden.">
           <div className="mb-10" style={{ overflowX: "auto", WebkitOverflowScrolling: "touch", marginLeft: -4, marginRight: -4 }}>
             <div className="flex items-start justify-between gap-2 relative" style={{ padding: "0 12px", minWidth: 480 }}>
-              <div className="absolute" style={{ left: 60, right: 60, top: 28, height: 2, background: "linear-gradient(to right, #E30613, #F07D00, #F6D400, #00843D)" }} />
+              <div className="absolute" style={{ left: 60, right: 60, top: 28, height: 2, background: "linear-gradient(to right, #E30613, #F07D00, #7C3AED, #F6D400, #00843D, #2563EB)" }} />
               <div className="flex flex-col items-center gap-2 relative">
                 <div style={{ width: 52, height: 56, background: "#6E2E1E", borderRadius: 3, border: "1.5px solid #1E1A15" }} />
                 <div className="text-[10.5px] tracking-[0.18em] uppercase text-center" style={{ color: "#6B6259", fontFamily: "'Geist Mono', monospace" }}>Heute</div>
@@ -1635,7 +1619,11 @@ export default function App() {
               </div>
               {effectivePakete.map(p => (
                 <div key={p.id} className="flex flex-col items-center gap-2 relative" style={{ opacity: aktivePakete.includes(p.id) ? 1 : 0.3 }}>
-                  <PaketHaus farbe={p.farbe} aktiv={aktivePakete.includes(p.id)} nummer={p.nummer} size={56} />
+                  <button className="print-hide" style={{ background: "none", border: "none", padding: 0, cursor: "pointer", display: "block" }}
+                    onClick={() => document.getElementById(`paket-${p.id}`)?.scrollIntoView({ behavior: "smooth", block: "start" })}
+                    title={`Zu Paket ${p.nummer}: ${p.titel} springen`}>
+                    <PaketHaus farbe={p.farbe} aktiv={aktivePakete.includes(p.id)} nummer={p.nummer} size={56} />
+                  </button>
                   <div className="text-[10.5px] tracking-[0.18em] uppercase text-center" style={{ color: "#6B6259", fontFamily: "'Geist Mono', monospace" }}>{p.zeitraum}</div>
                   <div className="text-[11.5px] text-center max-w-[110px] leading-tight" style={{ color: "#3A332B" }}>{p.titel}</div>
                 </div>
