@@ -451,8 +451,8 @@ const PaketBlock = ({ paket, aktiv, onToggle, aktiveMassnahmen, onToggleMassnahm
       borderRadius: 3, overflow: "hidden", opacity: aktiv ? 1 : 0.55,
     }}>
       <div className="flex items-stretch">
-        <div className="flex items-center justify-center shrink-0" style={{ width: 120, background: "#F8F5EF", borderRight: "1.25px solid #D3CAB9" }}>
-          <PaketHaus farbe={paket.farbe} aktiv={aktiv} nummer={paket.nummer} size={74} />
+        <div className="flex items-center justify-center shrink-0" style={{ width: 88, background: "#F8F5EF", borderRight: "1.25px solid #D3CAB9" }}>
+          <PaketHaus farbe={paket.farbe} aktiv={aktiv} nummer={paket.nummer} size={62} />
         </div>
         <div className="flex-1 p-5 flex items-center justify-between gap-4 flex-wrap">
           <div>
@@ -729,7 +729,8 @@ const KumuliertTabelle = ({ kumuliert, ist, heizkostenIst }) => (
         <span><InfoIcon size={11} /></span>
       </Tooltip>
     </div>
-    <table className="w-full text-[13px]" style={{ fontVariantNumeric: "tabular-nums" }}>
+    <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+    <table className="w-full text-[13px]" style={{ fontVariantNumeric: "tabular-nums", minWidth: 480 }}>
       <thead>
         <tr style={{ borderBottom: "1.25px solid #1E1A15" }}>
           <th className="text-left py-2.5 font-medium">Schritt</th>
@@ -771,6 +772,7 @@ const KumuliertTabelle = ({ kumuliert, ist, heizkostenIst }) => (
         ))}
       </tbody>
     </table>
+    </div>
   </div>
 );
 
@@ -1000,7 +1002,7 @@ const ISFPPrintReport = ({ ist, k, heizkostenIst, aktivePakete, aktiveMassnahmen
               <div style={{
                 width: 58, flexShrink: 0,
                 background: farbe.bg, color: farbe.text,
-                clipPath: "polygon(0 0, calc(100% - 10px) 0, 100% 50%, calc(100% - 10px) 100%, 0 100%)",
+                clipPath: "polygon(0 0, 82.76% 0, 100% 50%, 82.76% 100%, 0 100%)",
                 display: "flex", alignItems: "center", justifyContent: "center",
                 fontSize: 22, fontWeight: 700, fontFamily: "'Fraunces', serif",
               }}>{paket.nummer}</div>
@@ -1466,7 +1468,7 @@ export default function App() {
         position: "sticky", top: 0, zIndex: 30,
         backdropFilter: "blur(8px)",
       }}>
-        <div className="mx-auto max-w-[1180px]" style={{ padding: "14px 40px 0" }}>
+        <div className="mx-auto max-w-[1180px] px-5 md:px-10" style={{ paddingTop: 14 }}>
           <div className="flex items-center justify-between gap-6 flex-wrap mb-3">
             <div className="flex items-center gap-3">
               <div style={{ color: "#B5623E" }}><MFHIcon size={26} /></div>
@@ -1495,7 +1497,7 @@ export default function App() {
       {/* Print-Title (nur im PDF) */}
       <ISFPPrintReport ist={ist} k={k} heizkostenIst={heizkosten} aktivePakete={aktivePakete} aktiveMassnahmen={aktiveMassnahmen} gebaeude={gebaeude} kumuliert={kumuliert} effectivePakete={effectivePakete} />
 
-      <main className="mx-auto max-w-[1180px] print-hide" style={{ padding: "36px 40px 80px" }}>
+      <main className="mx-auto max-w-[1180px] print-hide px-5 md:px-10" style={{ paddingTop: 36, paddingBottom: 80 }}>
 
         {/* Preset-Picker */}
         <Section id="presets" eyebrow="Schnellstart">
@@ -1578,8 +1580,8 @@ export default function App() {
         {/* Fahrplan */}
         <Section id="fahrplan" eyebrow="Schritt 2 · Fahrplan" title="Empfohlene Maßnahmenpakete"
           subtitle="Die Pakete sind nach iSFP-Logik zeitlich sinnvoll gestaffelt (Hülle vor Technik). Pakete können für Szenarienvergleich ausgeblendet werden.">
-          <div className="mb-10">
-            <div className="flex items-end justify-between gap-2 relative" style={{ padding: "0 12px" }}>
+          <div className="mb-10" style={{ overflowX: "auto", WebkitOverflowScrolling: "touch", marginLeft: -4, marginRight: -4 }}>
+            <div className="flex items-end justify-between gap-2 relative" style={{ padding: "0 12px", minWidth: 480 }}>
               <div className="absolute" style={{ left: 60, right: 60, bottom: 38, height: 2, background: "linear-gradient(to right, #E30613, #F07D00, #F6D400, #00843D)" }} />
               <div className="flex flex-col items-center gap-2 relative">
                 <div style={{ width: 52, height: 56, background: "#6E2E1E", borderRadius: 3, border: "1.5px solid #1E1A15" }} />
@@ -1716,7 +1718,7 @@ export default function App() {
 
       </main>
 
-      <footer className="print-hide" style={{ borderTop: "1px solid #D3CAB9", padding: "32px 40px", marginTop: 40 }}>
+      <footer className="print-hide px-5 md:px-10" style={{ borderTop: "1px solid #D3CAB9", paddingTop: 32, paddingBottom: 32, marginTop: 40 }}>
         <div className="mx-auto max-w-[1180px] flex items-center justify-between flex-wrap gap-4 text-[11.5px]"
              style={{ color: "#6B6259", fontFamily: "'Geist Mono', monospace", letterSpacing: "0.05em" }}>
           <span>Demonstrator · keine rechtsverbindliche Energieberatung</span>
