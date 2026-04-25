@@ -5,6 +5,7 @@ import {
   OPTIONS_LUEFTUNG, OPTIONS_WARMWASSER, OPTIONS_ERNEUERBARE, BAUTEIL_STUFEN,
   MASSNAHMENPAKETE, BEG_BONUS,
   berechneNachMassnahmen, berechneKumuliert, berechneEffizienzklasse, berechneHeizkosten,
+  bewerteMassnahmen,
   EFFIZIENZ_FARBEN, NOTE_FARBEN, PAKET_FARBEN,
 } from "./data.js";
 import { extractFromPDF } from "./pdfExtract.js";
@@ -431,7 +432,7 @@ const BauteilKachel = ({ bauteil, onNoteChange }) => {
 };
 
 // ═══ PAKET-BLOCK mit Kostenherleitung-Tooltip ═══════════════════════════
-const PaketBlock = ({ paket, aktiv, onToggle, aktiveMassnahmen, onToggleMassnahme }) => {
+const PaketBlock = ({ paket, aktiv, onToggle, aktiveMassnahmen, onToggleMassnahme, empfohleneMassnahmen = [] }) => {
   const f = PAKET_FARBEN[paket.farbe];
   const aktiveMassnahmenInPaket = paket.massnahmen.filter(m => aktiveMassnahmen.includes(m.id));
   const summe_invest = aktiveMassnahmenInPaket.reduce((s, m) => s + m.investition, 0);
@@ -503,7 +504,7 @@ const PaketBlock = ({ paket, aktiv, onToggle, aktiveMassnahmen, onToggleMassnahm
           return (
           <div key={m.id} className="p-5" style={{ borderBottom: i < paket.massnahmen.length - 1 ? "1px solid #E2DBD0" : "none", opacity: massnahmeAktiv ? 1 : 0.45, transition: "opacity 0.15s" }}>
             <div className="mb-4">
-              <div className="text-[14.5px] font-medium mb-1.5 flex items-center gap-2" style={{ color: "#1E1A15" }}>
+              <div className="text-[14.5px] font-medium mb-1.5 flex items-center gap-2 flex-wrap" style={{ color: "#1E1A15" }}>
                 {aktiv && (
                   <button onClick={() => onToggleMassnahme(m.id)} title={massnahmeAktiv ? "Maßnahme ausblenden" : "Maßnahme einblenden"}
                     className="print-hide flex-shrink-0"
@@ -513,6 +514,11 @@ const PaketBlock = ({ paket, aktiv, onToggle, aktiveMassnahmen, onToggleMassnahm
                   </button>
                 )}
                 <span style={{ textDecoration: aktiv && !massnahmeAktiv ? "line-through" : "none" }}>{m.titel}</span>
+                {empfohleneMassnahmen.includes(m.id) && (
+                  <span className="print-hide" style={{ background: "#F6D400", color: "#1E1A15", padding: "1px 8px", borderRadius: 100, fontSize: 10, fontFamily: "'Geist Mono', monospace", fontWeight: 600, letterSpacing: "0.06em", flexShrink: 0 }}>
+                    ★ Empfohlen
+                  </span>
+                )}
                 <Tooltip content={
                   <div>
                     <div style={{ fontWeight: 600, marginBottom: 6 }}>Kosten-Herleitung</div>
@@ -1339,6 +1345,10 @@ export default function App() {
   const gebaeudeWithState = useMemo(() => ({ ...gebaeude, bauteile_state }), [gebaeude, bauteile_state]);
   const k = useMemo(() => berechneNachMassnahmen(aktiveMassnahmen, ist, gebaeudeWithState), [aktiveMassnahmen, ist, gebaeudeWithState]);
   const kumuliert = useMemo(() => berechneKumuliert(aktiveMassnahmen, ist, gebaeudeWithState), [aktiveMassnahmen, ist, gebaeudeWithState]);
+  const empfohleneMassnahmen = useMemo(() => {
+    const allM = MASSNAHMENPAKETE.flatMap(p => p.massnahmen);
+    return bewerteMassnahmen(allM, bauteile_state, gebaeude).slice(0, 3).map(m => m.id);
+  }, [bauteile_state, gebaeude]);
 
   const handleExport = () => {
     exportAsPDF();
@@ -1493,7 +1503,8 @@ export default function App() {
           <div className="space-y-5">
             {MASSNAHMENPAKETE.map(p => (
               <PaketBlock key={p.id} paket={p} aktiv={aktivePakete.includes(p.id)} onToggle={() => togglePaket(p.id)}
-                aktiveMassnahmen={aktiveMassnahmen} onToggleMassnahme={toggleMassnahme} />
+                aktiveMassnahmen={aktiveMassnahmen} onToggleMassnahme={toggleMassnahme}
+                empfohleneMassnahmen={empfohleneMassnahmen} />
             ))}
           </div>
 

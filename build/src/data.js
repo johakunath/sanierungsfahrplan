@@ -387,6 +387,23 @@ export function berechneKumuliert(aktiveMassnahmen, ist, gebaeude) {
   return ergebnisse;
 }
 
+// ─── Maßnahmen-Bewertung (€/kWh Primärenergie) ────────────────────────────
+// Returns measures sorted best-first (lowest cost per kWh saved).
+// Top N can be used to show "Empfohlen" tags in the UI.
+export function bewerteMassnahmen(massnahmen, bauteile_state, gebaeude) {
+  const wf = (gebaeude && gebaeude.wohnflaeche) || 150;
+  const bs = bauteile_state || {};
+  return massnahmen
+    .map(m => {
+      const impact = m.impact ? m.impact(bs) : { primaerenergie_delta: m.primaerenergie_delta || 0 };
+      const pe_saved = Math.abs(impact.primaerenergie_delta) * wf / 1000;
+      const invest_netto = m.investition - m.ohnehin_anteil;
+      const score = pe_saved > 0 ? invest_netto / pe_saved : Infinity;
+      return { id: m.id, score, pe_saved, invest_netto };
+    })
+    .sort((a, b) => a.score - b.score);
+}
+
 // ─── Farbcodes ────────────────────────────────────────────────────────────
 export const EFFIZIENZ_FARBEN = {
   "A+": "#00843D", "A": "#34A030", "B": "#95C11F",
