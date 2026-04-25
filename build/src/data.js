@@ -206,6 +206,13 @@ export const ENERGIEPREISE = {
   fernwaerme_gas: 0.13, strom_wp: 0.28, erdgas: 0.11, heizoel: 0.11, biomasse: 0.08,
 };
 
+// ─── Impact helper (stufe 1–7 lookup table) ───────────────────────────────
+const _imp = (tbl, stufe) => {
+  const s = Math.max(0, Math.min(6, Math.round(stufe || 2) - 1));
+  const [ee, pe, co2] = tbl[s];
+  return { endenergie_delta: ee, primaerenergie_delta: pe, co2_reduktion: co2 };
+};
+
 // ─── Maßnahmenpakete ──────────────────────────────────────────────────────
 // foerderquote = BEG-Grundförderung (realistisch, ohne Konjunktur-Booster)
 // kfw_programm = durchführende Stelle (BAFA für EM, KfW für WG/HZG)
@@ -221,7 +228,8 @@ export const MASSNAHMENPAKETE = [
         investition: 1800, ohnehin_anteil: 300, foerderquote: 0.15,
         co2_reduktion: 3.5, endenergie_delta: -12, primaerenergie_delta: -14,
         foerderung_rechtsgrundlage: "BEG EM", foerderung_stelle: "BAFA",
-        kostenherleitung: "~600 € Planung · ~1.200 € Umsetzung (Hocheffizienzpumpe + Ventile + Abgleich) für EFH" },
+        kostenherleitung: "~600 € Planung · ~1.200 € Umsetzung (Hocheffizienzpumpe + Ventile + Abgleich) für EFH",
+        impact: bs => _imp([[-15,-18,4.5],[-12,-14,3.5],[-8,-10,2.5],[-4,-5,1.5],[-2,-3,0.8],[-1,-1,0.3],[0,0,0]], (bs||{}).heizung) },
     ],
   },
   {
@@ -235,13 +243,15 @@ export const MASSNAHMENPAKETE = [
         investition: 22000, ohnehin_anteil: 4500, foerderquote: 0.15,
         co2_reduktion: 4.2, endenergie_delta: -22, primaerenergie_delta: -26,
         foerderung_rechtsgrundlage: "BEG EM", foerderung_stelle: "BAFA",
-        kostenherleitung: "~180 €/m² Dachfläche (~120 m² EFH-Dach) · 20 % davon sind sowieso fällige Dachneueindeckung (nicht förderfähig)" },
+        kostenherleitung: "~180 €/m² Dachfläche (~120 m² EFH-Dach) · 20 % davon sind sowieso fällige Dachneueindeckung (nicht förderfähig)",
+        impact: bs => _imp([[-26,-31,5.0],[-22,-26,4.2],[-14,-17,2.7],[-7,-8,1.3],[-2,-2,0.3],[-1,-1,0.1],[0,0,0]], (bs||{}).dach) },
       { id: "M3", titel: "Fenstertausch (3-fach Verglasung, Uw ≤ 0,95)",
         beschreibung: "Komplettaustausch, RC2-Beschlag, Einbruchhemmung.",
         investition: 19000, ohnehin_anteil: 6500, foerderquote: 0.15,
         co2_reduktion: 3.0, endenergie_delta: -15, primaerenergie_delta: -18,
         foerderung_rechtsgrundlage: "BEG EM", foerderung_stelle: "BAFA",
-        kostenherleitung: "~750 €/m² Fensterfläche (~25 m² EFH) · 35 % davon sind Fenster-Lebenszyklus-Erneuerung (nicht förderfähig)" },
+        kostenherleitung: "~750 €/m² Fensterfläche (~25 m² EFH) · 35 % davon sind Fenster-Lebenszyklus-Erneuerung (nicht förderfähig)",
+        impact: bs => _imp([[-20,-24,4.0],[-17,-20,3.4],[-15,-18,3.0],[-8,-10,1.6],[-2,-2,0.4],[-1,-1,0.1],[0,0,0]], (bs||{}).fenster) },
     ],
   },
   {
@@ -255,13 +265,15 @@ export const MASSNAHMENPAKETE = [
         investition: 32000, ohnehin_anteil: 5000, foerderquote: 0.30,
         co2_reduktion: 22, endenergie_delta: -70, primaerenergie_delta: -55,
         foerderung_rechtsgrundlage: "BEG EM / KfW 458", foerderung_stelle: "KfW",
-        kostenherleitung: "~2.700 €/kW Leistung EFH-typisch · 16 % davon sind Ersatz der alten Heizung (nicht förderfähig). Grundförderung 30 % + Klimageschwindigkeit 20 % möglich → max. 50 %" },
+        kostenherleitung: "~2.700 €/kW Leistung EFH-typisch · 16 % davon sind Ersatz der alten Heizung (nicht förderfähig). Grundförderung 30 % + Klimageschwindigkeit 20 % möglich → max. 50 %",
+        impact: bs => _imp([[-75,-60,24],[-70,-55,22],[-55,-43,17],[-40,-32,12],[-20,-16,6],[-8,-6,2],[0,0,0]], (bs||{}).heizung) },
       { id: "M5", titel: "Fassadendämmung (WDVS 18 cm Mineralwolle)",
         beschreibung: "Wärmedämmverbundsystem U<0,20, neue Fassadenfarbe, Fensterlaibungen.",
         investition: 38000, ohnehin_anteil: 12000, foerderquote: 0.15,
         co2_reduktion: 6.5, endenergie_delta: -28, primaerenergie_delta: -33,
         foerderung_rechtsgrundlage: "BEG EM", foerderung_stelle: "BAFA",
-        kostenherleitung: "~190 €/m² Fassade (~200 m² EFH) · 32 % davon sind sowieso fällige Putzerneuerung + Anstrich (nicht förderfähig)" },
+        kostenherleitung: "~190 €/m² Fassade (~200 m² EFH) · 32 % davon sind sowieso fällige Putzerneuerung + Anstrich (nicht förderfähig)",
+        impact: bs => _imp([[-34,-40,7.8],[-28,-33,6.5],[-18,-21,4.1],[-9,-11,2.1],[-2,-3,0.5],[-1,-1,0.1],[0,0,0]], (bs||{}).waende) },
     ],
   },
   {
@@ -275,7 +287,8 @@ export const MASSNAHMENPAKETE = [
         investition: 18000, ohnehin_anteil: 0, foerderquote: 0,
         co2_reduktion: 4.0, endenergie_delta: 0, primaerenergie_delta: -12,
         foerderung_rechtsgrundlage: "KfW 270 (Kredit) + EEG-Einspeisung", foerderung_stelle: "KfW",
-        kostenherleitung: "~1.500 €/kWp inkl. Speicher und Montage · keine nicht-förderfähigen Anteile (Neuinvestition)" },
+        kostenherleitung: "~1.500 €/kWp inkl. Speicher und Montage · keine nicht-förderfähigen Anteile (Neuinvestition)",
+        impact: () => ({ endenergie_delta: 0, primaerenergie_delta: -12, co2_reduktion: 4.0 }) },
     ],
   },
 ];
@@ -313,20 +326,24 @@ export function berechneHeizkosten(endenergie, wohnflaeche, heizungTyp) {
   return Math.round(endenergie * wohnflaeche * preisFuerHeizung(heizungTyp));
 }
 
-export function berechneNachMassnahmen(aktivePakete, ist, gebaeude) {
+// aktiveMassnahmen = array of measure IDs e.g. ["M1","M2","M4"]
+// gebaeude.bauteile_state = { waende, dach, fenster, keller, heizung, warmwasser } (stufe 1–7)
+export function berechneNachMassnahmen(aktiveMassnahmen, ist, gebaeude) {
   let endenergie = ist.endenergie;
   let primaerenergie = ist.primaerenergie;
   let co2 = ist.co2;
   let invest_gesamt = 0;
   let instand_gesamt = 0;
   let foerderung_gesamt = 0;
+  const bs = gebaeude.bauteile_state || null;
 
   MASSNAHMENPAKETE.forEach(paket => {
-    if (!aktivePakete.includes(paket.id)) return;
     paket.massnahmen.forEach(m => {
-      endenergie     += m.endenergie_delta;
-      primaerenergie += m.primaerenergie_delta;
-      co2            -= m.co2_reduktion;
+      if (!aktiveMassnahmen.includes(m.id)) return;
+      const imp = m.impact ? m.impact(bs) : { endenergie_delta: m.endenergie_delta, primaerenergie_delta: m.primaerenergie_delta, co2_reduktion: m.co2_reduktion };
+      endenergie     += imp.endenergie_delta;
+      primaerenergie += imp.primaerenergie_delta;
+      co2            -= imp.co2_reduktion;
       invest_gesamt  += m.investition;
       instand_gesamt += m.ohnehin_anteil;
       const netto = m.investition - m.ohnehin_anteil;
@@ -340,7 +357,7 @@ export function berechneNachMassnahmen(aktivePakete, ist, gebaeude) {
   primaerenergie = Math.max(primaerenergie, 20);
   co2 = Math.max(co2, 2);
 
-  const hatWP = aktivePakete.includes("P3");
+  const hatWP = aktiveMassnahmen.includes("M4");
   const heizungTyp = hatWP ? "Wärmepumpe Luft/Wasser" : gebaeude.heizung_typ;
 
   return {
@@ -356,18 +373,16 @@ export function berechneNachMassnahmen(aktivePakete, ist, gebaeude) {
   };
 }
 
-// Kumulierte Berechnung pro Paket — zeigt Schritt-für-Schritt-Wirkung (BAFA-Muster)
-export function berechneKumuliert(aktivePakete, ist, gebaeude) {
+// Kumulierte Berechnung — zeigt Schritt-für-Schritt-Wirkung (BAFA-Muster)
+export function berechneKumuliert(aktiveMassnahmen, ist, gebaeude) {
   const ergebnisse = [];
-  const sortedActive = MASSNAHMENPAKETE.filter(p => aktivePakete.includes(p.id));
-  let laufenderState = [];
-  for (const p of sortedActive) {
-    laufenderState.push(p.id);
-    const k = berechneNachMassnahmen(laufenderState, ist, gebaeude);
-    ergebnisse.push({
-      paket: p,
-      nachher: k,
-    });
+  let laufendeMassnahmen = [];
+  for (const paket of MASSNAHMENPAKETE) {
+    const aktivInPaket = paket.massnahmen.filter(m => aktiveMassnahmen.includes(m.id));
+    if (aktivInPaket.length === 0) continue;
+    laufendeMassnahmen = [...laufendeMassnahmen, ...aktivInPaket.map(m => m.id)];
+    const k = berechneNachMassnahmen(laufendeMassnahmen, ist, gebaeude);
+    ergebnisse.push({ paket, nachher: k });
   }
   return ergebnisse;
 }

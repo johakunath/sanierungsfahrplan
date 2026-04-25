@@ -431,11 +431,11 @@ const BauteilKachel = ({ bauteil, onNoteChange }) => {
 };
 
 // ═══ PAKET-BLOCK mit Kostenherleitung-Tooltip ═══════════════════════════
-const PaketBlock = ({ paket, aktiv, onToggle }) => {
+const PaketBlock = ({ paket, aktiv, onToggle, aktiveMassnahmen, onToggleMassnahme }) => {
   const f = PAKET_FARBEN[paket.farbe];
-  const summe_invest = paket.massnahmen.reduce((s, m) => s + m.investition, 0);
-  const summe_instand = paket.massnahmen.reduce((s, m) => s + m.ohnehin_anteil, 0);
-  const summe_foerder = paket.massnahmen.reduce((s, m) => {
+  const aktiveMassnahmenInPaket = paket.massnahmen.filter(m => aktiveMassnahmen.includes(m.id));
+  const summe_invest = aktiveMassnahmenInPaket.reduce((s, m) => s + m.investition, 0);
+  const summe_foerder = aktiveMassnahmenInPaket.reduce((s, m) => {
     const netto = m.investition - m.ohnehin_anteil;
     const bonus = BEG_BONUS.isfp_bonus;
     const quote = m.foerderquote > 0 ? Math.min(m.foerderquote + bonus, 0.5) : 0;
@@ -495,15 +495,24 @@ const PaketBlock = ({ paket, aktiv, onToggle }) => {
 
       <div>
         {paket.massnahmen.map((m, i) => {
+          const massnahmeAktiv = aktiveMassnahmen.includes(m.id);
           const foerderfaehig = m.investition - m.ohnehin_anteil;
           const quote = m.foerderquote > 0 ? Math.min(m.foerderquote + BEG_BONUS.isfp_bonus, 0.5) : 0;
           const foerderung = Math.round(foerderfaehig * quote);
           const eigenanteil = m.investition - foerderung;
           return (
-          <div key={m.id} className="p-5" style={{ borderBottom: i < paket.massnahmen.length - 1 ? "1px solid #E2DBD0" : "none" }}>
+          <div key={m.id} className="p-5" style={{ borderBottom: i < paket.massnahmen.length - 1 ? "1px solid #E2DBD0" : "none", opacity: massnahmeAktiv ? 1 : 0.45, transition: "opacity 0.15s" }}>
             <div className="mb-4">
               <div className="text-[14.5px] font-medium mb-1.5 flex items-center gap-2" style={{ color: "#1E1A15" }}>
-                {m.titel}
+                {aktiv && (
+                  <button onClick={() => onToggleMassnahme(m.id)} title={massnahmeAktiv ? "Maßnahme ausblenden" : "Maßnahme einblenden"}
+                    className="print-hide flex-shrink-0"
+                    style={{ width: 18, height: 18, borderRadius: 3, border: `1.5px solid ${massnahmeAktiv ? f.bg : "#D3CAB9"}`,
+                      background: massnahmeAktiv ? f.bg : "transparent", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+                    {massnahmeAktiv && <svg viewBox="0 0 14 14" width="11" height="11"><path d="M2.5 7 L5.5 10 L11.5 4" stroke="white" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                  </button>
+                )}
+                <span style={{ textDecoration: aktiv && !massnahmeAktiv ? "line-through" : "none" }}>{m.titel}</span>
                 <Tooltip content={
                   <div>
                     <div style={{ fontWeight: 600, marginBottom: 6 }}>Kosten-Herleitung</div>
@@ -915,7 +924,7 @@ const EnergieVerlaufChart = ({ ist, kumuliert }) => {
   );
 };
 
-const ISFPPrintReport = ({ ist, k, heizkostenIst, aktivePakete, gebaeude, kumuliert }) => {
+const ISFPPrintReport = ({ ist, k, heizkostenIst, aktivePakete, aktiveMassnahmen, gebaeude, kumuliert }) => {
   const istKlasse = berechneEffizienzklasse(ist.primaerenergie);
   const aktivePaketeObj = MASSNAHMENPAKETE.filter(p => aktivePakete.includes(p.id));
   const co2Gesamt = Math.round(ist.co2 * gebaeude.gebaeudenutzflaeche);
@@ -1076,7 +1085,7 @@ const ISFPPrintReport = ({ ist, k, heizkostenIst, aktivePakete, gebaeude, kumuli
         const nachherKlasse = step.nachher.effizienzklasse;
         const gebaeudeEEK = berechneEffizienzklasse(step.nachher.endenergie);
         const p3Index = aktivePaketeObj.findIndex(p => p.id === "P3");
-        const hatWPNachDiesemStep = aktivePakete.includes("P3") && (p3Index >= 0 && i >= p3Index);
+        const hatWPNachDiesemStep = aktiveMassnahmen.includes("M4") && (p3Index >= 0 && i >= p3Index);
         const heizTypFuerEEK = hatWPNachDiesemStep ? "Wärmepumpe Luft/Wasser" : gebaeude.heizung_typ;
         const waerveEEK = waermeEEK(heizTypFuerEEK);
 
@@ -1217,7 +1226,7 @@ export default function App() {
     PRESETS.efhNachkrieg.gebaeude.lueftung,
     PRESETS.efhNachkrieg.gebaeude.warmwasser,
   ));
-  const [aktivePakete, setAktivePakete] = useState(MASSNAHMENPAKETE.map(p => p.id));
+  const [aktiveMassnahmen, setAktiveMassnahmen] = useState(() => MASSNAHMENPAKETE.flatMap(p => p.massnahmen.map(m => m.id)));
   const [extraction, setExtraction] = useState(null);
   const [activeTab, setActiveTab] = useState("gebaeude");
 
@@ -1267,6 +1276,7 @@ export default function App() {
     setGebaeude(p.gebaeude);
     setIst(p.ist);
     setBauteile(ableiteBauteile(p.gebaeude.baujahr, p.gebaeude.heizung_typ, p.gebaeude.lueftung, p.gebaeude.warmwasser));
+    setAktiveMassnahmen(MASSNAHMENPAKETE.flatMap(pkg => pkg.massnahmen.map(m => m.id)));
     setExtraction(null);
   }, []);
 
@@ -1294,18 +1304,41 @@ export default function App() {
   };
 
   const togglePaket = (id) => {
-    setAktivePakete(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+    const paket = MASSNAHMENPAKETE.find(p => p.id === id);
+    if (!paket) return;
+    const mIds = paket.massnahmen.map(m => m.id);
+    const allActive = mIds.every(mid => aktiveMassnahmen.includes(mid));
+    setAktiveMassnahmen(prev => allActive
+      ? prev.filter(x => !mIds.includes(x))
+      : [...prev.filter(x => !mIds.includes(x)), ...mIds]
+    );
+  };
+
+  const toggleMassnahme = (id) => {
+    setAktiveMassnahmen(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
   };
 
   // ─── Derived values ──
+  const bauteile_state = useMemo(() => {
+    const bs = {};
+    bauteile.forEach(b => { bs[b.id] = b.note; });
+    return bs;
+  }, [bauteile]);
+
+  const aktivePakete = useMemo(() =>
+    MASSNAHMENPAKETE.filter(p => p.massnahmen.some(m => aktiveMassnahmen.includes(m.id))).map(p => p.id),
+    [aktiveMassnahmen]
+  );
+
   const heizkosten = useMemo(
     () => berechneHeizkosten(ist.endenergie, gebaeude.wohnflaeche, gebaeude.heizung_typ),
     [ist.endenergie, gebaeude.wohnflaeche, gebaeude.heizung_typ]
   );
   const heizkostenWE = useMemo(() => gebaeude.wohneinheiten > 0 ? Math.round(heizkosten / gebaeude.wohneinheiten) : 0, [heizkosten, gebaeude.wohneinheiten]);
   const effizienzklasse = useMemo(() => berechneEffizienzklasse(ist.primaerenergie), [ist.primaerenergie]);
-  const k = useMemo(() => berechneNachMassnahmen(aktivePakete, ist, gebaeude), [aktivePakete, ist, gebaeude]);
-  const kumuliert = useMemo(() => berechneKumuliert(aktivePakete, ist, gebaeude), [aktivePakete, ist, gebaeude]);
+  const gebaeudeWithState = useMemo(() => ({ ...gebaeude, bauteile_state }), [gebaeude, bauteile_state]);
+  const k = useMemo(() => berechneNachMassnahmen(aktiveMassnahmen, ist, gebaeudeWithState), [aktiveMassnahmen, ist, gebaeudeWithState]);
+  const kumuliert = useMemo(() => berechneKumuliert(aktiveMassnahmen, ist, gebaeudeWithState), [aktiveMassnahmen, ist, gebaeudeWithState]);
 
   const handleExport = () => {
     exportAsPDF();
@@ -1347,7 +1380,7 @@ export default function App() {
       </header>
 
       {/* Print-Title (nur im PDF) */}
-      <ISFPPrintReport ist={ist} k={k} heizkostenIst={heizkosten} aktivePakete={aktivePakete} gebaeude={gebaeude} kumuliert={kumuliert} />
+      <ISFPPrintReport ist={ist} k={k} heizkostenIst={heizkosten} aktivePakete={aktivePakete} aktiveMassnahmen={aktiveMassnahmen} gebaeude={gebaeude} kumuliert={kumuliert} />
 
       <main className="mx-auto max-w-[1180px] print-hide" style={{ padding: "36px 40px 80px" }}>
 
@@ -1459,7 +1492,8 @@ export default function App() {
 
           <div className="space-y-5">
             {MASSNAHMENPAKETE.map(p => (
-              <PaketBlock key={p.id} paket={p} aktiv={aktivePakete.includes(p.id)} onToggle={() => togglePaket(p.id)} />
+              <PaketBlock key={p.id} paket={p} aktiv={aktivePakete.includes(p.id)} onToggle={() => togglePaket(p.id)}
+                aktiveMassnahmen={aktiveMassnahmen} onToggleMassnahme={toggleMassnahme} />
             ))}
           </div>
 
