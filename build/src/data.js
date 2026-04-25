@@ -328,7 +328,7 @@ export function berechneHeizkosten(endenergie, wohnflaeche, heizungTyp) {
 
 // aktiveMassnahmen = array of measure IDs e.g. ["M1","M2","M4"]
 // gebaeude.bauteile_state = { waende, dach, fenster, keller, heizung, warmwasser } (stufe 1–7)
-export function berechneNachMassnahmen(aktiveMassnahmen, ist, gebaeude) {
+export function berechneNachMassnahmen(aktiveMassnahmen, ist, gebaeude, pakete = MASSNAHMENPAKETE) {
   let endenergie = ist.endenergie;
   let primaerenergie = ist.primaerenergie;
   let co2 = ist.co2;
@@ -337,7 +337,7 @@ export function berechneNachMassnahmen(aktiveMassnahmen, ist, gebaeude) {
   let foerderung_gesamt = 0;
   const bs = gebaeude.bauteile_state || null;
 
-  MASSNAHMENPAKETE.forEach(paket => {
+  pakete.forEach(paket => {
     paket.massnahmen.forEach(m => {
       if (!aktiveMassnahmen.includes(m.id)) return;
       const imp = m.impact ? m.impact(bs) : { endenergie_delta: m.endenergie_delta, primaerenergie_delta: m.primaerenergie_delta, co2_reduktion: m.co2_reduktion };
@@ -374,14 +374,14 @@ export function berechneNachMassnahmen(aktiveMassnahmen, ist, gebaeude) {
 }
 
 // Kumulierte Berechnung — zeigt Schritt-für-Schritt-Wirkung (BAFA-Muster)
-export function berechneKumuliert(aktiveMassnahmen, ist, gebaeude) {
+export function berechneKumuliert(aktiveMassnahmen, ist, gebaeude, pakete = MASSNAHMENPAKETE) {
   const ergebnisse = [];
   let laufendeMassnahmen = [];
-  for (const paket of MASSNAHMENPAKETE) {
+  for (const paket of pakete) {
     const aktivInPaket = paket.massnahmen.filter(m => aktiveMassnahmen.includes(m.id));
     if (aktivInPaket.length === 0) continue;
     laufendeMassnahmen = [...laufendeMassnahmen, ...aktivInPaket.map(m => m.id)];
-    const k = berechneNachMassnahmen(laufendeMassnahmen, ist, gebaeude);
+    const k = berechneNachMassnahmen(laufendeMassnahmen, ist, gebaeude, pakete);
     ergebnisse.push({ paket, nachher: k });
   }
   return ergebnisse;

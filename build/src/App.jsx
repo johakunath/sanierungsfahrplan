@@ -930,9 +930,9 @@ const EnergieVerlaufChart = ({ ist, kumuliert }) => {
   );
 };
 
-const ISFPPrintReport = ({ ist, k, heizkostenIst, aktivePakete, aktiveMassnahmen, gebaeude, kumuliert }) => {
+const ISFPPrintReport = ({ ist, k, heizkostenIst, aktivePakete, aktiveMassnahmen, gebaeude, kumuliert, effectivePakete = MASSNAHMENPAKETE }) => {
   const istKlasse = berechneEffizienzklasse(ist.primaerenergie);
-  const aktivePaketeObj = MASSNAHMENPAKETE.filter(p => aktivePakete.includes(p.id));
+  const aktivePaketeObj = effectivePakete.filter(p => aktivePakete.includes(p.id));
   const co2Gesamt = Math.round(ist.co2 * gebaeude.gebaeudenutzflaeche);
   const co2Ziel = Math.round(k.co2 * gebaeude.gebaeudenutzflaeche);
   const kostenEinsparPct = heizkostenIst > 0 ? Math.round((1 - k.heizkosten_gesamt / heizkostenIst) * 100) : 0;
@@ -1220,6 +1220,92 @@ const ISFPPrintReport = ({ ist, k, heizkostenIst, aktivePakete, aktiveMassnahmen
   );
 };
 
+// ═══ MASSNAHMEN-EDITOR ═════════════════════════════════════════════════
+const MassnahmenEditor = ({ overrides, onUpdate, onReset }) => {
+  const [open, setOpen] = useState(false);
+  const allM = MASSNAHMENPAKETE.flatMap(p => p.massnahmen.map(m => ({ ...m, paketFarbe: p.farbe })));
+  return (
+    <div style={{ marginTop: 32, border: "1.25px solid #D3CAB9", borderRadius: 3, background: "#FFF" }}>
+      <button onClick={() => setOpen(o => !o)} className="print-hide"
+        style={{ width: "100%", padding: "15px 24px", background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div className="text-[11px] tracking-[0.22em] uppercase" style={{ color: "#B5623E", fontFamily: "'Geist Mono', monospace" }}>
+          Maßnahmen-Datenbank · Kosten &amp; Förderung anpassen
+        </div>
+        <span style={{ fontSize: 11, color: "#6B6259", fontFamily: "'Geist Mono', monospace" }}>{open ? "▲ Schließen" : "▼ Bearbeiten"}</span>
+      </button>
+      {open && (
+        <div style={{ borderTop: "1.25px solid #D3CAB9" }}>
+          <table className="w-full text-[12.5px]" style={{ fontVariantNumeric: "tabular-nums" }}>
+            <thead>
+              <tr style={{ borderBottom: "1.25px solid #E2DBD0", background: "#F8F5EF" }}>
+                <th className="text-left py-2.5 px-5 font-medium" style={{ color: "#3A332B" }}>Maßnahme</th>
+                <th className="text-right py-2.5 px-3 font-medium" style={{ color: "#3A332B" }}>Investition</th>
+                <th className="text-right py-2.5 px-3 font-medium" style={{ color: "#3A332B" }}>Förderquote</th>
+                <th className="py-2.5 px-4" />
+              </tr>
+            </thead>
+            <tbody>
+              {allM.map(m => {
+                const ov = overrides[m.id] || {};
+                const invest = ov.investition !== undefined ? ov.investition : m.investition;
+                const quote = ov.foerderquote !== undefined ? ov.foerderquote : m.foerderquote;
+                const changed = ov.investition !== undefined || ov.foerderquote !== undefined;
+                return (
+                  <tr key={m.id} style={{ borderBottom: "1px solid #E2DBD0" }}>
+                    <td className="py-3 px-5">
+                      <div className="flex items-center gap-2">
+                        <span style={{ width: 8, height: 8, borderRadius: 100, background: PAKET_FARBEN[m.paketFarbe].bg, flexShrink: 0, display: "inline-block" }} />
+                        <span style={{ color: "#1E1A15", lineHeight: 1.3 }}>{m.titel}</span>
+                      </div>
+                    </td>
+                    <td className="py-3 px-3">
+                      <div className="flex items-baseline justify-end gap-1.5">
+                        <input type="number" min={0} step={500} value={invest}
+                          onChange={e => onUpdate(m.id, "investition", Math.max(0, parseInt(e.target.value, 10) || 0))}
+                          style={{ width: 90, fontFamily: "'Geist Mono', monospace", fontSize: 12.5, textAlign: "right",
+                            background: ov.investition !== undefined ? "#FFFBE6" : "transparent",
+                            border: "1px solid #D3CAB9", borderRadius: 2, padding: "3px 6px", outline: "none" }} />
+                        <span style={{ fontSize: 11, color: "#6B6259" }}>€</span>
+                      </div>
+                    </td>
+                    <td className="py-3 px-3">
+                      <div className="flex items-baseline justify-end gap-1.5">
+                        {m.foerderquote > 0 ? (
+                          <>
+                            <input type="number" min={0} max={50} step={5} value={Math.round(quote * 100)}
+                              onChange={e => onUpdate(m.id, "foerderquote", Math.max(0, Math.min(50, parseInt(e.target.value, 10) || 0)) / 100)}
+                              style={{ width: 50, fontFamily: "'Geist Mono', monospace", fontSize: 12.5, textAlign: "right",
+                                background: ov.foerderquote !== undefined ? "#FFFBE6" : "transparent",
+                                border: "1px solid #D3CAB9", borderRadius: 2, padding: "3px 6px", outline: "none" }} />
+                            <span style={{ fontSize: 11, color: "#6B6259" }}>%</span>
+                          </>
+                        ) : (
+                          <span style={{ fontSize: 11, color: "#9B8E82" }}>—</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="py-3 px-4 text-center" style={{ width: 48 }}>
+                      {changed && (
+                        <button onClick={() => onReset(m.id)} title="Standardwert wiederherstellen"
+                          style={{ fontSize: 14, color: "#B5623E", background: "transparent", border: "1px solid #D3CAB9", borderRadius: 2, padding: "1px 7px", cursor: "pointer" }}>
+                          ↺
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          <div style={{ padding: "9px 20px 11px", borderTop: "1px solid #E2DBD0", fontSize: 11, color: "#9B8E82", fontStyle: "italic" }}>
+            Änderungen wirken sofort auf Fahrplan, Energiebilanz und Förderberechnung. Gelb hinterlegte Felder wurden geändert.
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 // ═══ MAIN APP ══════════════════════════════════════════════════════════
 
 export default function App() {
@@ -1233,6 +1319,7 @@ export default function App() {
     PRESETS.efhNachkrieg.gebaeude.warmwasser,
   ));
   const [aktiveMassnahmen, setAktiveMassnahmen] = useState(() => MASSNAHMENPAKETE.flatMap(p => p.massnahmen.map(m => m.id)));
+  const [massnahmenOverrides, setMassnahmenOverrides] = useState({});
   const [extraction, setExtraction] = useState(null);
   const [activeTab, setActiveTab] = useState("gebaeude");
 
@@ -1324,6 +1411,14 @@ export default function App() {
     setAktiveMassnahmen(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
   };
 
+  const updateMassnahme = useCallback((id, field, value) => {
+    setMassnahmenOverrides(prev => ({ ...prev, [id]: { ...(prev[id] || {}), [field]: value } }));
+  }, []);
+
+  const resetMassnahme = useCallback((id) => {
+    setMassnahmenOverrides(prev => { const n = { ...prev }; delete n[id]; return n; });
+  }, []);
+
   // ─── Derived values ──
   const bauteile_state = useMemo(() => {
     const bs = {};
@@ -1331,9 +1426,17 @@ export default function App() {
     return bs;
   }, [bauteile]);
 
+  const effectivePakete = useMemo(() =>
+    MASSNAHMENPAKETE.map(p => ({
+      ...p,
+      massnahmen: p.massnahmen.map(m => ({ ...m, ...(massnahmenOverrides[m.id] || {}) })),
+    })),
+    [massnahmenOverrides]
+  );
+
   const aktivePakete = useMemo(() =>
-    MASSNAHMENPAKETE.filter(p => p.massnahmen.some(m => aktiveMassnahmen.includes(m.id))).map(p => p.id),
-    [aktiveMassnahmen]
+    effectivePakete.filter(p => p.massnahmen.some(m => aktiveMassnahmen.includes(m.id))).map(p => p.id),
+    [effectivePakete, aktiveMassnahmen]
   );
 
   const heizkosten = useMemo(
@@ -1343,12 +1446,12 @@ export default function App() {
   const heizkostenWE = useMemo(() => gebaeude.wohneinheiten > 0 ? Math.round(heizkosten / gebaeude.wohneinheiten) : 0, [heizkosten, gebaeude.wohneinheiten]);
   const effizienzklasse = useMemo(() => berechneEffizienzklasse(ist.primaerenergie), [ist.primaerenergie]);
   const gebaeudeWithState = useMemo(() => ({ ...gebaeude, bauteile_state }), [gebaeude, bauteile_state]);
-  const k = useMemo(() => berechneNachMassnahmen(aktiveMassnahmen, ist, gebaeudeWithState), [aktiveMassnahmen, ist, gebaeudeWithState]);
-  const kumuliert = useMemo(() => berechneKumuliert(aktiveMassnahmen, ist, gebaeudeWithState), [aktiveMassnahmen, ist, gebaeudeWithState]);
+  const k = useMemo(() => berechneNachMassnahmen(aktiveMassnahmen, ist, gebaeudeWithState, effectivePakete), [aktiveMassnahmen, ist, gebaeudeWithState, effectivePakete]);
+  const kumuliert = useMemo(() => berechneKumuliert(aktiveMassnahmen, ist, gebaeudeWithState, effectivePakete), [aktiveMassnahmen, ist, gebaeudeWithState, effectivePakete]);
   const empfohleneMassnahmen = useMemo(() => {
-    const allM = MASSNAHMENPAKETE.flatMap(p => p.massnahmen);
+    const allM = effectivePakete.flatMap(p => p.massnahmen);
     return bewerteMassnahmen(allM, bauteile_state, gebaeude).slice(0, 3).map(m => m.id);
-  }, [bauteile_state, gebaeude]);
+  }, [effectivePakete, bauteile_state, gebaeude]);
 
   const handleExport = () => {
     exportAsPDF();
@@ -1390,7 +1493,7 @@ export default function App() {
       </header>
 
       {/* Print-Title (nur im PDF) */}
-      <ISFPPrintReport ist={ist} k={k} heizkostenIst={heizkosten} aktivePakete={aktivePakete} aktiveMassnahmen={aktiveMassnahmen} gebaeude={gebaeude} kumuliert={kumuliert} />
+      <ISFPPrintReport ist={ist} k={k} heizkostenIst={heizkosten} aktivePakete={aktivePakete} aktiveMassnahmen={aktiveMassnahmen} gebaeude={gebaeude} kumuliert={kumuliert} effectivePakete={effectivePakete} />
 
       <main className="mx-auto max-w-[1180px] print-hide" style={{ padding: "36px 40px 80px" }}>
 
@@ -1483,7 +1586,7 @@ export default function App() {
                 <div className="text-[10.5px] tracking-[0.18em] uppercase text-center" style={{ color: "#6B6259", fontFamily: "'Geist Mono', monospace" }}>Heute</div>
                 <div className="text-[11.5px]" style={{ color: "#3A332B" }}>Klasse {effizienzklasse}</div>
               </div>
-              {MASSNAHMENPAKETE.map(p => (
+              {effectivePakete.map(p => (
                 <div key={p.id} className="flex flex-col items-center gap-2 relative" style={{ opacity: aktivePakete.includes(p.id) ? 1 : 0.3 }}>
                   <PaketHaus farbe={p.farbe} aktiv={aktivePakete.includes(p.id)} nummer={p.nummer} size={56} />
                   <div className="text-[10.5px] tracking-[0.18em] uppercase text-center" style={{ color: "#6B6259", fontFamily: "'Geist Mono', monospace" }}>{p.zeitraum}</div>
@@ -1501,7 +1604,7 @@ export default function App() {
           </div>
 
           <div className="space-y-5">
-            {MASSNAHMENPAKETE.map(p => (
+            {effectivePakete.map(p => (
               <PaketBlock key={p.id} paket={p} aktiv={aktivePakete.includes(p.id)} onToggle={() => togglePaket(p.id)}
                 aktiveMassnahmen={aktiveMassnahmen} onToggleMassnahme={toggleMassnahme}
                 empfohleneMassnahmen={empfohleneMassnahmen} />
@@ -1545,7 +1648,7 @@ export default function App() {
                     </tr>
                   </thead>
                   <tbody>
-                    {MASSNAHMENPAKETE.map(p => {
+                    {effectivePakete.map(p => {
                       const active = aktivePakete.includes(p.id);
                       const invest = active ? p.massnahmen.reduce((s, m) => s + m.investition, 0) : 0;
                       const foerd = active ? p.massnahmen.reduce((s, m) => {
@@ -1607,6 +1710,8 @@ export default function App() {
               </div>
             </div>
           </div>
+
+          <MassnahmenEditor overrides={massnahmenOverrides} onUpdate={updateMassnahme} onReset={resetMassnahme} />
         </Section>
 
       </main>
