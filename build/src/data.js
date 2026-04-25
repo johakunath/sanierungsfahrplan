@@ -274,7 +274,18 @@ export const MASSNAHMENPAKETE = [
         co2_reduktion: 22, endenergie_delta: -70, primaerenergie_delta: -55,
         foerderung_rechtsgrundlage: "BEG EM / KfW 458", foerderung_stelle: "KfW",
         kostenherleitung: "~2.700 €/kW Leistung EFH-typisch · 16 % davon sind Ersatz der alten Heizung (nicht förderfähig). Grundförderung 30 % + Klimageschwindigkeit 20 % möglich → max. 50 %",
-        impact: bs => _imp([[-75,-60,24],[-70,-55,22],[-55,-43,17],[-40,-32,12],[-20,-16,6],[-8,-6,2],[0,0,0]], (bs||{}).heizung) },
+        impact: bs => {
+          const base = _imp([[-75,-60,24],[-70,-55,22],[-55,-43,17],[-40,-32,12],[-20,-16,6],[-8,-6,2],[0,0,0]], (bs||{}).heizung);
+          // Poor envelope forces WP to run at higher flow temps → lower COP → less PE savings.
+          // Reduces WP savings by 15 % per average envelope stufe below 4.
+          const envAvg = (((bs||{}).waende || 2) + ((bs||{}).dach || 2)) / 2;
+          const malus = Math.max(0, (4 - envAvg) * 0.15);
+          return {
+            endenergie_delta: Math.round(base.endenergie_delta * (1 - malus)),
+            primaerenergie_delta: Math.round(base.primaerenergie_delta * (1 - malus)),
+            co2_reduktion: +( base.co2_reduktion * (1 - malus)).toFixed(1),
+          };
+        } },
     ],
   },
   {

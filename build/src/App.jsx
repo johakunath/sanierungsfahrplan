@@ -238,8 +238,8 @@ const KPI = ({ label, value, unit, big = false, style, tooltip }) => (
 );
 
 // ═══ PRESET PICKER ═════════════════════════════════════════════════════
-const PresetPicker = ({ activeId, onPick }) => (
-  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+const PresetPicker = ({ activeId, onPick, onUploadClick, uploadLoading }) => (
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
     {Object.values(PRESETS).map(p => {
       const active = activeId === p.id;
       return (
@@ -268,87 +268,34 @@ const PresetPicker = ({ activeId, onPick }) => (
         </button>
       );
     })}
+    <button className="print-hide" onClick={onUploadClick}
+      style={{
+        padding: "16px 20px", textAlign: "left",
+        background: "#FFFFFF", color: "#1E1A15",
+        border: "1.5px dashed #D3CAB9",
+        borderRadius: 3, cursor: "pointer", transition: "all 0.12s",
+      }}
+      onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#B5623E"; }}
+      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#D3CAB9"; }}
+    >
+      <div className="flex items-center gap-2 mb-1.5">
+        <span className="text-[10.5px] tracking-[0.2em] uppercase"
+          style={{ color: "#B5623E", fontFamily: "'Geist Mono', monospace" }}>Energieausweis</span>
+        <span className="text-[9.5px] tracking-[0.1em] uppercase px-1.5 py-0.5"
+          style={{ color: "#6B6259", border: "1px solid #D3CAB9", borderRadius: 100,
+                   fontFamily: "'Geist Mono', monospace" }}>Demo</span>
+      </div>
+      <div className="font-serif text-[17px] leading-tight mb-1" style={{ fontWeight: 500 }}>
+        {uploadLoading ? "Wird ausgelesen …" : "PDF hochladen"}
+      </div>
+      <div className="text-[12px]" style={{ color: "#6B6259" }}>
+        Energieausweis einlesen — experimentell, manuelle Nachbearbeitung empfohlen
+      </div>
+    </button>
   </div>
 );
 
 // ═══ UPLOAD ZONE ═══════════════════════════════════════════════════════
-const UploadZone = ({ onUpload, extraction, onDismiss }) => {
-  const [hover, setHover] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const inputRef = useRef(null);
-
-  const handleFile = async (file) => {
-    if (!file) return;
-    if (!file.name.toLowerCase().endsWith(".pdf")) {
-      setError("Bitte PDF-Datei verwenden.");
-      return;
-    }
-    setError(null);
-    setLoading(true);
-    try {
-      const result = await extractFromPDF(file);
-      result.fileName = file.name;
-      onUpload(result);
-    } catch (e) {
-      setError("Datei konnte nicht gelesen werden: " + (e.message || "unbekannter Fehler"));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const onDrop = useCallback((e) => {
-    e.preventDefault();
-    setHover(false);
-    const file = e.dataTransfer?.files?.[0];
-    if (file) handleFile(file);
-  }, []);
-
-  if (extraction) {
-    return <ExtractionResult result={extraction} onDismiss={onDismiss} />;
-  }
-
-  return (
-    <div className="print-hide">
-      <div
-        onDragOver={(e) => { e.preventDefault(); setHover(true); }}
-        onDragLeave={() => setHover(false)}
-        onDrop={onDrop}
-        onClick={() => !loading && inputRef.current?.click()}
-        style={{
-          border: `1.5px dashed ${hover ? "#B5623E" : "#D3CAB9"}`,
-          background: hover ? "#F1EDE4" : "#F8F5EF",
-          padding: "22px 24px", borderRadius: 3,
-          cursor: loading ? "wait" : "pointer", transition: "all 0.15s",
-        }}
-      >
-        <div className="flex items-start gap-4">
-          <div style={{ color: hover ? "#B5623E" : "#6B6259", marginTop: 2 }}>
-            <UploadIcon />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-[14.5px] font-medium" style={{ color: "#1E1A15" }}>
-                {loading ? "Dokument wird ausgelesen …" : "Energieausweis als PDF hochladen"}
-              </span>
-              <span className="text-[10px] tracking-[0.18em] uppercase px-1.5 py-0.5"
-                style={{ color: "#B5623E", border: "1px solid #B5623E", borderRadius: 100,
-                         fontFamily: "'Geist Mono', monospace", letterSpacing: "0.1em" }}>
-                funktional
-              </span>
-            </div>
-            <div className="text-[13px]" style={{ color: "#3A332B" }}>
-              PDF hineinziehen oder klicken. Stammdaten, Kennzahlen und Anlagentechnik werden automatisch ausgelesen und in die Felder unten übernommen.
-            </div>
-            {error && <div className="text-[12.5px] mt-2" style={{ color: "#E30613" }}>{error}</div>}
-          </div>
-        </div>
-        <input ref={inputRef} type="file" accept="application/pdf,.pdf"
-          onChange={(e) => handleFile(e.target.files?.[0])} style={{ display: "none" }} />
-      </div>
-    </div>
-  );
-};
 
 const ExtractionResult = ({ result, onDismiss }) => {
   const matchedCount = result.matched.length;
@@ -612,30 +559,6 @@ const StickyTabs = ({ activeId, onClick }) => (
 );
 
 // ═══ GEBÄUDE-BILD (decoratively) ════════════════════════════════════════
-const GebaeudeBild = () => (
-  <div className="relative overflow-hidden" style={{
-    aspectRatio: "3/2",
-    background: "linear-gradient(135deg, #E2DBD0 0%, #D3CAB9 100%)",
-    borderRadius: 3, border: "1.25px solid #D3CAB9",
-  }}>
-    <svg viewBox="0 0 300 200" width="100%" height="100%" preserveAspectRatio="xMidYMid slice" style={{ opacity: 0.55 }}>
-      <defs>
-        <pattern id="windowPattern" x="0" y="0" width="22" height="28" patternUnits="userSpaceOnUse">
-          <rect x="4" y="6" width="14" height="18" fill="#1E1A15" opacity="0.65" />
-        </pattern>
-      </defs>
-      <rect x="30" y="80" width="80" height="120" fill="#6B6259" opacity="0.6"/>
-      <rect x="30" y="80" width="80" height="120" fill="url(#windowPattern)" opacity="0.4"/>
-      <rect x="100" y="45" width="140" height="155" fill="#3A332B"/>
-      <rect x="100" y="45" width="140" height="155" fill="url(#windowPattern)" opacity="0.9"/>
-      <rect x="96" y="40" width="148" height="8" fill="#1E1A15"/>
-      <rect x="100" y="41" width="140" height="4" fill="#657E5E"/>
-      <rect x="240" y="90" width="50" height="110" fill="#6B6259" opacity="0.7"/>
-      <rect x="240" y="90" width="50" height="110" fill="url(#windowPattern)" opacity="0.3"/>
-      <rect x="0" y="195" width="300" height="5" fill="#1E1A15"/>
-    </svg>
-  </div>
-);
 
 // ═══ ERGEBNIS-SECTION — Vorher/Nachher + Tabelle ════════════════════════
 const EffizienzBadge = ({ klasse, size = "md" }) => {
@@ -1389,6 +1312,10 @@ export default function App() {
     setExtraction(null);
   }, []);
 
+  const fileInputRef = useRef(null);
+  const [uploadLoading, setUploadLoading] = useState(false);
+  const [uploadError, setUploadError] = useState(null);
+
   const handleUpload = useCallback((result) => {
     if (result.gebaeude && Object.keys(result.gebaeude).length > 0) {
       setGebaeude(prev => {
@@ -1403,6 +1330,22 @@ export default function App() {
     setPresetId(null);
     setExtraction(result);
   }, []);
+
+  const handleFileSelect = useCallback(async (file) => {
+    if (!file) return;
+    if (!file.name.toLowerCase().endsWith(".pdf")) { setUploadError("Bitte PDF-Datei verwenden."); return; }
+    setUploadError(null);
+    setUploadLoading(true);
+    try {
+      const result = await extractFromPDF(file);
+      result.fileName = file.name;
+      handleUpload(result);
+    } catch (e) {
+      setUploadError("Datei konnte nicht gelesen werden: " + (e.message || "unbekannter Fehler"));
+    } finally {
+      setUploadLoading(false);
+    }
+  }, [handleUpload]);
 
   const scrollToTab = (id) => {
     const el = document.getElementById(id);
@@ -1532,20 +1475,27 @@ export default function App() {
         <Section id="presets" eyebrow="Schnellstart">
           <div className="flex items-center justify-between gap-4 mb-5 print-hide">
             <h2 className="font-serif leading-[1.05]" style={{ fontSize: 22, fontWeight: 500, color: "#1E1A15" }}>
-              Preset wählen oder eigenen Energieausweis hochladen
+              Startpunkt wählen
             </h2>
           </div>
-          <PresetPicker activeId={presetId} onPick={applyPreset} />
+          <PresetPicker activeId={presetId} onPick={applyPreset}
+            onUploadClick={() => fileInputRef.current?.click()}
+            uploadLoading={uploadLoading} />
+          <input ref={fileInputRef} type="file" accept="application/pdf,.pdf" style={{ display: "none" }}
+            onChange={(e) => { handleFileSelect(e.target.files?.[0]); e.target.value = ""; }} />
+          {uploadError && (
+            <div className="mt-3 text-[13px]" style={{ color: "#E30613" }}>{uploadError}</div>
+          )}
+          {extraction && (
+            <div className="mt-3">
+              <ExtractionResult result={extraction} onDismiss={() => setExtraction(null)} />
+            </div>
+          )}
         </Section>
 
         {/* Gebäude & Bestand */}
         <Section id="gebaeude" eyebrow="Schritt 1 · Erfassung" title="Ihr Gebäude heute"
           subtitle="Alle Felder editierbar. Laden Sie einen Energieausweis hoch, oder passen Sie die Werte manuell an. Alle Änderungen wirken sofort auf den Fahrplan und das Ergebnis.">
-          <div className="grid grid-cols-1 md:grid-cols-[1.05fr,1fr] gap-8 mb-10">
-            <GebaeudeBild />
-            <UploadZone onUpload={handleUpload} extraction={extraction} onDismiss={() => setExtraction(null)} />
-          </div>
-
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
             <Card>
               <CardEyebrow>Stammdaten</CardEyebrow>
@@ -1608,7 +1558,7 @@ export default function App() {
 
         {/* Fahrplan */}
         <Section id="fahrplan" eyebrow="Schritt 2 · Fahrplan" title="Empfohlene Maßnahmenpakete"
-          subtitle="Die Pakete sind nach iSFP-Logik zeitlich sinnvoll gestaffelt (Hülle vor Technik). Pakete können für Szenarienvergleich ausgeblendet werden.">
+          subtitle="Die Pakete sind nach iSFP-Logik zeitlich sinnvoll gestaffelt (Dach vor Technik). Pakete können für Szenarienvergleich ausgeblendet werden.">
           <div className="mb-10" style={{ overflowX: "auto", WebkitOverflowScrolling: "touch", marginLeft: -4, marginRight: -4 }}>
             <div className="flex items-start justify-between gap-2 relative" style={{ padding: "0 12px", minWidth: 480 }}>
               <div className="absolute" style={{ left: 60, right: 60, top: 28, height: 2, background: "linear-gradient(to right, #E30613, #F07D00, #7C3AED, #F6D400, #00843D, #2563EB)" }} />
