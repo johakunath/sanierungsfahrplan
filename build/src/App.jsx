@@ -393,8 +393,7 @@ const PaketBlock = ({ paket, aktiv, onToggle, aktiveMassnahmen, empfohleneMassna
     return s + netto * quote;
   }, 0);
   const eigenanteil   = summe_invest - summe_foerder;
-  const summe_co2     = aktiveMassnahmenInPaket.reduce((s, m) => s + (m.co2_reduktion || 0), 0);
-  const foerderPct    = summe_invest - summe_instand > 0 ? Math.round(summe_foerder / (summe_invest - summe_instand) * 100) : 0;
+  const foerderPct    =summe_invest - summe_instand > 0 ? Math.round(summe_foerder / (summe_invest - summe_instand) * 100) : 0;
   const firstM        = aktiveMassnahmenInPaket[0];
 
   return (
@@ -491,7 +490,7 @@ const PaketBlock = ({ paket, aktiv, onToggle, aktiveMassnahmen, empfohleneMassna
         })}
       </div>
 
-      <div className="px-5 py-4 grid grid-cols-2 md:grid-cols-4 gap-4" style={{ background: "#F8F5EF", borderTop: "1.25px solid #D3CAB9" }}>
+      <div className="px-5 py-4 grid grid-cols-3 gap-4" style={{ background: "#F8F5EF", borderTop: "1.25px solid #D3CAB9" }}>
         <div>
           <div className="text-[10.5px] tracking-[0.18em] uppercase mb-1" style={{ color: "#6B6259", fontFamily: "'Geist Mono', monospace" }}>Investition</div>
           <div className="text-[15px]" style={{ fontFamily: "'Geist Mono', monospace", color: "#1E1A15", fontVariantNumeric: "tabular-nums" }}>{fmtEur(summe_invest)}</div>
@@ -511,12 +510,6 @@ const PaketBlock = ({ paket, aktiv, onToggle, aktiveMassnahmen, empfohleneMassna
           <div className="text-[10.5px] tracking-[0.18em] uppercase mb-1" style={{ color: "#1E1A15", fontFamily: "'Geist Mono', monospace" }}>Eigenanteil</div>
           <div className="text-[15px]" style={{ fontFamily: "'Geist Mono', monospace", color: "#1E1A15", fontVariantNumeric: "tabular-nums", fontWeight: 500 }}>{fmtEur(eigenanteil)}</div>
         </div>
-        {summe_co2 > 0 && (
-          <div>
-            <div className="text-[10.5px] tracking-[0.18em] uppercase mb-1" style={{ color: "#6B6259", fontFamily: "'Geist Mono', monospace" }}>CO₂-Einsparung</div>
-            <div className="text-[15px]" style={{ fontFamily: "'Geist Mono', monospace", color: "#3A332B", fontVariantNumeric: "tabular-nums" }}>−{summe_co2.toFixed(1)} kg/(m²·a)</div>
-          </div>
-        )}
       </div>
     </div>
   );
