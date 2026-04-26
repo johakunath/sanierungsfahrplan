@@ -38,6 +38,13 @@ export const OPTIONS_ERNEUERBARE = [
   "Biomasse / Holz", "Kombination mehrerer",
 ];
 
+export const OPTIONS_WAERMEVERTEILUNG = [
+  "Heizkörper (Hochtemperatur, >60 °C)",
+  "Heizkörper (Niedertemperatur, 45–55 °C)",
+  "gemischt (Heizkörper + Fußboden)",
+  "Fußbodenheizung (<40 °C)",
+];
+
 // Benannte Slider-Stufen für Bauteile — pro Kategorie spezifisch
 export const BAUTEIL_STUFEN = {
   waende: {
@@ -128,6 +135,7 @@ export const PRESETS = {
       heizung_bj: 2008, heizung_typ: "Heizöl",
       warmwasser: "zentral, über Heizung", lueftung: "Fensterlüftung",
       erneuerbare: "keine", denkmalschutz: false, registriernummer: "—",
+      waermeverteilung: "Heizkörper (Hochtemperatur, >60 °C)",
     },
     ist: { endenergie: 215, primaerenergie: 236, co2: 63 },
   },
@@ -143,6 +151,7 @@ export const PRESETS = {
       heizung_bj: 2015, heizung_typ: "Erdgas Brennwert",
       warmwasser: "zentral, über Heizung", lueftung: "Fensterlüftung",
       erneuerbare: "keine", denkmalschutz: false, registriernummer: "—",
+      waermeverteilung: "Heizkörper (Hochtemperatur, >60 °C)",
     },
     ist: { endenergie: 155, primaerenergie: 172, co2: 41 },
   },
@@ -158,6 +167,7 @@ export const PRESETS = {
       heizung_bj: 2002, heizung_typ: "Erdgas Brennwert",
       warmwasser: "zentral, über Heizung", lueftung: "Fensterlüftung",
       erneuerbare: "keine", denkmalschutz: false, registriernummer: "—",
+      waermeverteilung: "Heizkörper (Niedertemperatur, 45–55 °C)",
     },
     ist: { endenergie: 98, primaerenergie: 118, co2: 25 },
   },
@@ -425,15 +435,39 @@ export function berechneKumuliert(aktiveMassnahmen, ist, gebaeude, pakete = MASS
 export function bewerteMassnahmen(massnahmen, bauteile_state, gebaeude) {
   const wf = (gebaeude && gebaeude.wohnflaeche) || 150;
   const bs = bauteile_state || {};
-  return massnahmen
-    .map(m => {
-      const impact = m.impact ? m.impact(bs) : { primaerenergie_delta: m.primaerenergie_delta || 0 };
-      const pe_saved = Math.abs(impact.primaerenergie_delta) * wf / 1000;
-      const invest_netto = m.investition - m.ohnehin_anteil;
-      const score = pe_saved > 0 ? invest_netto / pe_saved : Infinity;
-      return { id: m.id, score, pe_saved, invest_netto };
-    })
-    .sort((a, b) => a.score - b.score);
+  const scored = massnahmen.map(m => {
+    const impact = m.impact ? m.impact(bs) : { primaerenergie_delta: m.primaerenergie_delta || 0 };
+    const pe_saved = Math.abs(impact.primaerenergie_delta) * wf / 1000;
+    const invest_netto = m.investition - m.ohnehin_anteil;
+    const score = pe_saved > 0 ? invest_netto / pe_saved : Infinity;
+    return { id: m.id, score, pe_saved, invest_netto };
+  });
+  const sorted = [...scored].sort((a, b) => a.score - b.score);
+  const finite = sorted.filter(m => Number.isFinite(m.score));
+  const median = finite.length ? finite[Math.floor(finite.length / 2)].score : Infinity;
+  return sorted.map(m => ({
+    ...m,
+    empfohlen:      Number.isFinite(m.score) && m.score < median * 0.75,
+    nichtEmpfohlen: !Number.isFinite(m.score) || m.score > median * 2.0,
+  }));
+}
+
+export function vorlauftemperaturFuer(typ) {
+  if (!typ || typ.includes(">60")) return 65;
+  if (typ.includes("45–55"))       return 50;
+  if (typ.includes("gemischt"))    return 45;
+  if (typ.includes("Fußboden"))    return 35;
+  return 65;
+}
+
+export function wpTypEmpfehlung(vorlaufTemp, envAvg) {
+  if (vorlaufTemp <= 40 && envAvg >= 4)
+    return { typ: "Monovalent", note: "Ideal: Flächenheizung + gute Hülle → COP ~4–5, keine Backup-Heizung nötig." };
+  if (vorlaufTemp <= 50 && envAvg >= 3)
+    return { typ: "Monovalent / Monoenergetic", note: "Gut geeignet: Niedertemperatur-Heizkörper oder gemischtes System. Elektrischer Notbetrieb als Reserve." };
+  if (vorlaufTemp <= 55)
+    return { typ: "Monoenergetic", note: "Akzeptabel: WP deckt ~95 % der Heizlast, elektrischer Heizstab für Spitzenlasten." };
+  return { typ: "Bivalent / Hybrid", note: "Hohe Vorlauftemperatur reduziert WP-Effizienz (COP ~2). Hüllsanierung oder Heizkreisumbau vor WP-Einbau empfohlen." };
 }
 
 // ─── Farbcodes ────────────────────────────────────────────────────────────

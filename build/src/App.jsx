@@ -2,10 +2,12 @@ import React, { useState, useMemo, useRef, useCallback, useEffect } from "react"
 import {
   PRESETS, ableiteBauteile,
   OPTIONS_GEBAEUDETYP, OPTIONS_HEIZUNG, OPTIONS_DACH, OPTIONS_KELLER,
-  OPTIONS_LUEFTUNG, OPTIONS_WARMWASSER, OPTIONS_ERNEUERBARE, BAUTEIL_STUFEN,
+  OPTIONS_LUEFTUNG, OPTIONS_WARMWASSER, OPTIONS_ERNEUERBARE, OPTIONS_WAERMEVERTEILUNG,
+  BAUTEIL_STUFEN,
   MASSNAHMENPAKETE, BEG_BONUS,
   berechneNachMassnahmen, berechneKumuliert, berechneEffizienzklasse, berechneHeizkosten,
-  bewerteMassnahmen,
+  preisFuerHeizung, traegerFuerHeizung,
+  bewerteMassnahmen, vorlauftemperaturFuer, wpTypEmpfehlung,
   EFFIZIENZ_FARBEN, NOTE_FARBEN, PAKET_FARBEN,
 } from "./data.js";
 import { extractFromPDF } from "./pdfExtract.js";
@@ -379,7 +381,7 @@ const BauteilKachel = ({ bauteil, onNoteChange }) => {
 };
 
 // ═══ PAKET-BLOCK mit Kostenherleitung-Tooltip ═══════════════════════════
-const PaketBlock = ({ paket, aktiv, onToggle, aktiveMassnahmen, onToggleMassnahme, empfohleneMassnahmen = [], nichtEmpfohleneMassnahmen = [] }) => {
+const PaketBlock = ({ paket, aktiv, onToggle, aktiveMassnahmen, empfohleneMassnahmen = [], nichtEmpfohleneMassnahmen = [], gebaeude = {}, bauteile_state = {} }) => {
   const f = PAKET_FARBEN[paket.farbe];
   const aktiveMassnahmenInPaket = paket.massnahmen.filter(m => aktiveMassnahmen.includes(m.id));
   const summe_invest = aktiveMassnahmenInPaket.reduce((s, m) => s + m.investition, 0);
@@ -462,12 +464,12 @@ const PaketBlock = ({ paket, aktiv, onToggle, aktiveMassnahmen, onToggleMassnahm
                 )}
                 <span style={{ textDecoration: aktiv && !massnahmeAktiv ? "line-through" : "none" }}>{m.titel}</span>
                 {empfohleneMassnahmen.includes(m.id) && (
-                  <span className="print-hide" style={{ background: "#F6D400", color: "#1E1A15", padding: "1px 8px", borderRadius: 100, fontSize: 10, fontFamily: "'Geist Mono', monospace", fontWeight: 600, letterSpacing: "0.06em", flexShrink: 0 }}>
+                  <span className="print-hide" title="Kosten-Nutzen deutlich besser als Durchschnitt (< 75 % des Medianwerts in €/MWh Primärenergie)" style={{ background: "#F6D400", color: "#1E1A15", padding: "1px 8px", borderRadius: 100, fontSize: 10, fontFamily: "'Geist Mono', monospace", fontWeight: 600, letterSpacing: "0.06em", flexShrink: 0, cursor: "help" }}>
                     ★ Empfohlen
                   </span>
                 )}
                 {nichtEmpfohleneMassnahmen.includes(m.id) && !empfohleneMassnahmen.includes(m.id) && (
-                  <span className="print-hide" style={{ background: "#E2DBD0", color: "#6B6259", padding: "1px 8px", borderRadius: 100, fontSize: 10, fontFamily: "'Geist Mono', monospace", fontWeight: 600, letterSpacing: "0.06em", flexShrink: 0 }}>
+                  <span className="print-hide" title="Kosten-Nutzen deutlich schlechter als Durchschnitt (> 2× Medianwert in €/MWh Primärenergie)" style={{ background: "#E2DBD0", color: "#6B6259", padding: "1px 8px", borderRadius: 100, fontSize: 10, fontFamily: "'Geist Mono', monospace", fontWeight: 600, letterSpacing: "0.06em", flexShrink: 0, cursor: "help" }}>
                     ✕ Nicht empfohlen
                   </span>
                 )}
@@ -487,18 +489,23 @@ const PaketBlock = ({ paket, aktiv, onToggle, aktiveMassnahmen, onToggleMassnahm
               </div>
               <div className="text-[13px] leading-relaxed" style={{ color: "#3A332B" }}>{m.beschreibung}</div>
             </div>
-
-            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1" style={{ fontFamily: "'Geist Mono', monospace", fontSize: 13 }}>
-              <span style={{ color: "#1E1A15", fontVariantNumeric: "tabular-nums", fontWeight: 500 }}>{fmtEur(m.investition)}</span>
-              <span style={{ color: "#D3CAB9" }}>·</span>
-              {m.foerderquote > 0 ? (
-                <span style={{ color: "#00843D" }}>{Math.round(quote * 100)} % BEG-Förderung ({m.foerderung_stelle})</span>
-              ) : (
-                <span style={{ color: "#6B6259" }}>Keine BEG-Förderung ({m.foerderung_rechtsgrundlage})</span>
-              )}
-              <span style={{ color: "#D3CAB9" }}>·</span>
-              <span style={{ color: "#6B6259" }}>CO₂ −{m.co2_reduktion} kg/(m²·a)</span>
-            </div>
+            {m.id === "M4" && (() => {
+              const vt = vorlauftemperaturFuer(gebaeude.waermeverteilung);
+              const envAvg = ((bauteile_state.waende || 3) + (bauteile_state.dach || 3)) / 2;
+              const wpRec = wpTypEmpfehlung(vt, envAvg);
+              return (
+                <div style={{ marginBottom: 12, background: "#F8F5EF", border: "1px solid #D3CAB9", borderRadius: 3, padding: "8px 12px", fontSize: 12 }}>
+                  <div style={{ fontWeight: 600, color: "#1E1A15", marginBottom: 3 }}>WP-Typ-Empfehlung: {wpRec.typ}</div>
+                  <div style={{ color: "#6B6259" }}>Vorlauftemperatur: {vt} °C · {gebaeude.waermeverteilung || "–"}</div>
+                  <div style={{ color: "#3A332B", marginTop: 4 }}>→ {wpRec.note}</div>
+                </div>
+              );
+            })()}
+            {m.co2_reduktion > 0 && (
+              <div style={{ fontFamily: "'Geist Mono', monospace", fontSize: 11.5, color: "#6B6259", marginTop: 2 }}>
+                CO₂ −{m.co2_reduktion} kg/(m²·a)
+              </div>
+            )}
           </div>
           );
         })}
@@ -1417,18 +1424,12 @@ export default function App() {
   const gebaeudeWithState = useMemo(() => ({ ...gebaeude, bauteile_state }), [gebaeude, bauteile_state]);
   const k = useMemo(() => berechneNachMassnahmen(aktiveMassnahmen, ist, gebaeudeWithState, effectivePakete), [aktiveMassnahmen, ist, gebaeudeWithState, effectivePakete]);
   const kumuliert = useMemo(() => berechneKumuliert(aktiveMassnahmen, ist, gebaeudeWithState, effectivePakete), [aktiveMassnahmen, ist, gebaeudeWithState, effectivePakete]);
-  const empfohleneMassnahmen = useMemo(() => {
-    const allM = effectivePakete.flatMap(p => p.massnahmen);
-    return bewerteMassnahmen(allM, bauteile_state, gebaeude).slice(0, 3).map(m => m.id);
-  }, [effectivePakete, bauteile_state, gebaeude]);
-
-  const nichtEmpfohleneMassnahmen = useMemo(() =>
-    effectivePakete.flatMap(p => p.massnahmen).filter(m => {
-      const imp = m.impact ? m.impact(bauteile_state) : { primaerenergie_delta: m.primaerenergie_delta || 0 };
-      return Math.abs(imp.primaerenergie_delta) < 3;
-    }).map(m => m.id),
-    [effectivePakete, bauteile_state]
+  const bewertung = useMemo(() =>
+    bewerteMassnahmen(effectivePakete.flatMap(p => p.massnahmen), bauteile_state, gebaeude),
+    [effectivePakete, bauteile_state, gebaeude]
   );
+  const empfohleneMassnahmen      = useMemo(() => bewertung.filter(m => m.empfohlen).map(m => m.id),      [bewertung]);
+  const nichtEmpfohleneMassnahmen = useMemo(() => bewertung.filter(m => m.nichtEmpfohlen).map(m => m.id), [bewertung]);
 
   const handleExport = () => {
     exportAsPDF();
@@ -1523,6 +1524,8 @@ export default function App() {
               <SelectInput label="Dach"              value={gebaeude.dach}        onChange={v => updateGebaeude("dach", v)} options={OPTIONS_DACH} />
               <SelectInput label="Keller"            value={gebaeude.keller}      onChange={v => updateGebaeude("keller", v)} options={OPTIONS_KELLER} />
               <NumberInput label="Vollgeschosse"     value={gebaeude.vollgeschosse} onChange={v => updateGebaeude("vollgeschosse", v)} min={1} max={30} />
+              <SelectInput label="Wärmeverteilung"   value={gebaeude.waermeverteilung || OPTIONS_WAERMEVERTEILUNG[0]} onChange={v => updateGebaeude("waermeverteilung", v)} options={OPTIONS_WAERMEVERTEILUNG}
+                tooltip="Bestimmt Vorlauftemperatur und empfohlene WP-Betriebsart (Monovalent / Monoenergetic / Bivalent)." />
             </Card>
 
             <Card>
@@ -1558,7 +1561,7 @@ export default function App() {
 
         {/* Fahrplan */}
         <Section id="fahrplan" eyebrow="Schritt 2 · Fahrplan" title="Empfohlene Maßnahmenpakete"
-          subtitle="Die Pakete sind nach iSFP-Logik zeitlich sinnvoll gestaffelt (Dach vor Technik). Pakete können für Szenarienvergleich ausgeblendet werden.">
+          subtitle="Reihenfolge nach Kosten-Nutzen (€/MWh Primärenergie). ★ = deutlich günstiger als Median; ✕ = deutlich teurer. Pakete können für Szenarienvergleich ausgeblendet werden.">
           <div className="mb-10" style={{ overflowX: "auto", WebkitOverflowScrolling: "touch", marginLeft: -4, marginRight: -4 }}>
             <div className="flex items-start justify-between gap-2 relative" style={{ padding: "0 12px", minWidth: 480 }}>
               <div className="absolute" style={{ left: 60, right: 60, top: 28, height: 2, background: "linear-gradient(to right, #E30613, #F07D00, #7C3AED, #F6D400, #00843D, #2563EB)" }} />
@@ -1593,8 +1596,14 @@ export default function App() {
               <PaketBlock key={p.id} paket={p} aktiv={aktivePakete.includes(p.id)} onToggle={() => togglePaket(p.id)}
                 aktiveMassnahmen={aktiveMassnahmen} onToggleMassnahme={toggleMassnahme}
                 empfohleneMassnahmen={empfohleneMassnahmen}
-                nichtEmpfohleneMassnahmen={nichtEmpfohleneMassnahmen} />
+                nichtEmpfohleneMassnahmen={nichtEmpfohleneMassnahmen}
+                gebaeude={gebaeude}
+                bauteile_state={bauteile_state} />
             ))}
+          </div>
+
+          <div className="print-hide" style={{ marginTop: 16, borderLeft: "3px solid #D3CAB9", padding: "8px 14px", fontSize: 11.5, color: "#6B6259", fontStyle: "italic" }}>
+            Förderwerte sind vereinfachte Demo-Annahmen. Keine Förderzusage. Förderdeckel, Bonuskombinationen, Eigentümerstatus und Antragspflichten müssen im echten Prozess geprüft werden.
           </div>
 
           <EnergieVerlaufChart ist={ist} kumuliert={kumuliert} />
