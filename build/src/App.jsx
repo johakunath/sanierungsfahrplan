@@ -580,14 +580,14 @@ const VorherNachher = ({ ist, k, heizkostenIst, gebaeude }) => {
       = <b>{fmtN(heizkostenIst)} €/Jahr</b>
     </span>
   );
-  const capped = k.heizkosten_roh > k.heizkosten_gesamt;
+  const higher = k.heizkosten_gesamt > heizkostenIst;
   const zielTooltip = (
     <span>
       <b>Berechnung ZIEL:</b><br />
       {fmtN(k.endenergie)} kWh/m² × {gebaeude.wohnflaeche} m²<br />
       × {fmtP(k.heizkosten_tarif)} €/kWh ({k.heizkosten_traeger})<br />
-      = <b>{fmtN(k.heizkosten_roh)} €/Jahr</b>
-      {capped && <><br /><span style={{ color: "#B5623E" }}>Begrenzt auf IST-Wert — WP ohne Hüllsanierung</span></>}
+      = <b>{fmtN(k.heizkosten_gesamt)} €/Jahr</b>
+      {higher && <><br /><span style={{ color: "#B5623E" }}>Höher als IST: WP-Stromtarif ({fmtP(k.heizkosten_tarif)} €/kWh) ist teurer als {istTraeger} ({fmtP(istTarif)} €/kWh), aber Endenergie sinkt stark — Hüllsanierung würde dies korrigieren.</span></>}
     </span>
   );
 
