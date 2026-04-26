@@ -78,7 +78,7 @@ export function parseEnergieausweisText(text) {
 
   // ─── Gebäude-Stammdaten ─────────────────────────────────────────
   tryGet("Gebäudetyp",
-    () => g_str(/Gebäudetyp\s+(Mehrfamilienhaus|Einfamilienhaus|Zweifamilienhaus|Reihenhaus)/i),
+    () => g_str(/Gebäudetyp\s+(Einfamilienhaus|Zweifamilienhaus|Doppelhaushälfte|Reihenhaus)/i),
     gebaeude_partial, "typ");
 
   tryGet("Adresse",

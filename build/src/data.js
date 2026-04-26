@@ -1,9 +1,10 @@
 // ============================================================================
-// SANIERUNGSFAHRPLAN MFH — Datenmodell & Logik (v3.0)
+// iSFP-Schnellcheck — Datenmodell & Logik (v3.1)
 // - iSFP-Klassifizierung auf Primärenergie-Basis
 // - Realistische Förderquoten (Konjunktur-Booster entfernt)
 // - BEG = Programm, BAFA/KfW = durchführende Stellen
 // - 3 Presets, Auto-Derive Bauteile aus Baujahr
+// - EFH-fokussiert: Einfamilienhaus, Zweifamilienhaus, Doppelhaushälfte, Reihenhaus
 // ============================================================================
 
 // ─── Options für Dropdowns ────────────────────────────────────────────────
