@@ -2,9 +2,17 @@
 
 ## What this is
 
-A single-page React demonstrator for energy renovation planning of German single-family homes (EFH). It generates an **individueller Sanierungsfahrplan (iSFP)** — a BAFA-style staged renovation roadmap — with live energy calculations, cost/subsidy breakdowns, and a printable PDF report.
+A single-page React **demonstrator** for energy renovation planning of German single-family homes (EFH). It generates an **individueller Sanierungsfahrplan (iSFP)** — a BAFA-style staged renovation roadmap — with live energy calculations, cost/subsidy breakdowns, and a printable PDF report.
 
-It is **not** a legally binding BAFA iSFP. It is a credible demonstrator that shows homeowners and advisors what a real iSFP looks like and what the expected savings, costs, and subsidy amounts are for a given building.
+It is **not** a BAFA-certified iSFP and carries no legal weight. It is a credible demonstrator that shows homeowners and advisors what a real iSFP looks like and what the expected savings, costs, and subsidy amounts are for a given building.
+
+---
+
+## Product boundaries
+
+- **Supported building types**: Einfamilienhaus (EFH), Zweifamilienhaus (ZFH), Doppelhaushälfte (DHH), Reihenhaus — max ~4 Wohneinheiten.
+- **Not supported**: Mehrfamilienhaus (MFH), commercial buildings, historic listed buildings (Denkmalschutz) beyond a simple flag.
+- The pdfExtract regex, Gebäudetyp dropdown, and all energy presets are scoped to EFH only. Do not add MFH support without rethinking the entire energy model.
 
 ---
 
@@ -100,7 +108,34 @@ This means the Ergebnis/EEK projection changes automatically when component slid
 score = invest_netto / pe_saved   [€ per MWh primary energy saved]
 ```
 
-Lower score = better value. Top 3 are tagged **★ Empfohlen** in the UI. Score updates when preset or bauteil sliders change.
+Lower score = better value. The function returns each measure with two derived flags:
+
+- `empfohlen: true` — score < **0.75 × median** of all finite scores (clearly cheaper per MWh than average)
+- `nichtEmpfohlen: true` — score > **2.0 × median**, or infinite (clearly more expensive, or no PE savings)
+
+Measures in between carry no badge. This scales automatically with any number of active measures; no fixed count like "top 3". Score updates whenever preset, bauteil sliders, or massnahmenOverrides change.
+
+**Note**: This is a single-metric ranking (€/MWh PE). It does not factor in comfort, CO₂, subsidy urgency, or legal deadlines (GEG §71). Advisors should communicate this to clients.
+
+### Wärmeverteilung + WP-Typ recommendation
+
+`vorlauftemperaturFuer(typ)` maps the `gebaeude.waermeverteilung` option to a Vorlauftemperatur:
+
+| Wärmeverteilung | Vorlauftemperatur |
+|---|---|
+| Heizkörper (Hochtemperatur, >60 °C) | 65 °C |
+| Heizkörper (Niedertemperatur, 45–55 °C) | 50 °C |
+| gemischt (Heizkörper + Fußboden) | 45 °C |
+| Fußbodenheizung (<40 °C) | 35 °C |
+
+`wpTypEmpfehlung(vorlaufTemp, envAvg)` returns `{ typ, note }` based on Vorlauftemperatur and envelope quality (average of `waende` + `dach` bauteil stufe):
+
+- ≤ 40 °C + envAvg ≥ 4 → **Monovalent** (ideal, floor heating + good envelope)
+- ≤ 50 °C + envAvg ≥ 3 → **Monovalent / Monoenergetic**
+- ≤ 55 °C → **Monoenergetic** (WP covers ~95 % of load, electric backup for peaks)
+- > 55 °C → **Bivalent / Hybrid** (COP ~2, envelope or heating circuit upgrade recommended first)
+
+This is shown as a live readout inside the M4 (Wärmepumpe) PaketBlock. It is **informational only** — it does not feed back into energy calculations (WP PE savings already apply an envelope-quality malus via the impact function).
 
 ### effectivePakete
 
@@ -124,7 +159,9 @@ Derived (useMemo):
   gebaeudeWithState  — gebaeude + bauteile_state
   k                  — berechneNachMassnahmen result (ZIEL values)
   kumuliert          — berechneKumuliert result (step-by-step table)
-  empfohleneMassnahmen — top 3 measure IDs by score
+  bewertung              — sorted array of {id, score, empfohlen, nichtEmpfohlen} from bewerteMassnahmen
+  empfohleneMassnahmen   — IDs where empfohlen === true (score < 0.75 × median)
+  nichtEmpfohleneMassnahmen — IDs where nichtEmpfohlen === true (score > 2× median or Infinity)
 ```
 
 ---
@@ -169,19 +206,54 @@ git push origin <branch>
 
 Remote needs PAT in URL (`ghp_…`) — set it once with:
 ```bash
-git remote set-url origin https://johakunath:<PAT>@github.com/johakunath/sanierungsfahrplan.git
+git remote set-url origin https://johakunath:<PAT>@github.com/johakunath/iSFP-Schnellcheck.git
 ```
 
 ---
 
-## What's implemented (v3.1)
+## Build rules
 
-- **Phase A** — House icon alignment; per-measure cost line simplified to 1 line
-- **Phase B** — Per-measure toggles (M4 WP and M5 Fassade independent); state-aware impact functions; bauteile_state derived from sliders
-- **Phase C** — `bewerteMassnahmen` scorer; ★ Empfohlen tags on top 3 measures; updates live with preset/slider changes
-- **Phase D** — Maßnahmen-Datenbank: collapsible editor for investition and Förderquote per measure; live propagation to all calculations
-- **Phase E** — Mobile layout (responsive gutters, scrollable timeline + kumuliert table); Safari/Firefox print clip-path fix
+- **Never edit `index.html` (repo root) directly.** It is overwritten by `npm run build`. Edit source files in `build/src/` only.
+- Run `npm run build` from `build/` after any change to `App.jsx`, `data.js`, `pdfExtract.js`, `printExport.js`, or `input.css`.
+- The full build script: `node build.mjs && npx tailwindcss -i src/input.css -o dist/tailwind.css --minify && node assemble.mjs && cp dist/index.html ../index.html`
 
-## What's next (planned)
+---
 
-- **Phase F** — Smart auto-deselect: measures that don't make sense for a building (tiny pe_delta < 3 kWh/m²·a) are deselected by default on preset load; "nicht empfohlen" badge for low-value measures; within-package measure sort by score
+## Subsidy disclaimer (in-app wording)
+
+The following disclaimer appears at the bottom of the Fahrplan section (print-hide):
+
+> Förderwerte sind vereinfachte Demo-Annahmen. Keine Förderzusage. Förderdeckel, Bonuskombinationen, Eigentümerstatus und Antragspflichten müssen im echten Prozess geprüft werden.
+
+Do not remove this or weaken the wording. It is a legal/trust safeguard.
+
+---
+
+## Technical debt (known simplifications)
+
+| Area | Simplification |
+|------|---------------|
+| Subsidy amounts | Fixed Förderquoten per measure; no income test, no Förderdeckel (z.B. BEG max. 60.000 € förderfähige Kosten), no bonus-combination rules |
+| Wohnfläche | Heuristic: GNF / 1.3 when not from PDF; real buildings vary significantly |
+| WP COP | Wärmeverteilung is informational only; WP savings use a fixed PE factor + envelope malus, not a COP model |
+| CO₂ values | Per-measure CO₂ reductions are static estimates, not calculated from energy delta + carrier emission factor |
+| Multi-WE | Treats ZFH/DHH/RH identically to EFH; Wohneinheiten count has no effect on energy calculation |
+
+---
+
+## What's implemented (v3.2)
+
+- **Phase A** — House icon; per-measure cost line
+- **Phase B** — Per-measure toggles; state-aware impact functions; bauteile_state from sliders
+- **Phase C** — `bewerteMassnahmen` scorer; ★ Empfohlen tags; live updates
+- **Phase D** — Maßnahmen-Datenbank: collapsible cost/Förderquote editor per measure
+- **Phase E** — Mobile layout; Safari/Firefox print fix
+- **Phase F–H** — (intermediate phases)
+- **Phase I** — PDF Energieausweis import (pdfExtract.js); print export; EnergieVerlaufChart
+- **Phase J** — Ratio-to-median recommendation thresholds (replaces "top 3"); Wärmeverteilung model + WP-Typ recommendation in M4; subsidy disclaimer; legacy cleanup (removed babel/html2canvas/jspdf/jsdom deps; HouseIcon rename; EFH-only regex)
+
+## What's next
+
+- **Vorlauftemperatur → WP COP linkage**: Wire `vorlauftemperaturFuer()` into the WP PE savings calculation (M4 impact function) so high-temp radiator buildings correctly show lower WP savings — currently the envelope malus proxies for this but doesn't account for the heating circuit directly.
+- **Preset Wärmeverteilung auto-suggest**: When user selects Heizung = Wärmepumpe, suggest switching to Fußbodenheizung if current distribution is Hochtemperatur.
+- **Multi-step Förderdeckel**: Enforce BEG per-measure caps (60.000 € förderfähige Kosten) and correctly limit the iSFP-Bonus stacking.
