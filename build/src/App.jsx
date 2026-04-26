@@ -17,7 +17,7 @@ const fmt = (n) => new Intl.NumberFormat("de-DE").format(Math.round(n));
 const fmtEur = (n) => fmt(n) + " €";
 
 // ═══ ICONS ══════════════════════════════════════════════════════════════
-const MFHIcon = ({ size = 24, color = "currentColor" }) => (
+const HouseIcon = ({ size = 24, color = "currentColor" }) => (
   <svg width={size} height={size} viewBox="0 0 32 32" fill="none" stroke={color} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
     <path d="M4 28 L4 14 L16 6 L28 14 L28 28 Z" />
     <line x1="4" y1="28" x2="28" y2="28" strokeWidth="1.8" />
@@ -1543,7 +1543,7 @@ export default function App() {
         <div className="mx-auto max-w-[1180px] px-5 md:px-10" style={{ paddingTop: 14 }}>
           <div className="flex items-center justify-between gap-6 flex-wrap mb-3">
             <div className="flex items-center gap-3">
-              <div style={{ color: "#B5623E" }}><MFHIcon size={26} /></div>
+              <div style={{ color: "#B5623E" }}><HouseIcon size={26} /></div>
               <div>
                 <div className="font-serif" style={{ fontSize: 18, fontWeight: 500, color: "#1E1A15", lineHeight: 1.1 }}>
                   iSFP-Schnellcheck

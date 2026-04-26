@@ -4,19 +4,14 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "build": "node build.mjs && npx tailwindcss -i src/input.css -o dist/tailwind.css --minify && node assemble.mjs && cp dist/index.html ../index.html",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@babel/core": "^7.29.0",
-    "@babel/preset-env": "^7.29.2",
-    "@babel/preset-react": "^7.28.5",
     "esbuild": "^0.28.0",
-    "html2canvas": "^1.4.1",
-    "jsdom": "^29.0.2",
-    "jspdf": "^4.2.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "tailwindcss": "^3.4.19"
