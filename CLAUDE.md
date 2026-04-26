@@ -169,7 +169,7 @@ git push origin <branch>
 
 Remote needs PAT in URL (`ghp_…`) — set it once with:
 ```bash
-git remote set-url origin https://johakunath:<PAT>@github.com/johakunath/sanierungsfahrplan.git
+git remote set-url origin https://johakunath:<PAT>@github.com/johakunath/iSFP-Schnellcheck.git
 ```
 
 ---

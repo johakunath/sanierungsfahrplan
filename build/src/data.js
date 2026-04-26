@@ -8,7 +8,7 @@
 
 // ─── Options für Dropdowns ────────────────────────────────────────────────
 export const OPTIONS_GEBAEUDETYP = [
-  "Mehrfamilienhaus", "Einfamilienhaus", "Zweifamilienhaus", "Reihenhaus",
+  "Einfamilienhaus", "Zweifamilienhaus", "Doppelhaushälfte", "Reihenhaus",
 ];
 
 export const OPTIONS_HEIZUNG = [
@@ -203,7 +203,8 @@ export function ableiteBauteile(baujahr, heizungTyp, lueftung, warmwasser) {
 
 // ─── Energiepreise (Stand April 2026) ─────────────────────────────────────
 export const ENERGIEPREISE = {
-  fernwaerme_gas: 0.13, strom_wp: 0.28, erdgas: 0.11, heizoel: 0.11, biomasse: 0.08,
+  fernwaerme_gas: 0.13, strom_wp: 0.22, erdgas: 0.11, heizoel: 0.11, biomasse: 0.08,
+  // strom_wp = WP Wärmestromtarif (Sondertarif) — typisch 2026 Deutschland
 };
 
 // ─── Impact helper (stufe 1–7 lookup table) ───────────────────────────────
@@ -276,14 +277,14 @@ export const MASSNAHMENPAKETE = [
         kostenherleitung: "~2.700 €/kW Leistung EFH-typisch · 16 % davon sind Ersatz der alten Heizung (nicht förderfähig). Grundförderung 30 % + Klimageschwindigkeit 20 % möglich → max. 50 %",
         impact: bs => {
           const base = _imp([[-75,-60,24],[-70,-55,22],[-55,-43,17],[-40,-32,12],[-20,-16,6],[-8,-6,2],[0,0,0]], (bs||{}).heizung);
-          // Poor envelope forces WP to run at higher flow temps → lower COP → less PE savings.
-          // Reduces WP savings by 15 % per average envelope stufe below 4.
+          // Poor envelope forces WP to higher flow temps → lower COP → less PE benefit.
+          // Fuel-switch endenergie saving is unaffected (oil→electricity always cuts kWh regardless of envelope).
           const envAvg = (((bs||{}).waende || 2) + ((bs||{}).dach || 2)) / 2;
           const malus = Math.max(0, (4 - envAvg) * 0.15);
           return {
-            endenergie_delta: Math.round(base.endenergie_delta * (1 - malus)),
+            endenergie_delta: base.endenergie_delta,
             primaerenergie_delta: Math.round(base.primaerenergie_delta * (1 - malus)),
-            co2_reduktion: +( base.co2_reduktion * (1 - malus)).toFixed(1),
+            co2_reduktion: +(base.co2_reduktion * (1 - malus)).toFixed(1),
           };
         } },
     ],
@@ -349,6 +350,16 @@ export function preisFuerHeizung(typ) {
   return ENERGIEPREISE.fernwaerme_gas;
 }
 
+export function traegerFuerHeizung(typ) {
+  if (!typ) return "Fernwärme";
+  if (typ.includes("Fernwärme"))  return "Fernwärme";
+  if (typ.includes("Wärmepumpe")) return "WP-Sondertarif";
+  if (typ.includes("Öl") || typ.includes("Heizöl")) return "Heizöl";
+  if (typ.includes("Erdgas") || typ.includes("Gas")) return "Erdgas";
+  if (typ.includes("Biomasse") || typ.includes("Pellets")) return "Biomasse";
+  return "Fernwärme";
+}
+
 export function berechneHeizkosten(endenergie, wohnflaeche, heizungTyp) {
   return Math.round(endenergie * wohnflaeche * preisFuerHeizung(heizungTyp));
 }
@@ -402,6 +413,9 @@ export function berechneNachMassnahmen(aktiveMassnahmen, ist, gebaeude, pakete =
     foerderung_gesamt: Math.round(foerderung_gesamt),
     eigenanteil: Math.round(invest_gesamt - foerderung_gesamt),
     heizkosten_gesamt,
+    heizkosten_roh:     berechneHeizkosten(endenergie, gebaeude.wohnflaeche, heizungTyp),
+    heizkosten_tarif:   preisFuerHeizung(heizungTyp),
+    heizkosten_traeger: traegerFuerHeizung(heizungTyp),
   };
 }
 
