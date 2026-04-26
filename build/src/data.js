@@ -397,11 +397,7 @@ export function berechneNachMassnahmen(aktiveMassnahmen, ist, gebaeude, pakete =
 
   const hatWP = aktiveMassnahmen.includes("M4");
   const heizungTyp = hatWP ? "Wärmepumpe Luft/Wasser" : gebaeude.heizung_typ;
-  const heizkosten_ist = berechneHeizkosten(ist.endenergie, gebaeude.wohnflaeche, gebaeude.heizung_typ);
-  const heizkosten_gesamt = Math.min(
-    berechneHeizkosten(endenergie, gebaeude.wohnflaeche, heizungTyp),
-    heizkosten_ist
-  );
+  const heizkosten_gesamt = berechneHeizkosten(endenergie, gebaeude.wohnflaeche, heizungTyp);
 
   return {
     endenergie: Math.round(endenergie),
@@ -413,7 +409,6 @@ export function berechneNachMassnahmen(aktiveMassnahmen, ist, gebaeude, pakete =
     foerderung_gesamt: Math.round(foerderung_gesamt),
     eigenanteil: Math.round(invest_gesamt - foerderung_gesamt),
     heizkosten_gesamt,
-    heizkosten_roh:     berechneHeizkosten(endenergie, gebaeude.wohnflaeche, heizungTyp),
     heizkosten_tarif:   preisFuerHeizung(heizungTyp),
     heizkosten_traeger: traegerFuerHeizung(heizungTyp),
   };

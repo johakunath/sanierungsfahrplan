@@ -155,7 +155,7 @@ const TextInput = ({ label, value, onChange, placeholder }) => (
 
 const SelectInput = ({ label, value, onChange, options, tooltip }) => (
   <RowShell>
-    <span style={labelStyle} className="flex items-center gap-1.5">
+    <span style={{ ...labelStyle, flexShrink: 0 }} className="flex items-center gap-1.5">
       {label}
       {tooltip && <Tooltip content={tooltip}><span style={{ color: "#B5623E" }}><InfoIcon /></span></Tooltip>}
     </span>
@@ -165,7 +165,8 @@ const SelectInput = ({ label, value, onChange, options, tooltip }) => (
                padding: "4px 26px 4px 8px", appearance: "none",
                backgroundImage: "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%236B6259' fill='none' stroke-width='1.2'/></svg>\")",
                backgroundRepeat: "no-repeat", backgroundPosition: "right 8px center",
-               cursor: "pointer", outline: "none", fontSize: 13, maxWidth: 220 }}>
+               cursor: "pointer", outline: "none", fontSize: 13,
+               minWidth: 0, maxWidth: "min(220px, 55%)" }}>
       {options.map(o => <option key={o} value={o}>{o}</option>)}
     </select>
   </RowShell>
@@ -208,7 +209,7 @@ const Section = ({ id, eyebrow, title, subtitle, children }) => (
 );
 
 const Card = ({ children, style }) => (
-  <div style={{ background: "#FFFFFF", border: "1.25px solid #D3CAB9", borderRadius: 3, padding: 24, ...style }}>
+  <div style={{ background: "#FFFFFF", border: "1.25px solid #D3CAB9", borderRadius: 3, padding: 24, overflow: "hidden", ...style }}>
     {children}
   </div>
 );
@@ -383,14 +384,18 @@ const BauteilKachel = ({ bauteil, onNoteChange }) => {
 const PaketBlock = ({ paket, aktiv, onToggle, aktiveMassnahmen, empfohleneMassnahmen = [], nichtEmpfohleneMassnahmen = [] }) => {
   const f = PAKET_FARBEN[paket.farbe];
   const aktiveMassnahmenInPaket = paket.massnahmen.filter(m => aktiveMassnahmen.includes(m.id));
-  const summe_invest = aktiveMassnahmenInPaket.reduce((s, m) => s + m.investition, 0);
+  const summe_invest  = aktiveMassnahmenInPaket.reduce((s, m) => s + m.investition, 0);
+  const summe_instand = aktiveMassnahmenInPaket.reduce((s, m) => s + m.ohnehin_anteil, 0);
   const summe_foerder = aktiveMassnahmenInPaket.reduce((s, m) => {
     const netto = m.investition - m.ohnehin_anteil;
     const bonus = BEG_BONUS.isfp_bonus;
     const quote = m.foerderquote > 0 ? Math.min(m.foerderquote + bonus, 0.5) : 0;
     return s + netto * quote;
   }, 0);
-  const eigenanteil = summe_invest - summe_foerder;
+  const eigenanteil   = summe_invest - summe_foerder;
+  const summe_co2     = aktiveMassnahmenInPaket.reduce((s, m) => s + (m.co2_reduktion || 0), 0);
+  const foerderPct    = summe_invest - summe_instand > 0 ? Math.round(summe_foerder / (summe_invest - summe_instand) * 100) : 0;
+  const firstM        = aktiveMassnahmenInPaket[0];
 
   return (
     <div id={`paket-${paket.id}`} className="transition-all" style={{
@@ -445,10 +450,6 @@ const PaketBlock = ({ paket, aktiv, onToggle, aktiveMassnahmen, empfohleneMassna
       <div>
         {paket.massnahmen.map((m, i) => {
           const massnahmeAktiv = aktiveMassnahmen.includes(m.id);
-          const foerderfaehig = m.investition - m.ohnehin_anteil;
-          const quote = m.foerderquote > 0 ? Math.min(m.foerderquote + BEG_BONUS.isfp_bonus, 0.5) : 0;
-          const foerderung = Math.round(foerderfaehig * quote);
-          const eigenanteil = m.investition - foerderung;
           return (
           <div key={m.id} className="p-5" style={{ borderBottom: i < paket.massnahmen.length - 1 ? "1px solid #E2DBD0" : "none", opacity: massnahmeAktiv ? 1 : 0.45, transition: "opacity 0.15s" }}>
             <div className="mb-4">
@@ -480,36 +481,42 @@ const PaketBlock = ({ paket, aktiv, onToggle, aktiveMassnahmen, empfohleneMassna
               </div>
               <div className="text-[13px] leading-relaxed" style={{ color: "#3A332B" }}>{m.beschreibung}</div>
             </div>
-
-            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1" style={{ fontFamily: "'Geist Mono', monospace", fontSize: 13 }}>
-              <span style={{ color: "#1E1A15", fontVariantNumeric: "tabular-nums", fontWeight: 500 }}>{fmtEur(m.investition)}</span>
-              <span style={{ color: "#D3CAB9" }}>·</span>
-              {m.foerderquote > 0 ? (
-                <span style={{ color: "#00843D" }}>{Math.round(quote * 100)} % BEG-Förderung ({m.foerderung_stelle})</span>
-              ) : (
-                <span style={{ color: "#6B6259" }}>Keine BEG-Förderung ({m.foerderung_rechtsgrundlage})</span>
-              )}
-              <span style={{ color: "#D3CAB9" }}>·</span>
-              <span style={{ color: "#6B6259" }}>CO₂ −{m.co2_reduktion} kg/(m²·a)</span>
-            </div>
+            {m.co2_reduktion > 0 && (
+              <div style={{ fontFamily: "'Geist Mono', monospace", fontSize: 11.5, color: "#6B6259", marginTop: 2 }}>
+                CO₂ −{m.co2_reduktion} kg/(m²·a)
+              </div>
+            )}
           </div>
           );
         })}
       </div>
 
-      <div className="px-5 py-4 grid grid-cols-3 gap-4" style={{ background: "#F8F5EF", borderTop: "1.25px solid #D3CAB9" }}>
+      <div className="px-5 py-4 grid grid-cols-2 md:grid-cols-4 gap-4" style={{ background: "#F8F5EF", borderTop: "1.25px solid #D3CAB9" }}>
         <div>
-          <div className="text-[10.5px] tracking-[0.18em] uppercase mb-1" style={{ color: "#6B6259", fontFamily: "'Geist Mono', monospace" }}>Summe Investition</div>
+          <div className="text-[10.5px] tracking-[0.18em] uppercase mb-1" style={{ color: "#6B6259", fontFamily: "'Geist Mono', monospace" }}>Investition</div>
           <div className="text-[15px]" style={{ fontFamily: "'Geist Mono', monospace", color: "#1E1A15", fontVariantNumeric: "tabular-nums" }}>{fmtEur(summe_invest)}</div>
         </div>
         <div>
-          <div className="text-[10.5px] tracking-[0.18em] uppercase mb-1" style={{ color: "#00843D", fontFamily: "'Geist Mono', monospace" }}>Summe Förderung</div>
-          <div className="text-[15px]" style={{ fontFamily: "'Geist Mono', monospace", color: "#00843D", fontVariantNumeric: "tabular-nums" }}>− {fmtEur(summe_foerder)}</div>
+          <div className="text-[10.5px] tracking-[0.18em] uppercase mb-1" style={{ color: "#00843D", fontFamily: "'Geist Mono', monospace" }}>Förderung</div>
+          <div className="text-[15px]" style={{ fontFamily: "'Geist Mono', monospace", color: "#00843D", fontVariantNumeric: "tabular-nums" }}>
+            {summe_foerder > 0 ? `− ${fmtEur(summe_foerder)}` : "—"}
+          </div>
+          {firstM && foerderPct > 0 && (
+            <div className="text-[10.5px] mt-0.5" style={{ color: "#00843D", fontFamily: "'Geist Mono', monospace" }}>
+              {foerderPct} % · {firstM.foerderung_rechtsgrundlage}
+            </div>
+          )}
         </div>
         <div>
-          <div className="text-[10.5px] tracking-[0.18em] uppercase mb-1" style={{ color: "#1E1A15", fontFamily: "'Geist Mono', monospace" }}>Ihr Kostenanteil</div>
+          <div className="text-[10.5px] tracking-[0.18em] uppercase mb-1" style={{ color: "#1E1A15", fontFamily: "'Geist Mono', monospace" }}>Eigenanteil</div>
           <div className="text-[15px]" style={{ fontFamily: "'Geist Mono', monospace", color: "#1E1A15", fontVariantNumeric: "tabular-nums", fontWeight: 500 }}>{fmtEur(eigenanteil)}</div>
         </div>
+        {summe_co2 > 0 && (
+          <div>
+            <div className="text-[10.5px] tracking-[0.18em] uppercase mb-1" style={{ color: "#6B6259", fontFamily: "'Geist Mono', monospace" }}>CO₂-Einsparung</div>
+            <div className="text-[15px]" style={{ fontFamily: "'Geist Mono', monospace", color: "#3A332B", fontVariantNumeric: "tabular-nums" }}>−{summe_co2.toFixed(1)} kg/(m²·a)</div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -580,14 +587,14 @@ const VorherNachher = ({ ist, k, heizkostenIst, gebaeude }) => {
       = <b>{fmtN(heizkostenIst)} €/Jahr</b>
     </span>
   );
-  const capped = k.heizkosten_roh > k.heizkosten_gesamt;
+  const higher = k.heizkosten_gesamt > heizkostenIst;
   const zielTooltip = (
     <span>
       <b>Berechnung ZIEL:</b><br />
       {fmtN(k.endenergie)} kWh/m² × {gebaeude.wohnflaeche} m²<br />
       × {fmtP(k.heizkosten_tarif)} €/kWh ({k.heizkosten_traeger})<br />
-      = <b>{fmtN(k.heizkosten_roh)} €/Jahr</b>
-      {capped && <><br /><span style={{ color: "#B5623E" }}>Begrenzt auf IST-Wert — WP ohne Hüllsanierung</span></>}
+      = <b>{fmtN(k.heizkosten_gesamt)} €/Jahr</b>
+      {higher && <><br /><span style={{ color: "#B5623E" }}>Höher als IST: WP-Stromtarif ({fmtP(k.heizkosten_tarif)} €/kWh) ist teurer als {istTraeger} ({fmtP(istTarif)} €/kWh), aber Endenergie sinkt stark — Hüllsanierung würde dies korrigieren.</span></>}
     </span>
   );
 
