@@ -490,6 +490,8 @@ const PaketBlock = ({ paket, aktiv, onToggle, onToggleMassnahme = () => {}, akti
   const eigenanteil   = summe_invest - summe_foerder;
   const foerderPct    =summe_invest - summe_instand > 0 ? Math.round(summe_foerder / (summe_invest - summe_instand) * 100) : 0;
   const firstM        = aktiveMassnahmenInPaket[0];
+  const [warumOffen, setWarumOffen] = useState(new Set());
+  const toggleWarum = mid => setWarumOffen(prev => { const s = new Set(prev); s.has(mid) ? s.delete(mid) : s.add(mid); return s; });
 
   return (
     <div id={`paket-${paket.id}`} className="transition-all" style={{
@@ -542,8 +544,6 @@ const PaketBlock = ({ paket, aktiv, onToggle, onToggleMassnahme = () => {}, akti
           });
           return (
           <div key={m.id} className="p-5" style={{ borderBottom: i < paket.massnahmen.length - 1 ? "1px solid #E2DBD0" : "none", opacity: massnahmeAktiv ? 1 : 0.45, transition: "opacity 0.15s" }}>
-            <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] gap-5">
-            <div>
             <div className="mb-4">
               <div className="text-[14.5px] font-medium mb-1.5 flex items-center gap-2 flex-wrap" style={{ color: "#1E1A15" }}>
                 <label className="print-hide" style={{ display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer", fontSize: 11, color: "#6B6259", fontFamily: "'Geist Mono', monospace", letterSpacing: "0.05em" }}>
@@ -584,6 +584,12 @@ const PaketBlock = ({ paket, aktiv, onToggle, onToggleMassnahme = () => {}, akti
                 }>
                   <span style={{ color: "#B5623E" }}><InfoIcon /></span>
                 </Tooltip>
+                <button onClick={() => toggleWarum(m.id)} className="print-hide"
+                  style={{ fontSize: 11, color: "#B5623E", background: "none", border: "none",
+                           cursor: "pointer", marginLeft: "auto", letterSpacing: "0.05em",
+                           fontFamily: "'Geist Mono', monospace", display: "flex", alignItems: "center", gap: 2 }}>
+                  Warum {warumOffen.has(m.id) ? "▴" : "▸"}
+                </button>
               </div>
               <div className="text-[13px] leading-relaxed" style={{ color: "#3A332B" }}>{m.beschreibung}</div>
             </div>
@@ -666,21 +672,13 @@ const PaketBlock = ({ paket, aktiv, onToggle, onToggleMassnahme = () => {}, akti
                 CO₂ −{m.co2_reduktion} kg/(m²·a)
               </div>
             )}
-            </div>
-            <aside style={{ background: "#FAF7F1", border: "1px solid #E2DBD0", borderRadius: 3, padding: "12px 14px" }}>
-              <div style={{ fontSize: 9.5, letterSpacing: "0.18em", color: "#B5623E", textTransform: "uppercase", fontFamily: "'Geist Mono', monospace", marginBottom: 8 }}>Warum</div>
-              {warum.grund && (
-                <div style={{ fontSize: 12, lineHeight: 1.55, color: "#3A332B", marginBottom: 8 }}>
-                  <span style={{ fontWeight: 600 }}>Diese Maßnahme:</span> {warum.grund}
-                </div>
-              )}
-              {warum.jetzt && (
-                <div style={{ fontSize: 12, lineHeight: 1.55, color: "#3A332B" }}>
-                  <span style={{ fontWeight: 600 }}>Jetzt im Plan:</span> {warum.jetzt}
-                </div>
-              )}
-            </aside>
-            </div>
+            {warumOffen.has(m.id) && (
+              <div style={{ marginTop: 10, background: "#FAF7F1", border: "1px solid #E2DBD0",
+                            borderRadius: 3, padding: "10px 12px", fontSize: 12, lineHeight: 1.55, color: "#3A332B" }}>
+                {warum.grund && <div style={{ marginBottom: 6 }}><b>Diese Maßnahme:</b> {warum.grund}</div>}
+                {warum.jetzt && <div><b>Jetzt im Plan:</b> {warum.jetzt}</div>}
+              </div>
+            )}
           </div>
           );
         })}
@@ -1842,7 +1840,7 @@ export default function App() {
       {/* Print-Title (nur im PDF) */}
       <ISFPPrintReport ist={ist} k={k} heizkostenIst={heizkosten} aktivePakete={aktivePakete} aktiveMassnahmen={aktiveMassnahmen} gebaeude={gebaeude} kumuliert={kumuliert} effectivePakete={effectivePakete} />
 
-      <main className="mx-auto max-w-[1180px] print-hide px-5 md:px-10" style={{ paddingTop: 36, paddingBottom: 80 }}>
+      <main className="mx-auto max-w-[1400px] print-hide px-5 md:px-10" style={{ paddingTop: 36, paddingBottom: 80 }}>
 
         {/* Preset-Picker */}
         <Section id="presets" eyebrow="Schnellstart">
@@ -1865,6 +1863,10 @@ export default function App() {
             </div>
           )}
         </Section>
+
+        {/* 2-col layout on xl+: left=scrollable content, right=sticky Ergebnis sidebar */}
+        <div className="xl:grid xl:grid-cols-[minmax(0,1fr)_380px] xl:gap-8 xl:items-start">
+        <div>
 
         {/* Gebäude & Bestand */}
         <Section id="gebaeude" eyebrow="Schritt 1 · Erfassung" title="Ihr Gebäude heute"
@@ -2013,17 +2015,97 @@ export default function App() {
           <EnergieVerlaufChart ist={ist} kumuliert={kumuliert} />
         </Section>
 
+        </div>{/* end left column */}
+
+        {/* Sticky Ergebnis sidebar — desktop (xl+) only, hidden in print */}
+        <aside className="hidden xl:block print:hidden"
+               style={{ position: "sticky", top: 92, maxHeight: "calc(100vh - 110px)",
+                        overflowY: "auto", scrollbarWidth: "thin", paddingBottom: 24 }}>
+          <div className="text-[9.5px] tracking-[0.18em] uppercase mb-3"
+               style={{ color: "#B5623E", fontFamily: "'Geist Mono', monospace" }}>Ergebnis · Live</div>
+
+          {/* EEK comparison — compact 2-box design */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+            <div style={{ flex: 1, background: "#FFFFFF", border: "1.25px solid #D3CAB9", borderRadius: 3,
+                          padding: "12px 10px", textAlign: "center" }}>
+              <div style={{ fontSize: 9, letterSpacing: "0.2em", color: "#6B6259",
+                            fontFamily: "'Geist Mono', monospace", textTransform: "uppercase", marginBottom: 6 }}>Heute</div>
+              <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center",
+                            width: 44, height: 44, background: EFFIZIENZ_FARBEN[effizienzklasse] || "#6B6259",
+                            borderRadius: 3, fontSize: 22, fontWeight: 600, fontFamily: "'Fraunces', serif",
+                            color: ["C","D","E"].includes(effizienzklasse) ? "#1E1A15" : "#FFF" }}>{effizienzklasse}</div>
+            </div>
+            <span style={{ fontSize: 22, color: "#B5623E", flexShrink: 0 }}>→</span>
+            <div style={{ flex: 1, background: EFFIZIENZ_FARBEN[k.effizienzklasse] || "#00843D",
+                          border: "1.25px solid #1E1A15", borderRadius: 3, padding: "12px 10px", textAlign: "center" }}>
+              <div style={{ fontSize: 9, letterSpacing: "0.2em", fontFamily: "'Geist Mono', monospace",
+                            textTransform: "uppercase", marginBottom: 6,
+                            color: ["B","C","D"].includes(k.effizienzklasse) ? "rgba(30,26,21,0.6)" : "rgba(248,245,239,0.7)" }}>Ziel</div>
+              <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center",
+                            width: 44, height: 44, background: "#F8F5EF",
+                            borderRadius: 3, fontSize: 22, fontWeight: 600, fontFamily: "'Fraunces', serif",
+                            color: EFFIZIENZ_FARBEN[k.effizienzklasse] || "#00843D" }}>{k.effizienzklasse}</div>
+            </div>
+          </div>
+
+          {/* Metrics table */}
+          <div style={{ background: "#FFFFFF", border: "1.25px solid #D3CAB9", borderRadius: 3,
+                        padding: "8px 12px", marginBottom: 10 }}>
+            {[
+              ["Primärenergie", ist.primaerenergie, k.primaerenergie, "kWh/(m²·a)"],
+              ["Endenergie",    ist.endenergie,    k.endenergie,    "kWh/(m²·a)"],
+              ["CO₂-Emissionen",ist.co2,           k.co2,          "kg/(m²·a)"],
+              ["Heizkosten",    heizkosten,         k.heizkosten_gesamt, "€/a"],
+            ].map(([label, v, w, unit], i, arr) => {
+              const pct = v > 0 ? Math.round(Math.abs(w - v) / v * 100) : 0;
+              const down = w < v;
+              return (
+                <div key={label} style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline",
+                                          padding: "6px 0", fontSize: 12,
+                                          borderBottom: i < arr.length - 1 ? "1px solid #E2DBD0" : "none" }}>
+                  <span style={{ color: "#6B6259" }}>{label}</span>
+                  <span style={{ fontFamily: "'Geist Mono', monospace", color: down ? "#00843D" : "#B5623E", fontWeight: 600 }}>
+                    {down ? "−" : "+"}{pct} %
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Investment summary */}
+          <div style={{ background: "#F8F5EF", border: "1px solid #D3CAB9",
+                        borderRadius: 3, padding: "10px 12px", fontSize: 12 }}>
+            <div className="flex justify-between mb-1.5" style={{ color: "#3A332B" }}>
+              <span>Investition</span>
+              <span style={{ fontFamily: "'Geist Mono', monospace" }}>{fmtEur(k.invest_gesamt)}</span>
+            </div>
+            <div className="flex justify-between mb-1.5" style={{ color: "#00843D" }}>
+              <span>Förderung</span>
+              <span style={{ fontFamily: "'Geist Mono', monospace" }}>−{fmtEur(k.foerderung_gesamt)}</span>
+            </div>
+            <div className="flex justify-between font-medium"
+                 style={{ color: "#1E1A15", marginTop: 4, paddingTop: 6, borderTop: "1px solid #D3CAB9" }}>
+              <span>Eigenanteil</span>
+              <span style={{ fontFamily: "'Geist Mono', monospace" }}>{fmtEur(k.eigenanteil)}</span>
+            </div>
+          </div>
+        </aside>
+
+        </div>{/* end 2-col grid */}
+
         {/* Ergebnis (ehemals Cockpit + Zukunft) */}
         <Section id="ergebnis" eyebrow="Schritt 3 · Ergebnis" title="Ihr Gebäude nach der Sanierung"
           subtitle="Alle Kennzahlen, Einsparungen und Förderungen im Überblick. Kumulierte Wirkung nach BAFA-Logik: jedes Paket baut auf dem vorigen auf.">
-          <VorherNachher ist={ist} k={k} heizkostenIst={heizkosten} gebaeude={gebaeude} />
-
-          <div className="mt-10">
-            <h3 className="font-serif mb-4" style={{ fontSize: 22, fontWeight: 500, color: "#1E1A15" }}>Einsparungen im Überblick</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              <DeltaKPI label="Endenergie" vorher={ist.endenergie} nachher={k.endenergie} unit="kWh/(m²·a)" />
-              <DeltaKPI label="CO₂-Emissionen" vorher={ist.co2} nachher={k.co2} unit="kg/(m²·a)" />
-              <DeltaKPI label="Heizkosten" vorher={heizkosten} nachher={k.heizkosten_gesamt} unit="€/a" />
+          {/* On xl+ these are shown in the sticky sidebar; here only for mobile/tablet and print */}
+          <div className="xl:hidden print:block">
+            <VorherNachher ist={ist} k={k} heizkostenIst={heizkosten} gebaeude={gebaeude} />
+            <div className="mt-10">
+              <h3 className="font-serif mb-4" style={{ fontSize: 22, fontWeight: 500, color: "#1E1A15" }}>Einsparungen im Überblick</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <DeltaKPI label="Endenergie" vorher={ist.endenergie} nachher={k.endenergie} unit="kWh/(m²·a)" />
+                <DeltaKPI label="CO₂-Emissionen" vorher={ist.co2} nachher={k.co2} unit="kg/(m²·a)" />
+                <DeltaKPI label="Heizkosten" vorher={heizkosten} nachher={k.heizkosten_gesamt} unit="€/a" />
+              </div>
             </div>
           </div>
 
