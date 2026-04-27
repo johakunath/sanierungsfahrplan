@@ -225,6 +225,34 @@ const _imp = (tbl, stufe) => {
   return { endenergie_delta: ee, primaerenergie_delta: pe, co2_reduktion: co2 };
 };
 
+// ─── WP-Varianten ─────────────────────────────────────────────────────────
+export const WP_VARIANTEN = {
+  monovalent: {
+    label: "Monovalent",
+    beschreibung: "WP deckt 100 % der Heizlast. Kein fossiler Backup. Geeignet bei Vorlauftemperatur ≤ 55 °C oder mit Heizkreisumbau (M7).",
+    investition: 32000, ohnehin_anteil: 5000, foerderquote: 0.30,
+    pe_mult: 1.0, ee_mult: 1.0, co2_mult: 1.0,
+  },
+  monoenergetisch: {
+    label: "Monoenergetisch",
+    beschreibung: "WP deckt ~95 % der Heizlast. Elektrischer Heizstab für Spitzenlast — kein fossiler Anschluss nötig.",
+    investition: 29000, ohnehin_anteil: 5000, foerderquote: 0.30,
+    pe_mult: 0.88, ee_mult: 0.92, co2_mult: 0.88,
+  },
+  hybrid: {
+    label: "Hybrid (WP + Gas)",
+    beschreibung: "WP deckt ~65 % der Heizlast. Gaskessel für Spitzenlast. Übergangslösung bei hoher Vorlauftemperatur und vorhandenem Gasanschluss.",
+    investition: 24000, ohnehin_anteil: 4000, foerderquote: 0.15,
+    pe_mult: 0.55, ee_mult: 0.60, co2_mult: 0.55,
+  },
+};
+
+export function wpTypVarianteKey(vorlaufTemp, envAvg) {
+  if (vorlaufTemp <= 55 && envAvg >= 3) return "monovalent";
+  if (vorlaufTemp <= 60)                return "monoenergetisch";
+  return "hybrid";
+}
+
 // ─── Maßnahmenpakete ──────────────────────────────────────────────────────
 // foerderquote = BEG-Grundförderung (realistisch, ohne Konjunktur-Booster)
 // kfw_programm = durchführende Stelle (BAFA für EM, KfW für WG/HZG)
@@ -306,17 +334,15 @@ export const MASSNAHMENPAKETE = [
         foerderung_rechtsgrundlage: "BEG EM / KfW 458", foerderung_stelle: "KfW",
         kostenherleitung: "~2.700 €/kW Leistung EFH-typisch · 16 % davon sind Ersatz der alten Heizung (nicht förderfähig). Grundförderung 30 % + Klimageschwindigkeit 20 % möglich → max. 50 %",
         impact: bs => {
+          const variante = WP_VARIANTEN[(bs||{}).wpVariante] || WP_VARIANTEN.monovalent;
           const base = _imp([[-75,-60,24],[-70,-55,22],[-55,-43,17],[-40,-32,12],[-20,-16,6],[-8,-6,2],[0,0,0]], (bs||{}).heizung);
-          // Poor envelope forces WP to higher flow temps → lower COP → less PE benefit.
-          // Fuel-switch endenergie saving is unaffected (oil→electricity always cuts kWh regardless of envelope).
           const envAvg = (((bs||{}).waende || 2) + ((bs||{}).dach || 2)) / 2;
-          // Floor heating (verteilung stufe ≥ 6) eliminates the COP penalty from high flow temperature.
           const distrib = (bs||{}).verteilung || 2;
           const malus = distrib >= 6 ? 0 : Math.max(0, (4 - envAvg) * 0.15);
           return {
-            endenergie_delta: base.endenergie_delta,
-            primaerenergie_delta: Math.round(base.primaerenergie_delta * (1 - malus)),
-            co2_reduktion: +(base.co2_reduktion * (1 - malus)).toFixed(1),
+            endenergie_delta: Math.round(base.endenergie_delta * variante.ee_mult),
+            primaerenergie_delta: Math.round(base.primaerenergie_delta * variante.pe_mult * (1 - malus)),
+            co2_reduktion: +(base.co2_reduktion * variante.co2_mult * (1 - malus)).toFixed(1),
           };
         } },
     ],
