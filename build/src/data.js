@@ -382,6 +382,23 @@ export const MASSNAHMENPAKETE = [
     ],
   },
   {
+    id: "P4a", nummer: 4, titel: "Solarthermie", zeitraum: "2030 – 2033", farbe: "ocker",
+    begruendung: "Solarthermie deckt 50–70 % des Warmwasserbedarfs solar. Unabhängig von Heizungstyp nachrüstbar — sinnvoll auch parallel zur Wärmepumpe.",
+    zu_beachten: "Mind. 4 m² unverschattete Dachfläche (Süd ± 45°) erforderlich. Statik prüfen (ca. 25 kg/m² inkl. Wasser). Bei WP-Kombi: Solarthermie übernimmt DHW, WP konzentriert sich auf Heizlast.",
+    komfortsteigerung: "Warmes Wasser im Sommer ohne Heizkessel. Geringere Abhängigkeit von Gaspreis. Gut kombinierbar mit Warmwasserspeicher für Nachtabsenkung.",
+    massnahmen: [
+      { id: "M8", rolle: "synergie", titel: "Solarthermie (4 m² Kollektorfläche + 300 L Pufferspeicher)",
+        beschreibung: "Flachkollektor Süddach, Pumpenstation, 300 L Kombispeicher, hydraulische Einbindung in Heizkreis. Deckt ~60 % des DHW-Bedarfs solar.",
+        investition: 7000, ohnehin_anteil: 0, foerderquote: 0.15,
+        co2_reduktion: 1.5, endenergie_delta: -7, primaerenergie_delta: -8,
+        foerderung_rechtsgrundlage: "BEG EM", foerderung_stelle: "BAFA",
+        kostenherleitung: "~700 €/m² Kollektorfläche inkl. Speicher und Einbindung. Keine ohnehin-Anteile — reine Nachrüstung.",
+        impact: bs => _imp([
+          [-10,-10,2.5],[-8,-9,2.0],[-7,-8,1.5],[-5,-6,1.0],[-2,-2,0.4],[-1,-1,0.2],[0,0,0]
+        ], (bs||{}).warmwasser) },
+    ],
+  },
+  {
     id: "P4", nummer: 4, titel: "Fassade", zeitraum: "2030 – 2034", farbe: "gruen",
     begruendung: "Fassadendämmung lohnt sich nur bei ungedämmten oder schlecht gedämmten Wänden. Bei modernen Gebäuden oft nicht wirtschaftlich.",
     zu_beachten: "Bei denkmalgeschützten Fassaden Innendämmung als Alternative prüfen. Fensterlaibungen und Sockel mit dämmen, sonst Wärmebrücken. Gerüststandzeit 6–10 Wochen einplanen.",
@@ -587,4 +604,5 @@ export const PAKET_FARBEN = {
   gruen:   { bg: "#00843D", text: "#FFFFFF", hell: "#D0E8D8" },
   blau:    { bg: "#2563EB", text: "#FFFFFF", hell: "#DBEAFE" },
   tuerkis: { bg: "#2A8B7A", text: "#FFFFFF", hell: "#EBF5F3" },
+  ocker:   { bg: "#B57A1E", text: "#FFFFFF", hell: "#F5E6CC" },
 };
