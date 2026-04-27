@@ -520,6 +520,11 @@ const PaketBlock = ({ paket, aktiv, onToggle, aktiveMassnahmen, empfohleneMassna
                     })}
                   </div>
                   {m7Geplant && <div style={{ color: "#2A8B7A", fontSize: 11, marginBottom: 4 }}>✓ Heizkreisumbau (M7) geplant — niedrige Vorlauftemperatur erreichbar</div>}
+                  {!m7Geplant && autoKey !== "monovalent" && (
+                    <div style={{ color: "#2A8B7A", fontSize: 11, marginBottom: 4 }}>
+                      💡 Paket P3a (Heizkreisumbau) prüfen — senkt Vorlauftemperatur und ermöglicht Monovalent-Betrieb.
+                    </div>
+                  )}
                   <div style={{ color: "#6B6259", fontSize: 11.5 }}>Vorlauftemperatur: {vt} °C · {m7Geplant ? "Fußbodenheizung" : (gebaeude.waermeverteilung || "–")}</div>
                   <div style={{ color: "#3A332B", marginTop: 4, fontStyle: "italic" }}>→ {currentV.beschreibung}</div>
                   {hybridMitOel && (
@@ -1594,19 +1599,30 @@ export default function App() {
     return ordered.map((p, idx) => ({ ...p, nummer: idx + 1 }));
   }, [massnahmenOverrides, effectiveBauteilState, gebaeude]);
 
+  // P3a (Heizkreisumbau) must always precede P3 (Wärmepumpe) — floor heating before WP install.
+  const orderedPakete = useMemo(() => {
+    const arr = [...effectivePakete];
+    const idxP3a = arr.findIndex(p => p.id === "P3a");
+    const idxP3  = arr.findIndex(p => p.id === "P3");
+    if (idxP3a !== -1 && idxP3 !== -1 && idxP3a > idxP3) {
+      [arr[idxP3a], arr[idxP3]] = [arr[idxP3], arr[idxP3a]];
+    }
+    return arr.map((p, idx) => ({ ...p, nummer: idx + 1 }));
+  }, [effectivePakete]);
+
   // M1 (Hydraulischer Abgleich) must be redone after WP or floor heating install (BEG requirement).
   // Move it from P1 into the relevant later package so it's counted once in the right step.
   const dynamicPakete = useMemo(() => {
     const m4Active = aktiveMassnahmen.includes("M4");
     const m7Active = aktiveMassnahmen.includes("M7");
-    if (!m4Active && !m7Active) return effectivePakete;
+    if (!m4Active && !m7Active) return orderedPakete;
 
     const targetId = m4Active ? "P3" : "P3a";
-    const p1 = effectivePakete.find(p => p.id === "P1");
+    const p1 = orderedPakete.find(p => p.id === "P1");
     const m1Measure = p1?.massnahmen.find(m => m.id === "M1");
-    if (!m1Measure) return effectivePakete;
+    if (!m1Measure) return orderedPakete;
 
-    const result = effectivePakete
+    const result = orderedPakete
       .filter(p => !(p.id === "P1"))  // Remove P1 (its only measure M1 moves)
       .map(p => {
         if (p.id === targetId) {
@@ -1615,7 +1631,7 @@ export default function App() {
         return p;
       });
     return result.map((p, idx) => ({ ...p, nummer: idx + 1 }));
-  }, [effectivePakete, aktiveMassnahmen]);
+  }, [orderedPakete, aktiveMassnahmen]);
 
   const aktivePakete = useMemo(() =>
     dynamicPakete.filter(p => p.massnahmen.some(m => aktiveMassnahmen.includes(m.id))).map(p => p.id),

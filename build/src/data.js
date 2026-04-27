@@ -504,7 +504,7 @@ export function bewerteMassnahmen(massnahmen, bauteile_state, gebaeude) {
   const sorted = [...scored].sort((a, b) => a.score - b.score);
   const finite = sorted.filter(m => Number.isFinite(m.score));
   const median = finite.length ? finite[Math.floor(finite.length / 2)].score : Infinity;
-  const BADGE_EXEMPT = ["enabler", "pflichtschritt", "synergie", "begleitkosten"];
+  const BADGE_EXEMPT = ["enabler", "pflichtschritt", "synergie", "begleitkosten", "systempfad"];
   return sorted.map(m => {
     const orig = massnahmen.find(x => x.id === m.id);
     if (orig && BADGE_EXEMPT.includes(orig.rolle)) return { ...m, empfohlen: false, nichtEmpfohlen: false };
