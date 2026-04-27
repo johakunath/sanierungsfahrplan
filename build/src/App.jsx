@@ -8,6 +8,7 @@ import {
   berechneNachMassnahmen, berechneKumuliert, berechneEffizienzklasse, berechneHeizkosten,
   preisFuerHeizung, traegerFuerHeizung,
   bewerteMassnahmen, vorlauftemperaturFuer, wpTypEmpfehlung,
+  WP_VARIANTEN, wpTypVarianteKey,
   EFFIZIENZ_FARBEN, NOTE_FARBEN, PAKET_FARBEN,
 } from "./data.js";
 import { extractFromPDF } from "./pdfExtract.js";
@@ -382,7 +383,7 @@ const BauteilKachel = ({ bauteil, onNoteChange }) => {
 };
 
 // ═══ PAKET-BLOCK mit Kostenherleitung-Tooltip ═══════════════════════════
-const PaketBlock = ({ paket, aktiv, onToggle, aktiveMassnahmen, empfohleneMassnahmen = [], nichtEmpfohleneMassnahmen = [], gebaeude = {}, bauteile_state = {} }) => {
+const PaketBlock = ({ paket, aktiv, onToggle, aktiveMassnahmen, empfohleneMassnahmen = [], nichtEmpfohleneMassnahmen = [], gebaeude = {}, bauteile_state = {}, wpVariante = "auto", resolvedWpVariante = "monovalent", onWpVarianteChange = () => {} }) => {
   const f = PAKET_FARBEN[paket.farbe];
   const aktiveMassnahmenInPaket = paket.massnahmen.filter(m => aktiveMassnahmen.includes(m.id));
   const summe_invest  = aktiveMassnahmenInPaket.reduce((s, m) => s + m.investition, 0);
@@ -492,18 +493,35 @@ const PaketBlock = ({ paket, aktiv, onToggle, aktiveMassnahmen, empfohleneMassna
             {m.id === "M4" && (() => {
               const m7Geplant = (bauteile_state.verteilung || 2) >= 6;
               const vt = m7Geplant ? 35 : vorlauftemperaturFuer(gebaeude.waermeverteilung);
-              const envAvg = ((bauteile_state.waende || 3) + (bauteile_state.dach || 3)) / 2;
-              const wpRec = wpTypEmpfehlung(vt, envAvg);
+              const envAvg = ((bauteile_state.waende||2) + (bauteile_state.dach||2)) / 2;
+              const autoKey = wpTypVarianteKey(vt, envAvg);
+              const currentV = WP_VARIANTEN[resolvedWpVariante] || WP_VARIANTEN.monovalent;
+              const isOverriding = wpVariante !== "auto" && wpVariante !== autoKey;
               return (
-                <div style={{ marginBottom: 12, background: "#F8F5EF", border: "1px solid #D3CAB9", borderRadius: 3, padding: "8px 12px", fontSize: 12 }}>
-                  <div style={{ fontWeight: 600, color: "#1E1A15", marginBottom: 3 }}>WP-Typ-Empfehlung: {wpRec.typ}</div>
-                  <div style={{ color: "#6B6259" }}>
-                    Vorlauftemperatur: {vt} °C · {m7Geplant ? "Fußbodenheizung (M7 geplant)" : (gebaeude.waermeverteilung || "–")}
+                <div style={{ marginBottom: 12, background: "#F8F5EF", border: "1px solid #D3CAB9", borderRadius: 3, padding: "10px 12px", fontSize: 12 }}>
+                  <div style={{ fontWeight: 600, color: "#1E1A15", marginBottom: 8 }}>WP-Variante</div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 3, marginBottom: 8 }}>
+                    {Object.entries(WP_VARIANTEN).map(([key, v]) => {
+                      const isSelected = key === resolvedWpVariante;
+                      const isAuto = key === autoKey;
+                      return (
+                        <label key={key} style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", padding: "4px 8px", borderRadius: 3, background: isSelected ? "#E8F4F2" : "transparent", border: isSelected ? "1px solid #8CBDB5" : "1px solid transparent" }}>
+                          <input type="radio" name={`wp-${paket.id}`} value={key} checked={isSelected} onChange={() => onWpVarianteChange(key)} style={{ accentColor: "#2A8B7A" }} />
+                          <span style={{ color: "#1E1A15", fontWeight: isSelected ? 600 : 400 }}>{v.label}</span>
+                          {isAuto && <span style={{ fontSize: 10, color: "#2A8B7A", fontFamily: "'Geist Mono', monospace" }}>empfohlen</span>}
+                        </label>
+                      );
+                    })}
                   </div>
-                  {m7Geplant && (
-                    <div style={{ color: "#2A8B7A", fontSize: 11, marginTop: 2 }}>✓ Heizkreisumbau geplant — Monovalent-Betrieb erreichbar</div>
+                  {m7Geplant && <div style={{ color: "#2A8B7A", fontSize: 11, marginBottom: 4 }}>✓ Heizkreisumbau (M7) geplant — niedrige Vorlauftemperatur erreichbar</div>}
+                  <div style={{ color: "#6B6259", fontSize: 11.5 }}>Vorlauftemperatur: {vt} °C · {m7Geplant ? "Fußbodenheizung" : (gebaeude.waermeverteilung || "–")}</div>
+                  <div style={{ color: "#3A332B", marginTop: 4, fontStyle: "italic" }}>→ {currentV.beschreibung}</div>
+                  {isOverriding && (
+                    <div style={{ color: "#B5623E", fontSize: 11, marginTop: 6 }}>
+                      ⚠ Abweichung von Empfehlung ({WP_VARIANTEN[autoKey]?.label})
+                      <button onClick={() => onWpVarianteChange("auto")} style={{ marginLeft: 8, fontSize: 10, color: "#6B6259", background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" }}>zurücksetzen</button>
+                    </div>
                   )}
-                  <div style={{ color: "#3A332B", marginTop: 4 }}>→ {wpRec.note}</div>
                 </div>
               );
             })()}
@@ -1372,6 +1390,7 @@ export default function App() {
     );
   });
   const [massnahmenOverrides, setMassnahmenOverrides] = useState({});
+  const [wpVariante, setWpVariante] = useState("auto");
   const [extraction, setExtraction] = useState(null);
   const [activeTab, setActiveTab] = useState("gebaeude");
 
@@ -1431,6 +1450,7 @@ export default function App() {
     setBauteile(neueBauteile);
     setAktiveMassnahmen(defaultAktive);
     setMassnahmenOverrides({});
+    setWpVariante("auto");
     setExtraction(null);
   }, []);
 
@@ -1505,9 +1525,23 @@ export default function App() {
 
   // When M7 (Heizkreisumbau) is active, treat verteilung as floor-heating level so M4's COP malus is lifted.
   const effectiveBauteilState = useMemo(() => {
-    if (aktiveMassnahmen.includes("M7")) return { ...bauteile_state, verteilung: 7 };
-    return bauteile_state;
-  }, [bauteile_state, aktiveMassnahmen]);
+    let state = { ...bauteile_state };
+    if (aktiveMassnahmen.includes("M7")) state = { ...state, verteilung: 7 };
+    const vt = vorlauftemperaturFuer(gebaeude.waermeverteilung);
+    const envAvg = ((state.waende||2) + (state.dach||2)) / 2;
+    const resolvedVariant = wpVariante === "auto" ? wpTypVarianteKey(vt, envAvg) : wpVariante;
+    return { ...state, wpVariante: resolvedVariant };
+  }, [bauteile_state, aktiveMassnahmen, wpVariante, gebaeude.waermeverteilung]);
+  const resolvedWpVariante = effectiveBauteilState.wpVariante || "monovalent";
+
+  useEffect(() => {
+    const v = WP_VARIANTEN[resolvedWpVariante];
+    if (!v) return;
+    setMassnahmenOverrides(prev => ({
+      ...prev,
+      M4: { ...(prev.M4||{}), investition: v.investition, ohnehin_anteil: v.ohnehin_anteil, foerderquote: v.foerderquote },
+    }));
+  }, [resolvedWpVariante]);
 
   const effectivePakete = useMemo(() => {
     const allMerged = MASSNAHMENPAKETE.flatMap(p =>
@@ -1737,7 +1771,10 @@ export default function App() {
                 empfohleneMassnahmen={empfohleneMassnahmen}
                 nichtEmpfohleneMassnahmen={nichtEmpfohleneMassnahmen}
                 gebaeude={gebaeude}
-                bauteile_state={effectiveBauteilState} />
+                bauteile_state={effectiveBauteilState}
+                wpVariante={wpVariante}
+                resolvedWpVariante={resolvedWpVariante}
+                onWpVarianteChange={setWpVariante} />
             ))}
           </div>
 
