@@ -172,6 +172,38 @@ export const PRESETS = {
     },
     ist: { endenergie: 98, primaerenergie: 118, co2: 25 },
   },
+  dhh1990: {
+    id: "dhh1990",
+    label: "DHH 90er-Jahre",
+    beschreibung: "1 WE · 130 m² · Erdgas NT · Klasse D/E · Doppelhaushälfte",
+    gebaeude: {
+      standort: "Dortmund", strasse: "Kastanienweg 5", plz: "44227",
+      baujahr: 1992, typ: "Doppelhaushälfte",
+      wohneinheiten: 1, wohnflaeche: 130, gebaeudenutzflaeche: 162,
+      vollgeschosse: 2, keller: "unbeheizt", dach: "Satteldach",
+      heizung_bj: 2005, heizung_typ: "Erdgas Niedertemperatur",
+      warmwasser: "zentral, über Heizung", lueftung: "Fensterlüftung",
+      erneuerbare: "keine", denkmalschutz: false, registriernummer: "—",
+      waermeverteilung: "Heizkörper (Hochtemperatur, >60 °C)",
+    },
+    ist: { endenergie: 128, primaerenergie: 145, co2: 35 },
+  },
+  efhSaniert: {
+    id: "efhSaniert",
+    label: "EFH Neubau 2012",
+    beschreibung: "1 WE · 148 m² · Gas-Brennwert · Klasse C · Neubaustandard",
+    gebaeude: {
+      standort: "Frankfurt", strasse: "Amselweg 3", plz: "60599",
+      baujahr: 2012, typ: "Einfamilienhaus",
+      wohneinheiten: 1, wohnflaeche: 148, gebaeudenutzflaeche: 185,
+      vollgeschosse: 2, keller: "beheizt", dach: "Pultdach",
+      heizung_bj: 2012, heizung_typ: "Erdgas Brennwert",
+      warmwasser: "zentral, über Heizung", lueftung: "Lüftungsanlage mit WRG",
+      erneuerbare: "keine", denkmalschutz: false, registriernummer: "—",
+      waermeverteilung: "Heizkörper (Niedertemperatur, 45–55 °C)",
+    },
+    ist: { endenergie: 68, primaerenergie: 82, co2: 17 },
+  },
 };
 
 // ─── Auto-Derive Bauteile aus Baujahr ──────────────────────────────────────
@@ -241,8 +273,8 @@ export const WP_VARIANTEN = {
   },
   hybrid: {
     label: "Hybrid (WP + Gas)",
-    beschreibung: "WP deckt ~65 % der Heizlast. Gaskessel für Spitzenlast. Übergangslösung bei hoher Vorlauftemperatur und vorhandenem Gasanschluss.",
-    investition: 24000, ohnehin_anteil: 4000, foerderquote: 0.15,
+    beschreibung: "WP deckt ~65 % der Heizlast. Gaskessel für Spitzenlast. Übergangslösung bei hoher Vorlauftemperatur und vorhandenem Gasanschluss. BEG 30 % auf den WP-Anteil (~60 % der Kosten). Gaskessel-Anteil nicht förderfähig.",
+    investition: 24000, ohnehin_anteil: 4000, foerderquote: 0.30,
     pe_mult: 0.55, ee_mult: 0.60, co2_mult: 0.55,
   },
 };
@@ -336,9 +368,11 @@ export const MASSNAHMENPAKETE = [
         impact: bs => {
           const variante = WP_VARIANTEN[(bs||{}).wpVariante] || WP_VARIANTEN.monovalent;
           const base = _imp([[-75,-60,24],[-70,-55,22],[-55,-43,17],[-40,-32,12],[-20,-16,6],[-8,-6,2],[0,0,0]], (bs||{}).heizung);
-          const envAvg = (((bs||{}).waende || 2) + ((bs||{}).dach || 2)) / 2;
+          // Use actual flow temperature from Wärmeverteilung dropdown; M7 (floor heating) overrides to 35 °C.
           const distrib = (bs||{}).verteilung || 2;
-          const malus = distrib >= 6 ? 0 : Math.max(0, (4 - envAvg) * 0.15);
+          const vorlaufTemp = distrib >= 6 ? 35 : ((bs||{}).vorlauftemp || 65);
+          // Malus scales 0–0.30: no penalty at 35 °C (COP ~4.5), 30 % at 65 °C (COP ~2).
+          const malus = Math.max(0, Math.min(0.30, (vorlaufTemp - 35) / 100));
           return {
             endenergie_delta: Math.round(base.endenergie_delta * variante.ee_mult),
             primaerenergie_delta: Math.round(base.primaerenergie_delta * variante.pe_mult * (1 - malus)),
@@ -502,7 +536,7 @@ export function bewerteMassnahmen(massnahmen, bauteile_state, gebaeude) {
   const sorted = [...scored].sort((a, b) => a.score - b.score);
   const finite = sorted.filter(m => Number.isFinite(m.score));
   const median = finite.length ? finite[Math.floor(finite.length / 2)].score : Infinity;
-  const BADGE_EXEMPT = ["enabler", "pflichtschritt", "synergie", "begleitkosten"];
+  const BADGE_EXEMPT = ["enabler", "pflichtschritt", "synergie", "begleitkosten", "systempfad"];
   return sorted.map(m => {
     const orig = massnahmen.find(x => x.id === m.id);
     if (orig && BADGE_EXEMPT.includes(orig.rolle)) return { ...m, empfohlen: false, nichtEmpfohlen: false };
@@ -534,9 +568,10 @@ export function wpTypEmpfehlung(vorlaufTemp, envAvg) {
 
 // ─── Farbcodes ────────────────────────────────────────────────────────────
 export const EFFIZIENZ_FARBEN = {
-  "A+": "#00843D", "A": "#34A030", "B": "#95C11F",
-  "C":  "#C5D62E", "D": "#F6D400", "E": "#F6A400",
-  "F":  "#F07D00", "G": "#E3501C", "H": "#E30613",
+  "A+": "#1B6B3A", "A": "#1B6B3A", "B": "#1B6B3A",
+  "C":  "#6B9E1F",
+  "D":  "#C8820A", "E": "#C8820A",
+  "F":  "#B83A2E", "G": "#B83A2E", "H": "#B83A2E",
 };
 
 export const NOTE_FARBEN = {

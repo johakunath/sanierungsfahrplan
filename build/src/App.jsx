@@ -211,7 +211,7 @@ const Section = ({ id, eyebrow, title, subtitle, children }) => (
 );
 
 const Card = ({ children, style }) => (
-  <div style={{ background: "#FFFFFF", border: "1.25px solid #D3CAB9", borderRadius: 3, padding: 24, overflow: "hidden", ...style }}>
+  <div style={{ background: "#FFFFFF", border: "1.25px solid #D3CAB9", borderRadius: 3, padding: 24, ...style }}>
     {children}
   </div>
 );
@@ -278,6 +278,7 @@ const PresetPicker = ({ activeId, onPick, onUploadClick, uploadLoading }) => (
         background: "#FFFFFF", color: "#1E1A15",
         border: "1.5px dashed #D3CAB9",
         borderRadius: 3, cursor: "pointer", transition: "all 0.12s",
+        outline: "none",
       }}
       onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#B5623E"; }}
       onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#D3CAB9"; }}
@@ -520,6 +521,11 @@ const PaketBlock = ({ paket, aktiv, onToggle, aktiveMassnahmen, empfohleneMassna
                     })}
                   </div>
                   {m7Geplant && <div style={{ color: "#2A8B7A", fontSize: 11, marginBottom: 4 }}>✓ Heizkreisumbau (M7) geplant — niedrige Vorlauftemperatur erreichbar</div>}
+                  {!m7Geplant && autoKey !== "monovalent" && (
+                    <div style={{ color: "#2A8B7A", fontSize: 11, marginBottom: 4 }}>
+                      💡 Paket P3a (Heizkreisumbau) prüfen — senkt Vorlauftemperatur und ermöglicht Monovalent-Betrieb.
+                    </div>
+                  )}
                   <div style={{ color: "#6B6259", fontSize: 11.5 }}>Vorlauftemperatur: {vt} °C · {m7Geplant ? "Fußbodenheizung" : (gebaeude.waermeverteilung || "–")}</div>
                   <div style={{ color: "#3A332B", marginTop: 4, fontStyle: "italic" }}>→ {currentV.beschreibung}</div>
                   {hybridMitOel && (
@@ -531,6 +537,11 @@ const PaketBlock = ({ paket, aktiv, onToggle, aktiveMassnahmen, empfohleneMassna
                     <div style={{ color: "#B5623E", fontSize: 11, marginTop: 6 }}>
                       ⚠ Abweichung von Empfehlung ({WP_VARIANTEN[autoKey]?.label})
                       <button onClick={() => onWpVarianteChange("auto")} style={{ marginLeft: 8, fontSize: 10, color: "#6B6259", background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" }}>zurücksetzen</button>
+                    </div>
+                  )}
+                  {resolvedWpVariante === "monoenergetisch" && (
+                    <div style={{ fontSize: 11, color: "#6B6259", marginTop: 6, fontStyle: "italic" }}>
+                      ℹ️ Heizstab deckt ~5 % der Jahresheizlast (Spitzenlast, COP = 1). Geschätzte Mehrkosten: ~200–400 €/Jahr gegenüber monovalentem Betrieb.
                     </div>
                   )}
                   {(istOel || hybridOhneGas) && (
@@ -635,7 +646,7 @@ const EffizienzBadge = ({ klasse, size = "md" }) => {
   return (
     <div className="inline-flex items-center justify-center font-serif"
       style={{ width: dim, height: dim, background: farbe,
-               color: ["B","C","D"].includes(klasse) ? "#1E1A15" : "#FFFFFF",
+               color: ["C","D","E"].includes(klasse) ? "#1E1A15" : "#FFFFFF",
                borderRadius: 3, fontSize: fs, fontWeight: 500 }}>{klasse}</div>
   );
 };
@@ -779,9 +790,21 @@ const KumuliertTabelle = ({ kumuliert, ist, heizkostenIst }) => (
       <thead>
         <tr style={{ borderBottom: "1.25px solid #1E1A15" }}>
           <th className="text-left py-2.5 font-medium">Schritt</th>
-          <th className="text-right py-2.5 font-medium">Endenergie</th>
-          <th className="text-right py-2.5 font-medium">Primärenergie</th>
-          <th className="text-right py-2.5 font-medium">CO₂</th>
+          <th className="text-right py-2.5 font-medium">
+            <Tooltip content="Tatsächlich gelieferter Energieträger (Gas, Strom, Öl) in kWh pro m² Wohnfläche und Jahr. Entspricht dem Energieausweis-Verbrauchswert.">
+              <span className="cursor-help border-b border-dashed border-current">Endenergie</span>
+            </Tooltip>
+          </th>
+          <th className="text-right py-2.5 font-medium">
+            <Tooltip content="Gesamtenergieeinsatz inkl. Gewinnung und Transport des Energieträgers (Primärenergiefaktor). Basis für die Energieeffizienzklasse nach GEG §86.">
+              <span className="cursor-help border-b border-dashed border-current">Primärenergie</span>
+            </Tooltip>
+          </th>
+          <th className="text-right py-2.5 font-medium">
+            <Tooltip content="CO₂-Emissionen aus dem Heizenergieverbrauch in kg pro m² Wohnfläche und Jahr. Inkl. Vorkette des Energieträgers.">
+              <span className="cursor-help border-b border-dashed border-current">CO₂</span>
+            </Tooltip>
+          </th>
           <th className="text-right py-2.5 font-medium">Klasse</th>
         </tr>
       </thead>
@@ -849,7 +872,7 @@ const EnergyBar = ({ label, value, maxValue, unit, note }) => {
   );
 };
 
-const textColorFor = (klasse) => ["B", "C", "D"].includes(klasse) ? "#1E1A15" : "#FFF";
+const textColorFor = (klasse) => ["C", "D", "E"].includes(klasse) ? "#1E1A15" : "#FFF";
 
 const EEK_ZONEN = [
   { klasse: "A+", von: 0,   bis: 30   },
@@ -970,7 +993,7 @@ const ISFPPrintReport = ({ ist, k, heizkostenIst, aktivePakete, aktiveMassnahmen
     <div className="print-only" style={{ fontFamily: "'Geist', sans-serif", color: "#1E1A15" }}>
 
       {/* ═══ SEITE 1: ÜBERBLICK ═══ */}
-      <div style={{ padding: "18px 22px 16px", pageBreakAfter: "always", minHeight: "270mm", display: "flex", flexDirection: "column" }}>
+      <div style={{ padding: "18px 22px 16px", marginBottom: "16mm", pageBreakInside: "avoid", display: "flex", flexDirection: "column" }}>
 
         {/* Header */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 }}>
@@ -1138,7 +1161,7 @@ const ISFPPrintReport = ({ ist, k, heizkostenIst, aktivePakete, aktiveMassnahmen
           .join(" · ");
 
         return (
-          <div key={paket.id} style={{ pageBreakBefore: "always", minHeight: "270mm", display: "flex", flexDirection: "column" }}>
+          <div key={paket.id} style={{ marginBottom: "12mm", pageBreakInside: "avoid", display: "flex", flexDirection: "column" }}>
 
             {/* Seitenkopf */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", padding: "14px 22px 5px" }}>
@@ -1198,7 +1221,7 @@ const ISFPPrintReport = ({ ist, k, heizkostenIst, aktivePakete, aktiveMassnahmen
                 <div style={{ marginBottom: 11 }}>
                   <div style={{ fontSize: 8.5, letterSpacing: "0.18em", color: "#B5623E", fontFamily: "'Geist Mono', monospace", textTransform: "uppercase", marginBottom: 5 }}>Maßnahmen</div>
                   {paket.massnahmen.map(m => (
-                    <div key={m.id} style={{ paddingLeft: 14, position: "relative", marginBottom: 6, fontSize: 11, lineHeight: 1.5 }}>
+                    <div key={m.id} style={{ paddingLeft: 14, position: "relative", marginBottom: 6, fontSize: 13, lineHeight: 1.5 }}>
                       <span style={{ position: "absolute", left: 0, color: farbe.bg, fontWeight: 700 }}>→</span>
                       <span style={{ fontWeight: 600, color: "#1E1A15" }}>{m.titel}</span>
                       {m.beschreibung && <span style={{ color: "#3A332B" }}> — {m.beschreibung}</span>}
@@ -1421,6 +1444,7 @@ export default function App() {
   const [massnahmenOverrides, setMassnahmenOverrides] = useState({});
   const [wpVariante, setWpVariante] = useState("auto");
   const [extraction, setExtraction] = useState(null);
+  const [sanierungsstand, setSanierungsstand] = useState(null);
   const [activeTab, setActiveTab] = useState("gebaeude");
 
   // Scroll observer für sticky tabs
@@ -1481,6 +1505,21 @@ export default function App() {
     setMassnahmenOverrides({});
     setWpVariante("auto");
     setExtraction(null);
+    setSanierungsstand(null);
+  }, []);
+
+  const SANIERUNGSSTAND_STUFEN = {
+    unsaniert:  { waende: 2, dach: 2, boden: 2, fenster: 2 },
+    teilsaniert:{ waende: 3, dach: 4, boden: 3, fenster: 4 },
+    saniert:    { waende: 5, dach: 5, boden: 4, fenster: 5 },
+    neubau:     { waende: 6, dach: 6, boden: 5, fenster: 6 },
+  };
+
+  const applySanierungsstand = useCallback((level) => {
+    const stufen = SANIERUNGSSTAND_STUFEN[level];
+    if (!stufen) return;
+    setBauteile(prev => prev.map(b => stufen[b.id] !== undefined ? { ...b, note: stufen[b.id] } : b));
+    setSanierungsstand(level);
   }, []);
 
   const fileInputRef = useRef(null);
@@ -1563,7 +1602,7 @@ export default function App() {
     if (wpVariante === "auto" && resolvedVariant === "hybrid" && /Heizöl/i.test(gebaeude.heizung_typ || "")) {
       resolvedVariant = "monoenergetisch";
     }
-    return { ...state, wpVariante: resolvedVariant };
+    return { ...state, wpVariante: resolvedVariant, vorlauftemp: vt };
   }, [bauteile_state, aktiveMassnahmen, wpVariante, gebaeude.waermeverteilung, gebaeude.heizung_typ]);
   const resolvedWpVariante = effectiveBauteilState.wpVariante || "monovalent";
 
@@ -1594,19 +1633,30 @@ export default function App() {
     return ordered.map((p, idx) => ({ ...p, nummer: idx + 1 }));
   }, [massnahmenOverrides, effectiveBauteilState, gebaeude]);
 
+  // P3a (Heizkreisumbau) must always precede P3 (Wärmepumpe) — floor heating before WP install.
+  const orderedPakete = useMemo(() => {
+    const arr = [...effectivePakete];
+    const idxP3a = arr.findIndex(p => p.id === "P3a");
+    const idxP3  = arr.findIndex(p => p.id === "P3");
+    if (idxP3a !== -1 && idxP3 !== -1 && idxP3a > idxP3) {
+      [arr[idxP3a], arr[idxP3]] = [arr[idxP3], arr[idxP3a]];
+    }
+    return arr.map((p, idx) => ({ ...p, nummer: idx + 1 }));
+  }, [effectivePakete]);
+
   // M1 (Hydraulischer Abgleich) must be redone after WP or floor heating install (BEG requirement).
   // Move it from P1 into the relevant later package so it's counted once in the right step.
   const dynamicPakete = useMemo(() => {
     const m4Active = aktiveMassnahmen.includes("M4");
     const m7Active = aktiveMassnahmen.includes("M7");
-    if (!m4Active && !m7Active) return effectivePakete;
+    if (!m4Active && !m7Active) return orderedPakete;
 
     const targetId = m4Active ? "P3" : "P3a";
-    const p1 = effectivePakete.find(p => p.id === "P1");
+    const p1 = orderedPakete.find(p => p.id === "P1");
     const m1Measure = p1?.massnahmen.find(m => m.id === "M1");
-    if (!m1Measure) return effectivePakete;
+    if (!m1Measure) return orderedPakete;
 
-    const result = effectivePakete
+    const result = orderedPakete
       .filter(p => !(p.id === "P1"))  // Remove P1 (its only measure M1 moves)
       .map(p => {
         if (p.id === targetId) {
@@ -1615,7 +1665,7 @@ export default function App() {
         return p;
       });
     return result.map((p, idx) => ({ ...p, nummer: idx + 1 }));
-  }, [effectivePakete, aktiveMassnahmen]);
+  }, [orderedPakete, aktiveMassnahmen]);
 
   const aktivePakete = useMemo(() =>
     dynamicPakete.filter(p => p.massnahmen.some(m => aktiveMassnahmen.includes(m.id))).map(p => p.id),
@@ -1713,7 +1763,8 @@ export default function App() {
               <SelectInput label="Gebäudetyp"           value={gebaeude.typ}                 onChange={v => updateGebaeude("typ", v)} options={OPTIONS_GEBAEUDETYP} />
               <NumberInput label="Baujahr"              value={gebaeude.baujahr}             onChange={v => updateGebaeude("baujahr", v)} min={1700} max={2030}
                 tooltip="Wird zur automatischen Ableitung der Bauteil-Noten verwendet (TABULA-Baualtersklassen)." />
-              <NumberInput label="Wohneinheiten"        value={gebaeude.wohneinheiten}       onChange={v => updateGebaeude("wohneinheiten", v)} min={1} max={1000} />
+              <NumberInput label="Wohneinheiten"        value={gebaeude.wohneinheiten}       onChange={v => updateGebaeude("wohneinheiten", v)} min={1} max={1000}
+                tooltip="Hat keinen Einfluss auf die Energierechnung in dieser Demo. Wird für die Dokumentation im Bericht verwendet." />
               <NumberInput label="Wohnfläche"           value={gebaeude.wohnflaeche}         onChange={v => updateGebaeude("wohnflaeche", v)} unit="m²" min={20} />
               <NumberInput label="Gebäudenutzfläche AN" value={gebaeude.gebaeudenutzflaeche} onChange={v => updateGebaeude("gebaeudenutzflaeche", v)} unit="m²" min={20}
                 tooltip="Bezugsfläche für Kennzahlen nach GEG. Typisch 1,3 × Wohnfläche." />
@@ -1730,9 +1781,34 @@ export default function App() {
                 tooltip="Wird automatisch vorgeschlagen, wenn Heizung auf Wärmepumpe oder Pellets steht. Manuelle Überschreibung möglich." />
               <SelectInput label="Dach"              value={gebaeude.dach}        onChange={v => updateGebaeude("dach", v)} options={OPTIONS_DACH} />
               <SelectInput label="Keller"            value={gebaeude.keller}      onChange={v => updateGebaeude("keller", v)} options={OPTIONS_KELLER} />
-              <NumberInput label="Vollgeschosse"     value={gebaeude.vollgeschosse} onChange={v => updateGebaeude("vollgeschosse", v)} min={1} max={30} />
               <SelectInput label="Wärmeverteilung"   value={gebaeude.waermeverteilung || OPTIONS_WAERMEVERTEILUNG[0]} onChange={v => updateGebaeude("waermeverteilung", v)} options={OPTIONS_WAERMEVERTEILUNG}
                 tooltip="Bestimmt Vorlauftemperatur und empfohlene WP-Betriebsart (Monovalent / Monoenergetic / Bivalent)." />
+              <div style={{ marginTop: 14 }}>
+                <div style={{ fontSize: 11, color: "#6B6259", marginBottom: 6, fontFamily: "'Geist Mono', monospace", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+                  Sanierungsstand Hülle (grob)
+                  <Tooltip content="Setzt Bauteil-Noten für Wand, Dach, Boden und Fenster auf einen Startwert. Kann danach in der Bauteilbewertung fein justiert werden."><span style={{ color: "#B5623E", marginLeft: 4 }}><InfoIcon size={10} /></span></Tooltip>
+                </div>
+                <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                  {[
+                    { key: "unsaniert",   label: "Altbau", sub: "Stud. 2" },
+                    { key: "teilsaniert", label: "Teilsaniert", sub: "Stud. 3–4" },
+                    { key: "saniert",     label: "Saniert", sub: "Stud. 5" },
+                    { key: "neubau",      label: "Neubau", sub: "Stud. 6" },
+                  ].map(({ key, label, sub }) => {
+                    const active = sanierungsstand === key;
+                    return (
+                      <button key={key} onClick={() => applySanierungsstand(key)}
+                        style={{ flex: 1, minWidth: 60, padding: "5px 6px", borderRadius: 3, cursor: "pointer", fontSize: 11,
+                          border: active ? "1.5px solid #2A8B7A" : "1.5px solid #D3CAB9",
+                          background: active ? "#EBF5F3" : "#FAFAF8", color: active ? "#1B4840" : "#3A332B",
+                          fontWeight: active ? 600 : 400 }}>
+                        <div>{label}</div>
+                        <div style={{ fontSize: 9.5, color: active ? "#2A8B7A" : "#6B6259", fontFamily: "'Geist Mono', monospace" }}>{sub}</div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </Card>
 
             <Card>
@@ -1742,13 +1818,16 @@ export default function App() {
               <NumberInput label="Primärenergie"    value={ist.primaerenergie} onChange={v => updateIst("primaerenergie", v)} unit="kWh/(m²·a)" min={0} max={700}
                 tooltip="Berücksichtigt die 'Vorkette' (Energieträger-Gewinnung, Transport). Basis für die Effizienzklasse nach GEG §86." />
               <NumberInput label="CO₂-Emissionen"   value={ist.co2}            onChange={v => updateIst("co2", v)} unit="kg/(m²·a)" min={0} max={200} step={0.1} />
-              <ComputedRow label="Effizienzklasse"  value={effizienzklasse}
-                tooltip="Nach iSFP-Bewertungsschema aus Primärenergie (nicht Endenergie!)." />
+              <div className="flex items-center justify-between gap-3" style={{ padding: "9px 0", borderBottom: "1px solid #E2DBD0", minHeight: 38 }}>
+                <span className="flex items-center gap-1.5" style={labelStyle}>
+                  Effizienzklasse
+                  <span style={{ color: "#B5623E" }} title="Automatisch berechnet"><SparkleIcon size={11} /></span>
+                  <Tooltip content="Nach iSFP-Bewertungsschema aus Primärenergie (nicht Endenergie!)."><span style={{ color: "#B5623E" }}><InfoIcon /></span></Tooltip>
+                </span>
+                <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", background: EFFIZIENZ_FARBEN[effizienzklasse] || "#6B6259", color: ["C","D","E"].includes(effizienzklasse) ? "#1E1A15" : "#FFF", borderRadius: 3, fontSize: 15, fontWeight: 600, width: 34, height: 28, fontFamily: "'Fraunces', serif" }}>{effizienzklasse}</span>
+              </div>
               <ComputedRow label="Heizkosten gesamt"   value={fmt(heizkosten)}   unit="€/a"
                 tooltip={`${ist.endenergie} kWh/m² × ${gebaeude.wohnflaeche} m² × ${preisFuerHeizung(gebaeude.heizung_typ).toFixed(2)} €/kWh (${traegerFuerHeizung(gebaeude.heizung_typ)}) = ${fmt(heizkosten)} €/Jahr`} />
-              <ComputedRow label="Heizkosten je WE"    value={fmt(heizkostenWE)} unit="€/a" />
-              <div style={{ height: 1, background: "#E2DBD0", margin: "16px 0" }} />
-              <TextInput   label="Registriernummer" value={gebaeude.registriernummer} onChange={v => updateGebaeude("registriernummer", v)} />
             </Card>
           </div>
         </Section>
