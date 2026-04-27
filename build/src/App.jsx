@@ -494,9 +494,15 @@ const PaketBlock = ({ paket, aktiv, onToggle, aktiveMassnahmen, empfohleneMassna
               const m7Geplant = (bauteile_state.verteilung || 2) >= 6;
               const vt = m7Geplant ? 35 : vorlauftemperaturFuer(gebaeude.waermeverteilung);
               const envAvg = ((bauteile_state.waende||2) + (bauteile_state.dach||2)) / 2;
-              const autoKey = wpTypVarianteKey(vt, envAvg);
+              const istOel = /Heizöl/i.test(gebaeude.heizung_typ || "");
+              const hatGas = /Gas/i.test(gebaeude.heizung_typ || "");
+              // For oil buildings, auto never picks hybrid — mirror suppression logic from effectiveBauteilState
+              const rawAutoKey = wpTypVarianteKey(vt, envAvg);
+              const autoKey = (rawAutoKey === "hybrid" && istOel) ? "monoenergetisch" : rawAutoKey;
               const currentV = WP_VARIANTEN[resolvedWpVariante] || WP_VARIANTEN.monovalent;
               const isOverriding = wpVariante !== "auto" && wpVariante !== autoKey;
+              const hybridOhneGas = resolvedWpVariante === "hybrid" && !hatGas;
+              const hybridMitOel  = resolvedWpVariante === "hybrid" && istOel;
               return (
                 <div style={{ marginBottom: 12, background: "#F8F5EF", border: "1px solid #D3CAB9", borderRadius: 3, padding: "10px 12px", fontSize: 12 }}>
                   <div style={{ fontWeight: 600, color: "#1E1A15", marginBottom: 8 }}>WP-Variante</div>
@@ -516,10 +522,33 @@ const PaketBlock = ({ paket, aktiv, onToggle, aktiveMassnahmen, empfohleneMassna
                   {m7Geplant && <div style={{ color: "#2A8B7A", fontSize: 11, marginBottom: 4 }}>✓ Heizkreisumbau (M7) geplant — niedrige Vorlauftemperatur erreichbar</div>}
                   <div style={{ color: "#6B6259", fontSize: 11.5 }}>Vorlauftemperatur: {vt} °C · {m7Geplant ? "Fußbodenheizung" : (gebaeude.waermeverteilung || "–")}</div>
                   <div style={{ color: "#3A332B", marginTop: 4, fontStyle: "italic" }}>→ {currentV.beschreibung}</div>
-                  {isOverriding && (
+                  {hybridMitOel && (
+                    <div style={{ color: "#B5623E", fontSize: 11.5, marginTop: 8, padding: "6px 8px", background: "#FEF2E8", borderRadius: 3, border: "1px solid #F5C09A" }}>
+                      ⚠ Bei Ölheizung schafft Hybrid-Gas neue fossile Infrastruktur. Monovalent oder Monoenergetisch bevorzugen.
+                    </div>
+                  )}
+                  {isOverriding && !hybridMitOel && (
                     <div style={{ color: "#B5623E", fontSize: 11, marginTop: 6 }}>
                       ⚠ Abweichung von Empfehlung ({WP_VARIANTEN[autoKey]?.label})
                       <button onClick={() => onWpVarianteChange("auto")} style={{ marginLeft: 8, fontSize: 10, color: "#6B6259", background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" }}>zurücksetzen</button>
+                    </div>
+                  )}
+                  {(istOel || hybridOhneGas) && (
+                    <div style={{ marginTop: 10, borderTop: "1px solid #D3CAB9", paddingTop: 8 }}>
+                      <div style={{ fontWeight: 600, fontSize: 10.5, color: "#6B6259", marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.1em", fontFamily: "'Geist Mono', monospace" }}>Begleitkosten</div>
+                      {istOel && (
+                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11.5, color: "#3A332B", marginBottom: 3 }}>
+                          <span>Öltank-Stilllegung & Entsorgung</span>
+                          <span style={{ fontFamily: "'Geist Mono', monospace" }}>~2.500 €</span>
+                        </div>
+                      )}
+                      {hybridOhneGas && (
+                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11.5, color: "#3A332B" }}>
+                          <span>Gasanschluss-Herstellung</span>
+                          <span style={{ fontFamily: "'Geist Mono', monospace" }}>~3.000–5.000 €</span>
+                        </div>
+                      )}
+                      <div style={{ fontSize: 10.5, color: "#6B6259", marginTop: 5, fontStyle: "italic" }}>Nicht förderfähig — erhöhen den Eigenanteil.</div>
                     </div>
                   )}
                 </div>
@@ -1529,9 +1558,13 @@ export default function App() {
     if (aktiveMassnahmen.includes("M7")) state = { ...state, verteilung: 7 };
     const vt = vorlauftemperaturFuer(gebaeude.waermeverteilung);
     const envAvg = ((state.waende||2) + (state.dach||2)) / 2;
-    const resolvedVariant = wpVariante === "auto" ? wpTypVarianteKey(vt, envAvg) : wpVariante;
+    let resolvedVariant = wpVariante === "auto" ? wpTypVarianteKey(vt, envAvg) : wpVariante;
+    // Oil buildings: don't auto-select hybrid (avoids creating new fossil infrastructure)
+    if (wpVariante === "auto" && resolvedVariant === "hybrid" && /Heizöl/i.test(gebaeude.heizung_typ || "")) {
+      resolvedVariant = "monoenergetisch";
+    }
     return { ...state, wpVariante: resolvedVariant };
-  }, [bauteile_state, aktiveMassnahmen, wpVariante, gebaeude.waermeverteilung]);
+  }, [bauteile_state, aktiveMassnahmen, wpVariante, gebaeude.waermeverteilung, gebaeude.heizung_typ]);
   const resolvedWpVariante = effectiveBauteilState.wpVariante || "monovalent";
 
   useEffect(() => {
