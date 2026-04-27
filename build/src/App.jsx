@@ -1432,6 +1432,7 @@ export default function App() {
   const [massnahmenOverrides, setMassnahmenOverrides] = useState({});
   const [wpVariante, setWpVariante] = useState("auto");
   const [extraction, setExtraction] = useState(null);
+  const [sanierungsstand, setSanierungsstand] = useState(null);
   const [activeTab, setActiveTab] = useState("gebaeude");
 
   // Scroll observer für sticky tabs
@@ -1492,6 +1493,21 @@ export default function App() {
     setMassnahmenOverrides({});
     setWpVariante("auto");
     setExtraction(null);
+    setSanierungsstand(null);
+  }, []);
+
+  const SANIERUNGSSTAND_STUFEN = {
+    unsaniert:  { waende: 2, dach: 2, boden: 2, fenster: 2 },
+    teilsaniert:{ waende: 3, dach: 4, boden: 3, fenster: 4 },
+    saniert:    { waende: 5, dach: 5, boden: 4, fenster: 5 },
+    neubau:     { waende: 6, dach: 6, boden: 5, fenster: 6 },
+  };
+
+  const applySanierungsstand = useCallback((level) => {
+    const stufen = SANIERUNGSSTAND_STUFEN[level];
+    if (!stufen) return;
+    setBauteile(prev => prev.map(b => stufen[b.id] !== undefined ? { ...b, note: stufen[b.id] } : b));
+    setSanierungsstand(level);
   }, []);
 
   const fileInputRef = useRef(null);
@@ -1755,6 +1771,32 @@ export default function App() {
               <SelectInput label="Keller"            value={gebaeude.keller}      onChange={v => updateGebaeude("keller", v)} options={OPTIONS_KELLER} />
               <SelectInput label="Wärmeverteilung"   value={gebaeude.waermeverteilung || OPTIONS_WAERMEVERTEILUNG[0]} onChange={v => updateGebaeude("waermeverteilung", v)} options={OPTIONS_WAERMEVERTEILUNG}
                 tooltip="Bestimmt Vorlauftemperatur und empfohlene WP-Betriebsart (Monovalent / Monoenergetic / Bivalent)." />
+              <div style={{ marginTop: 14 }}>
+                <div style={{ fontSize: 11, color: "#6B6259", marginBottom: 6, fontFamily: "'Geist Mono', monospace", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+                  Sanierungsstand Hülle (grob)
+                  <Tooltip content="Setzt Bauteil-Noten für Wand, Dach, Boden und Fenster auf einen Startwert. Kann danach in der Bauteilbewertung fein justiert werden."><span style={{ color: "#B5623E", marginLeft: 4 }}><InfoIcon size={10} /></span></Tooltip>
+                </div>
+                <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                  {[
+                    { key: "unsaniert",   label: "Altbau", sub: "Stud. 2" },
+                    { key: "teilsaniert", label: "Teilsaniert", sub: "Stud. 3–4" },
+                    { key: "saniert",     label: "Saniert", sub: "Stud. 5" },
+                    { key: "neubau",      label: "Neubau", sub: "Stud. 6" },
+                  ].map(({ key, label, sub }) => {
+                    const active = sanierungsstand === key;
+                    return (
+                      <button key={key} onClick={() => applySanierungsstand(key)}
+                        style={{ flex: 1, minWidth: 60, padding: "5px 6px", borderRadius: 3, cursor: "pointer", fontSize: 11,
+                          border: active ? "1.5px solid #2A8B7A" : "1.5px solid #D3CAB9",
+                          background: active ? "#EBF5F3" : "#FAFAF8", color: active ? "#1B4840" : "#3A332B",
+                          fontWeight: active ? 600 : 400 }}>
+                        <div>{label}</div>
+                        <div style={{ fontSize: 9.5, color: active ? "#2A8B7A" : "#6B6259", fontFamily: "'Geist Mono', monospace" }}>{sub}</div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </Card>
 
             <Card>

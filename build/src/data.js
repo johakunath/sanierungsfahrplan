@@ -172,6 +172,38 @@ export const PRESETS = {
     },
     ist: { endenergie: 98, primaerenergie: 118, co2: 25 },
   },
+  dhh1990: {
+    id: "dhh1990",
+    label: "DHH 90er-Jahre",
+    beschreibung: "1 WE · 130 m² · Erdgas NT · Klasse D/E · Doppelhaushälfte",
+    gebaeude: {
+      standort: "Dortmund", strasse: "Kastanienweg 5", plz: "44227",
+      baujahr: 1992, typ: "Doppelhaushälfte",
+      wohneinheiten: 1, wohnflaeche: 130, gebaeudenutzflaeche: 162,
+      vollgeschosse: 2, keller: "unbeheizt", dach: "Satteldach",
+      heizung_bj: 2005, heizung_typ: "Erdgas Niedertemperatur",
+      warmwasser: "zentral, über Heizung", lueftung: "Fensterlüftung",
+      erneuerbare: "keine", denkmalschutz: false, registriernummer: "—",
+      waermeverteilung: "Heizkörper (Hochtemperatur, >60 °C)",
+    },
+    ist: { endenergie: 128, primaerenergie: 145, co2: 35 },
+  },
+  efhSaniert: {
+    id: "efhSaniert",
+    label: "EFH Neubau 2012",
+    beschreibung: "1 WE · 148 m² · Gas-Brennwert · Klasse C · Neubaustandard",
+    gebaeude: {
+      standort: "Frankfurt", strasse: "Amselweg 3", plz: "60599",
+      baujahr: 2012, typ: "Einfamilienhaus",
+      wohneinheiten: 1, wohnflaeche: 148, gebaeudenutzflaeche: 185,
+      vollgeschosse: 2, keller: "beheizt", dach: "Pultdach",
+      heizung_bj: 2012, heizung_typ: "Erdgas Brennwert",
+      warmwasser: "zentral, über Heizung", lueftung: "Lüftungsanlage mit WRG",
+      erneuerbare: "keine", denkmalschutz: false, registriernummer: "—",
+      waermeverteilung: "Heizkörper (Niedertemperatur, 45–55 °C)",
+    },
+    ist: { endenergie: 68, primaerenergie: 82, co2: 17 },
+  },
 };
 
 // ─── Auto-Derive Bauteile aus Baujahr ──────────────────────────────────────
