@@ -536,9 +536,10 @@ export function wpTypEmpfehlung(vorlaufTemp, envAvg) {
 
 // ─── Farbcodes ────────────────────────────────────────────────────────────
 export const EFFIZIENZ_FARBEN = {
-  "A+": "#00843D", "A": "#34A030", "B": "#95C11F",
-  "C":  "#C5D62E", "D": "#F6D400", "E": "#F6A400",
-  "F":  "#F07D00", "G": "#E3501C", "H": "#E30613",
+  "A+": "#1B6B3A", "A": "#1B6B3A", "B": "#1B6B3A",
+  "C":  "#6B9E1F",
+  "D":  "#C8820A", "E": "#C8820A",
+  "F":  "#B83A2E", "G": "#B83A2E", "H": "#B83A2E",
 };
 
 export const NOTE_FARBEN = {

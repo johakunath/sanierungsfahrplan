@@ -211,7 +211,7 @@ const Section = ({ id, eyebrow, title, subtitle, children }) => (
 );
 
 const Card = ({ children, style }) => (
-  <div style={{ background: "#FFFFFF", border: "1.25px solid #D3CAB9", borderRadius: 3, padding: 24, overflow: "hidden", ...style }}>
+  <div style={{ background: "#FFFFFF", border: "1.25px solid #D3CAB9", borderRadius: 3, padding: 24, ...style }}>
     {children}
   </div>
 );
@@ -278,6 +278,7 @@ const PresetPicker = ({ activeId, onPick, onUploadClick, uploadLoading }) => (
         background: "#FFFFFF", color: "#1E1A15",
         border: "1.5px dashed #D3CAB9",
         borderRadius: 3, cursor: "pointer", transition: "all 0.12s",
+        outline: "none",
       }}
       onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#B5623E"; }}
       onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#D3CAB9"; }}
@@ -640,7 +641,7 @@ const EffizienzBadge = ({ klasse, size = "md" }) => {
   return (
     <div className="inline-flex items-center justify-center font-serif"
       style={{ width: dim, height: dim, background: farbe,
-               color: ["B","C","D"].includes(klasse) ? "#1E1A15" : "#FFFFFF",
+               color: ["C","D","E"].includes(klasse) ? "#1E1A15" : "#FFFFFF",
                borderRadius: 3, fontSize: fs, fontWeight: 500 }}>{klasse}</div>
   );
 };
@@ -854,7 +855,7 @@ const EnergyBar = ({ label, value, maxValue, unit, note }) => {
   );
 };
 
-const textColorFor = (klasse) => ["B", "C", "D"].includes(klasse) ? "#1E1A15" : "#FFF";
+const textColorFor = (klasse) => ["C", "D", "E"].includes(klasse) ? "#1E1A15" : "#FFF";
 
 const EEK_ZONEN = [
   { klasse: "A+", von: 0,   bis: 30   },
@@ -1729,7 +1730,8 @@ export default function App() {
               <SelectInput label="Gebäudetyp"           value={gebaeude.typ}                 onChange={v => updateGebaeude("typ", v)} options={OPTIONS_GEBAEUDETYP} />
               <NumberInput label="Baujahr"              value={gebaeude.baujahr}             onChange={v => updateGebaeude("baujahr", v)} min={1700} max={2030}
                 tooltip="Wird zur automatischen Ableitung der Bauteil-Noten verwendet (TABULA-Baualtersklassen)." />
-              <NumberInput label="Wohneinheiten"        value={gebaeude.wohneinheiten}       onChange={v => updateGebaeude("wohneinheiten", v)} min={1} max={1000} />
+              <NumberInput label="Wohneinheiten"        value={gebaeude.wohneinheiten}       onChange={v => updateGebaeude("wohneinheiten", v)} min={1} max={1000}
+                tooltip="Hat keinen Einfluss auf die Energierechnung in dieser Demo. Wird für die Dokumentation im Bericht verwendet." />
               <NumberInput label="Wohnfläche"           value={gebaeude.wohnflaeche}         onChange={v => updateGebaeude("wohnflaeche", v)} unit="m²" min={20} />
               <NumberInput label="Gebäudenutzfläche AN" value={gebaeude.gebaeudenutzflaeche} onChange={v => updateGebaeude("gebaeudenutzflaeche", v)} unit="m²" min={20}
                 tooltip="Bezugsfläche für Kennzahlen nach GEG. Typisch 1,3 × Wohnfläche." />
@@ -1746,7 +1748,6 @@ export default function App() {
                 tooltip="Wird automatisch vorgeschlagen, wenn Heizung auf Wärmepumpe oder Pellets steht. Manuelle Überschreibung möglich." />
               <SelectInput label="Dach"              value={gebaeude.dach}        onChange={v => updateGebaeude("dach", v)} options={OPTIONS_DACH} />
               <SelectInput label="Keller"            value={gebaeude.keller}      onChange={v => updateGebaeude("keller", v)} options={OPTIONS_KELLER} />
-              <NumberInput label="Vollgeschosse"     value={gebaeude.vollgeschosse} onChange={v => updateGebaeude("vollgeschosse", v)} min={1} max={30} />
               <SelectInput label="Wärmeverteilung"   value={gebaeude.waermeverteilung || OPTIONS_WAERMEVERTEILUNG[0]} onChange={v => updateGebaeude("waermeverteilung", v)} options={OPTIONS_WAERMEVERTEILUNG}
                 tooltip="Bestimmt Vorlauftemperatur und empfohlene WP-Betriebsart (Monovalent / Monoenergetic / Bivalent)." />
             </Card>
@@ -1758,13 +1759,16 @@ export default function App() {
               <NumberInput label="Primärenergie"    value={ist.primaerenergie} onChange={v => updateIst("primaerenergie", v)} unit="kWh/(m²·a)" min={0} max={700}
                 tooltip="Berücksichtigt die 'Vorkette' (Energieträger-Gewinnung, Transport). Basis für die Effizienzklasse nach GEG §86." />
               <NumberInput label="CO₂-Emissionen"   value={ist.co2}            onChange={v => updateIst("co2", v)} unit="kg/(m²·a)" min={0} max={200} step={0.1} />
-              <ComputedRow label="Effizienzklasse"  value={effizienzklasse}
-                tooltip="Nach iSFP-Bewertungsschema aus Primärenergie (nicht Endenergie!)." />
+              <div className="flex items-center justify-between gap-3" style={{ padding: "9px 0", borderBottom: "1px solid #E2DBD0", minHeight: 38 }}>
+                <span className="flex items-center gap-1.5" style={labelStyle}>
+                  Effizienzklasse
+                  <span style={{ color: "#B5623E" }} title="Automatisch berechnet"><SparkleIcon size={11} /></span>
+                  <Tooltip content="Nach iSFP-Bewertungsschema aus Primärenergie (nicht Endenergie!)."><span style={{ color: "#B5623E" }}><InfoIcon /></span></Tooltip>
+                </span>
+                <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", background: EFFIZIENZ_FARBEN[effizienzklasse] || "#6B6259", color: ["C","D","E"].includes(effizienzklasse) ? "#1E1A15" : "#FFF", borderRadius: 3, fontSize: 15, fontWeight: 600, width: 34, height: 28, fontFamily: "'Fraunces', serif" }}>{effizienzklasse}</span>
+              </div>
               <ComputedRow label="Heizkosten gesamt"   value={fmt(heizkosten)}   unit="€/a"
                 tooltip={`${ist.endenergie} kWh/m² × ${gebaeude.wohnflaeche} m² × ${preisFuerHeizung(gebaeude.heizung_typ).toFixed(2)} €/kWh (${traegerFuerHeizung(gebaeude.heizung_typ)}) = ${fmt(heizkosten)} €/Jahr`} />
-              <ComputedRow label="Heizkosten je WE"    value={fmt(heizkostenWE)} unit="€/a" />
-              <div style={{ height: 1, background: "#E2DBD0", margin: "16px 0" }} />
-              <TextInput   label="Registriernummer" value={gebaeude.registriernummer} onChange={v => updateGebaeude("registriernummer", v)} />
             </Card>
           </div>
         </Section>
