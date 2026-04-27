@@ -241,8 +241,8 @@ export const WP_VARIANTEN = {
   },
   hybrid: {
     label: "Hybrid (WP + Gas)",
-    beschreibung: "WP deckt ~65 % der Heizlast. Gaskessel für Spitzenlast. Übergangslösung bei hoher Vorlauftemperatur und vorhandenem Gasanschluss.",
-    investition: 24000, ohnehin_anteil: 4000, foerderquote: 0.15,
+    beschreibung: "WP deckt ~65 % der Heizlast. Gaskessel für Spitzenlast. Übergangslösung bei hoher Vorlauftemperatur und vorhandenem Gasanschluss. BEG 30 % auf den WP-Anteil (~60 % der Kosten). Gaskessel-Anteil nicht förderfähig.",
+    investition: 24000, ohnehin_anteil: 4000, foerderquote: 0.30,
     pe_mult: 0.55, ee_mult: 0.60, co2_mult: 0.55,
   },
 };

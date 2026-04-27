@@ -539,6 +539,11 @@ const PaketBlock = ({ paket, aktiv, onToggle, aktiveMassnahmen, empfohleneMassna
                       <button onClick={() => onWpVarianteChange("auto")} style={{ marginLeft: 8, fontSize: 10, color: "#6B6259", background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" }}>zurücksetzen</button>
                     </div>
                   )}
+                  {resolvedWpVariante === "monoenergetisch" && (
+                    <div style={{ fontSize: 11, color: "#6B6259", marginTop: 6, fontStyle: "italic" }}>
+                      ℹ️ Heizstab deckt ~5 % der Jahresheizlast (Spitzenlast, COP = 1). Geschätzte Mehrkosten: ~200–400 €/Jahr gegenüber monovalentem Betrieb.
+                    </div>
+                  )}
                   {(istOel || hybridOhneGas) && (
                     <div style={{ marginTop: 10, borderTop: "1px solid #D3CAB9", paddingTop: 8 }}>
                       <div style={{ fontWeight: 600, fontSize: 10.5, color: "#6B6259", marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.1em", fontFamily: "'Geist Mono', monospace" }}>Begleitkosten</div>
