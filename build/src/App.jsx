@@ -383,8 +383,100 @@ const BauteilKachel = ({ bauteil, onNoteChange }) => {
   );
 };
 
+// ═══ DYNAMIC "WARUM" GENERATOR ═══════════════════════════════════════════
+// Returns { grund, jetzt } strings tailored to current building state and active measures.
+function getWarum(measureId, ctx) {
+  const { bauteile_state: bs, gebaeude, aktiveMassnahmen, empfohlen, nichtEmpfohlen } = ctx;
+  switch (measureId) {
+    case "M1": {
+      const grund = "Hydraulischer Abgleich verteilt das Heizwasser gleichmäßig auf alle Räume — kein Heizkörper läuft mehr zu kalt oder zu heiß.";
+      const jetzt = aktiveMassnahmen.includes("M4")
+        ? "Nach WP-Einbau zwingend: BEG-Pflicht und neue Massenströme machen einen erneuten Abgleich nötig."
+        : "Sofort umsetzbar — geringe Investition, schnelle Heizkostenwirkung, Voraussetzung für viele BEG-Anträge.";
+      return { grund, jetzt };
+    }
+    case "M2": {
+      const note = bs.dach || 2;
+      const grund = note <= 2
+        ? "Ihr Dach ist ungedämmt. Bis zu 30 % der Heizenergie geht über das Dach verloren — höchstes Einsparpotenzial im Gebäude."
+        : note <= 4
+        ? "Ihr Dach hat Teildämmung. Eine Aufdopplung bringt noch spürbare Einsparungen."
+        : "Ihr Dach ist bereits gut gedämmt. Zusätzliche Dämmung lohnt sich kaum.";
+      const jetzt = aktiveMassnahmen.includes("M4")
+        ? "Vor der Wärmepumpe einplanen: schlechte Hülle macht eine größer dimensionierte (teurere) WP nötig."
+        : "Frühzeitig umsetzen — kurze Bauzeit, hohe Wirkung pro investiertem Euro.";
+      return { grund, jetzt };
+    }
+    case "M3": {
+      const note = bs.fenster || 2;
+      const grund = note <= 2
+        ? "Ihre Fenster sind alt und undicht — Zugluft und hohe Wärmeverluste."
+        : note <= 4
+        ? "Ihre Fenster haben moderne 2-fach-Verglasung. 3-fach bringt nur noch geringe Einsparung."
+        : "Fenster bereits auf hohem Standard — Tausch lohnt energetisch kaum.";
+      const jetzt = nichtEmpfohlen
+        ? "Hoher Investitionsbetrag bei kleiner PE-Wirkung — Dachdämmung oder WP zuerst priorisieren."
+        : "Sinnvoll bei größerer Hüllsanierung; Fensterlaibungen bei der Fassadendämmung mitdenken.";
+      return { grund, jetzt };
+    }
+    case "M4": {
+      const m7Geplant = (bs.verteilung || 2) >= 6;
+      const vt = m7Geplant ? 35 : vorlauftemperaturFuer(gebaeude.waermeverteilung);
+      const envAvg = ((bs.waende||2) + (bs.dach||2)) / 2;
+      const istOel = /Heizöl/i.test(gebaeude.heizung_typ || "");
+      const rawAutoKey = wpTypVarianteKey(vt, envAvg);
+      const autoKey = (rawAutoKey === "hybrid" && istOel) ? "monoenergetisch" : rawAutoKey;
+      const wpReady = vt <= 50;
+      const grund = wpReady
+        ? `Vorlauftemperatur ${vt} °C — Gebäude ist sofort WP-ready (${WP_VARIANTEN[autoKey]?.label}). Senkt Heizenergie um Faktor 3–4.`
+        : aktiveMassnahmen.includes("M7")
+        ? `Mit Erneuerung Wärmeverteilung (M7): Vorlauftemperatur sinkt auf 35 °C → Monovalent-Betrieb möglich (COP ~4–5).`
+        : `Aktuelle Vorlauftemperatur ${vt} °C zu hoch für effizienten WP-Betrieb. Ohne M7 nur ${WP_VARIANTEN[autoKey]?.label} sinnvoll.`;
+      const jetzt = aktiveMassnahmen.includes("M7")
+        ? "Nach Wärmeverteilung-Umbau einbauen — dann ist Monovalent-Betrieb (höchster COP) erreichbar."
+        : (aktiveMassnahmen.includes("M2") || aktiveMassnahmen.includes("M5"))
+        ? "Nach Hüllsanierung einbauen — WP kann kleiner dimensioniert werden, was Investition senkt."
+        : "GEG §71 ab 2026 macht erneuerbare Wärmeerzeugung beim Heizungstausch zur Pflicht — frühzeitig planen.";
+      return { grund, jetzt };
+    }
+    case "M5": {
+      const note = bs.waende || 2;
+      const grund = note <= 2
+        ? "Ihre Außenwände sind ungedämmt — größter Verlust- und Schimmelrisiko-Faktor der Gebäudehülle."
+        : note <= 4
+        ? "Wände teilgedämmt — Aufdopplung lohnt nur bei sowieso fälliger Putzerneuerung."
+        : "Fassade bereits gut gedämmt — Dämmung lohnt energetisch kaum.";
+      const jetzt = nichtEmpfohlen
+        ? "Ihr €/MWh-Score liegt deutlich über dem Median — andere Maßnahmen sind effizienter."
+        : "Idealerweise gemeinsam mit fälliger Putzerneuerung umsetzen — Gerüstkosten bereits eingerechnet.";
+      return { grund, jetzt };
+    }
+    case "M6": {
+      const grund = aktiveMassnahmen.includes("M4")
+        ? "Mit Wärmepumpe besonders attraktiv: Eigenstrom senkt WP-Betriebskosten direkt und verbessert die CO₂-Bilanz."
+        : "Wirtschaftlich auch ohne WP — amortisiert sich über Eigenverbrauch und EEG-Einspeisung in 8–12 Jahren.";
+      const jetzt = "Reihenfolge flexibel — sinnvoll am Schluss, wenn Strombedarf der WP geplant ist.";
+      return { grund, jetzt };
+    }
+    case "M7": {
+      const vt = vorlauftemperaturFuer(gebaeude.waermeverteilung);
+      const grund = vt > 55
+        ? `Aktuelle Vorlauftemperatur ${vt} °C ist zu hoch für effizienten WP-Betrieb. Umbau senkt VT auf ~35 °C.`
+        : vt > 45
+        ? `Vorlauftemperatur ${vt} °C — Umbau ermöglicht Monovalent statt Monoenergetisch.`
+        : `Vorlauftemperatur bereits niedrig (${vt} °C). Umbau bringt nur noch geringen Effizienzgewinn.`;
+      const jetzt = aktiveMassnahmen.includes("M4")
+        ? "Vor WP-Einbau erledigen — sonst muss man Estrich/Heizkreis zweimal anfassen."
+        : "Eigenständig kaum lohnend — Wirkung entsteht erst durch Wärmepumpe.";
+      return { grund, jetzt };
+    }
+    default:
+      return { grund: "", jetzt: "" };
+  }
+}
+
 // ═══ PAKET-BLOCK mit Kostenherleitung-Tooltip ═══════════════════════════
-const PaketBlock = ({ paket, aktiv, onToggle, aktiveMassnahmen, empfohleneMassnahmen = [], nichtEmpfohleneMassnahmen = [], gebaeude = {}, bauteile_state = {}, wpVariante = "auto", resolvedWpVariante = "monovalent", onWpVarianteChange = () => {} }) => {
+const PaketBlock = ({ paket, aktiv, onToggle, onToggleMassnahme = () => {}, aktiveMassnahmen, empfohleneMassnahmen = [], nichtEmpfohleneMassnahmen = [], gebaeude = {}, bauteile_state = {}, wpVariante = "auto", resolvedWpVariante = "monovalent", onWpVarianteChange = () => {} }) => {
   const f = PAKET_FARBEN[paket.farbe];
   const aktiveMassnahmenInPaket = paket.massnahmen.filter(m => aktiveMassnahmen.includes(m.id));
   const summe_invest  = aktiveMassnahmenInPaket.reduce((s, m) => s + m.investition, 0);
@@ -440,20 +532,24 @@ const PaketBlock = ({ paket, aktiv, onToggle, aktiveMassnahmen, empfohleneMassna
         </div>
       </div>
 
-      <div className="px-5 py-3 italic text-[13px]"
-        style={{ background: "#F8F5EF", borderTop: "1px solid #E2DBD0", color: "#3A332B", borderBottom: "1px solid #E2DBD0" }}>
-        <span className="not-italic uppercase tracking-[0.18em] text-[10.5px] mr-2"
-          style={{ color: "#B5623E", fontFamily: "'Geist Mono', monospace" }}>Warum</span>
-        {paket.begruendung}
-      </div>
-
       <div>
         {paket.massnahmen.map((m, i) => {
           const massnahmeAktiv = aktiveMassnahmen.includes(m.id);
+          const warum = getWarum(m.id, {
+            bauteile_state, gebaeude, aktiveMassnahmen,
+            empfohlen: empfohleneMassnahmen.includes(m.id),
+            nichtEmpfohlen: nichtEmpfohleneMassnahmen.includes(m.id),
+          });
           return (
           <div key={m.id} className="p-5" style={{ borderBottom: i < paket.massnahmen.length - 1 ? "1px solid #E2DBD0" : "none", opacity: massnahmeAktiv ? 1 : 0.45, transition: "opacity 0.15s" }}>
+            <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] gap-5">
+            <div>
             <div className="mb-4">
               <div className="text-[14.5px] font-medium mb-1.5 flex items-center gap-2 flex-wrap" style={{ color: "#1E1A15" }}>
+                <label className="print-hide" style={{ display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer", fontSize: 11, color: "#6B6259", fontFamily: "'Geist Mono', monospace", letterSpacing: "0.05em" }}>
+                  <input type="checkbox" checked={massnahmeAktiv} onChange={() => onToggleMassnahme(m.id)}
+                    style={{ accentColor: "#2A8B7A", width: 14, height: 14, cursor: "pointer" }} />
+                </label>
                 <span style={{ textDecoration: aktiv && !massnahmeAktiv ? "line-through" : "none" }}>{m.titel}</span>
                 {m._isMovedAbgleich && (
                   <span style={{ background: "#EBF5F3", color: "#1B4840", border: "1px solid #8CBDB5", padding: "1px 8px", borderRadius: 100, fontSize: 10, fontFamily: "'Geist Mono', monospace", flexShrink: 0 }}>
@@ -523,7 +619,7 @@ const PaketBlock = ({ paket, aktiv, onToggle, aktiveMassnahmen, empfohleneMassna
                   {m7Geplant && <div style={{ color: "#2A8B7A", fontSize: 11, marginBottom: 4 }}>✓ Heizkreisumbau (M7) geplant — niedrige Vorlauftemperatur erreichbar</div>}
                   {!m7Geplant && autoKey !== "monovalent" && (
                     <div style={{ color: "#2A8B7A", fontSize: 11, marginBottom: 4 }}>
-                      💡 Paket P3a (Heizkreisumbau) prüfen — senkt Vorlauftemperatur und ermöglicht Monovalent-Betrieb.
+                      💡 Maßnahme „Erneuerung Wärmeverteilung" (M7) aktivieren — senkt Vorlauftemperatur und ermöglicht Monovalent-Betrieb.
                     </div>
                   )}
                   <div style={{ color: "#6B6259", fontSize: 11.5 }}>Vorlauftemperatur: {vt} °C · {m7Geplant ? "Fußbodenheizung" : (gebaeude.waermeverteilung || "–")}</div>
@@ -570,6 +666,21 @@ const PaketBlock = ({ paket, aktiv, onToggle, aktiveMassnahmen, empfohleneMassna
                 CO₂ −{m.co2_reduktion} kg/(m²·a)
               </div>
             )}
+            </div>
+            <aside style={{ background: "#FAF7F1", border: "1px solid #E2DBD0", borderRadius: 3, padding: "12px 14px" }}>
+              <div style={{ fontSize: 9.5, letterSpacing: "0.18em", color: "#B5623E", textTransform: "uppercase", fontFamily: "'Geist Mono', monospace", marginBottom: 8 }}>Warum</div>
+              {warum.grund && (
+                <div style={{ fontSize: 12, lineHeight: 1.55, color: "#3A332B", marginBottom: 8 }}>
+                  <span style={{ fontWeight: 600 }}>Diese Maßnahme:</span> {warum.grund}
+                </div>
+              )}
+              {warum.jetzt && (
+                <div style={{ fontSize: 12, lineHeight: 1.55, color: "#3A332B" }}>
+                  <span style={{ fontWeight: 600 }}>Jetzt im Plan:</span> {warum.jetzt}
+                </div>
+              )}
+            </aside>
+            </div>
           </div>
           );
         })}
@@ -1492,10 +1603,18 @@ export default function App() {
     const neueBauteile = ableiteBauteile(p.gebaeude.baujahr, p.gebaeude.heizung_typ, p.gebaeude.lueftung, p.gebaeude.warmwasser);
     const bs = {};
     neueBauteile.forEach(b => { bs[b.id] = b.note; });
+    const vt = vorlauftemperaturFuer(p.gebaeude.waermeverteilung);
+    const fossil = /Heizöl|Erdgas|Fernwärme \(Gas/i.test(p.gebaeude.heizung_typ || "");
     const defaultAktive = MASSNAHMENPAKETE.flatMap(pkg =>
-      pkg.massnahmen
-        .filter(m => Math.abs((m.impact ? m.impact(bs) : { primaerenergie_delta: m.primaerenergie_delta || 0 }).primaerenergie_delta) >= 3)
-        .map(m => m.id)
+      pkg.massnahmen.filter(m => {
+        // M7: nur aktivieren wenn VT > 50 °C (Hochtemperatur-Heizkörper).
+        if (m.id === "M7") return vt > 50;
+        // M4: immer aktivieren bei fossiler Heizung — Heizungstausch ist sinnvoll.
+        if (m.id === "M4") return fossil;
+        // Alle anderen Maßnahmen: nach PE-Wirkungsschwelle (>= 3 kWh/m²a).
+        const imp = m.impact ? m.impact(bs) : { primaerenergie_delta: m.primaerenergie_delta || 0 };
+        return Math.abs(imp.primaerenergie_delta) >= 3;
+      }).map(m => m.id)
     );
     setPresetId(id);
     setGebaeude(p.gebaeude);
@@ -1565,14 +1684,23 @@ export default function App() {
     }
   };
 
+  // Package toggle = "select all / deselect all" of its measures.
+  // Off if any measure is active; turning on activates all measures of the package.
   const togglePaket = (id) => {
     const paket = dynamicPakete.find(p => p.id === id);
     if (!paket) return;
     const mIds = paket.massnahmen.map(m => m.id);
-    const allActive = mIds.every(mid => aktiveMassnahmen.includes(mid));
-    setAktiveMassnahmen(prev => allActive
+    const anyActive = mIds.some(mid => aktiveMassnahmen.includes(mid));
+    setAktiveMassnahmen(prev => anyActive
       ? prev.filter(x => !mIds.includes(x))
       : [...prev.filter(x => !mIds.includes(x)), ...mIds]
+    );
+  };
+
+  const toggleMassnahme = (mid) => {
+    setAktiveMassnahmen(prev => prev.includes(mid)
+      ? prev.filter(x => x !== mid)
+      : [...prev, mid]
     );
   };
 
@@ -1633,39 +1761,26 @@ export default function App() {
     return ordered.map((p, idx) => ({ ...p, nummer: idx + 1 }));
   }, [massnahmenOverrides, effectiveBauteilState, gebaeude]);
 
-  // P3a (Heizkreisumbau) must always precede P3 (Wärmepumpe) — floor heating before WP install.
-  const orderedPakete = useMemo(() => {
-    const arr = [...effectivePakete];
-    const idxP3a = arr.findIndex(p => p.id === "P3a");
-    const idxP3  = arr.findIndex(p => p.id === "P3");
-    if (idxP3a !== -1 && idxP3 !== -1 && idxP3a > idxP3) {
-      [arr[idxP3a], arr[idxP3]] = [arr[idxP3], arr[idxP3a]];
-    }
-    return arr.map((p, idx) => ({ ...p, nummer: idx + 1 }));
-  }, [effectivePakete]);
-
-  // M1 (Hydraulischer Abgleich) must be redone after WP or floor heating install (BEG requirement).
-  // Move it from P1 into the relevant later package so it's counted once in the right step.
+  // M1 (Hydraulischer Abgleich) must be redone after WP install (BEG requirement).
+  // Move it from P1 to the END of P3 so the install sequence reads: M7 → M4 → M1.
   const dynamicPakete = useMemo(() => {
     const m4Active = aktiveMassnahmen.includes("M4");
-    const m7Active = aktiveMassnahmen.includes("M7");
-    if (!m4Active && !m7Active) return orderedPakete;
+    if (!m4Active) return effectivePakete;
 
-    const targetId = m4Active ? "P3" : "P3a";
-    const p1 = orderedPakete.find(p => p.id === "P1");
+    const p1 = effectivePakete.find(p => p.id === "P1");
     const m1Measure = p1?.massnahmen.find(m => m.id === "M1");
-    if (!m1Measure) return orderedPakete;
+    if (!m1Measure) return effectivePakete;
 
-    const result = orderedPakete
-      .filter(p => !(p.id === "P1"))  // Remove P1 (its only measure M1 moves)
+    const result = effectivePakete
+      .filter(p => p.id !== "P1")  // Remove P1 (its only measure M1 moves)
       .map(p => {
-        if (p.id === targetId) {
-          return { ...p, massnahmen: [{ ...m1Measure, _isMovedAbgleich: true }, ...p.massnahmen] };
+        if (p.id === "P3") {
+          return { ...p, massnahmen: [...p.massnahmen, { ...m1Measure, _isMovedAbgleich: true }] };
         }
         return p;
       });
     return result.map((p, idx) => ({ ...p, nummer: idx + 1 }));
-  }, [orderedPakete, aktiveMassnahmen]);
+  }, [effectivePakete, aktiveMassnahmen]);
 
   const aktivePakete = useMemo(() =>
     dynamicPakete.filter(p => p.massnahmen.some(m => aktiveMassnahmen.includes(m.id))).map(p => p.id),
@@ -1879,6 +1994,7 @@ export default function App() {
           <div className="space-y-5">
             {dynamicPakete.map(p => (
               <PaketBlock key={p.id} paket={p} aktiv={aktivePakete.includes(p.id)} onToggle={() => togglePaket(p.id)}
+                onToggleMassnahme={toggleMassnahme}
                 aktiveMassnahmen={aktiveMassnahmen}
                 empfohleneMassnahmen={empfohleneMassnahmen}
                 nichtEmpfohleneMassnahmen={nichtEmpfohleneMassnahmen}
