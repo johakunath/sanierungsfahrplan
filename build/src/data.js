@@ -275,6 +275,25 @@ export const MASSNAHMENPAKETE = [
     ],
   },
   {
+    id: "P3a", nummer: 3, titel: "Heizkreisumbau", zeitraum: "2028 – 2031", farbe: "tuerkis",
+    begruendung: "Voraussetzung für optimalen WP-Betrieb. Fußbodenheizung senkt Vorlauftemperatur auf <40 °C — COP der Wärmepumpe steigt von ~2 auf ~4–5.",
+    zu_beachten: "Heizkreisumbau erfordert Öffnung von Estrich und Fußbodenbelägen. Bauzeit 3–5 Wochen. Koordination mit WP-Einbau sinnvoll — idealerweise innerhalb eines Jahres.",
+    komfortsteigerung: "Gleichmäßige Strahlungswärme, kein Überheizen. Kein Staubaufwirbeln durch Konvektion. Fußbodenwärme kombinierbar mit Kühlung im Sommer.",
+    massnahmen: [
+      { id: "M7", titel: "Heizkreisumbau auf Niedertemperatur / Fußbodenheizung",
+        beschreibung: "Umbau auf Fußbodenheizung (Trocken- oder Nassestrich) oder Heizkreisoptimierung für NT-Betrieb ≤ 40 °C. Inkl. hydraulischem Abgleich. Ermöglicht Monovalent-Betrieb der Wärmepumpe (COP ~4–5 statt ~2).",
+        investition: 12000, ohnehin_anteil: 500, foerderquote: 0.15,
+        co2_reduktion: 1.0,
+        foerderung_rechtsgrundlage: "BEG EM", foerderung_stelle: "BAFA",
+        kostenherleitung: "~100 €/m² Fußbodenheizung (Trockenbau) für EFH 120 m² · inkl. hydraulischem Abgleich und Estricharbeiten",
+        skipBadge: true,
+        impact: bs => {
+          const vNote = ((bs||{}).verteilung) || 2;
+          return _imp([[-5,-4,1.0],[-4,-3,0.8],[-3,-3,0.6],[-2,-2,0.4],[-1,-1,0.2],[0,0,0],[0,0,0]], vNote);
+        } },
+    ],
+  },
+  {
     id: "P3", nummer: 3, titel: "Wärmeerzeugung", zeitraum: "2030 – 2032", farbe: "gelb",
     begruendung: "Umstieg auf Wärmepumpe wirtschaftlich erst nach Hüllsanierung sinnvoll. KfW 458 mit bis zu 50 % Förderung verfügbar.",
     zu_beachten: "Wärmepumpe benötigt ausreichend Aufstellfläche außen (mind. 2 m² Abstand zu Grundstücksgrenze, je nach Bundesland). Schallschutzgutachten empfohlen. Heizkörper auf Niedertemperatur-Tauglichkeit prüfen. GEG §71 ab 2026 zwingend bei Heizungstausch.",
@@ -291,7 +310,9 @@ export const MASSNAHMENPAKETE = [
           // Poor envelope forces WP to higher flow temps → lower COP → less PE benefit.
           // Fuel-switch endenergie saving is unaffected (oil→electricity always cuts kWh regardless of envelope).
           const envAvg = (((bs||{}).waende || 2) + ((bs||{}).dach || 2)) / 2;
-          const malus = Math.max(0, (4 - envAvg) * 0.15);
+          // Floor heating (verteilung stufe ≥ 6) eliminates the COP penalty from high flow temperature.
+          const distrib = (bs||{}).verteilung || 2;
+          const malus = distrib >= 6 ? 0 : Math.max(0, (4 - envAvg) * 0.15);
           return {
             endenergie_delta: base.endenergie_delta,
             primaerenergie_delta: Math.round(base.primaerenergie_delta * (1 - malus)),
@@ -455,11 +476,15 @@ export function bewerteMassnahmen(massnahmen, bauteile_state, gebaeude) {
   const sorted = [...scored].sort((a, b) => a.score - b.score);
   const finite = sorted.filter(m => Number.isFinite(m.score));
   const median = finite.length ? finite[Math.floor(finite.length / 2)].score : Infinity;
-  return sorted.map(m => ({
-    ...m,
-    empfohlen:      Number.isFinite(m.score) && m.score < median * 0.75,
-    nichtEmpfohlen: !Number.isFinite(m.score) || m.score > median * 2.0,
-  }));
+  return sorted.map(m => {
+    const orig = massnahmen.find(x => x.id === m.id);
+    if (orig && orig.skipBadge) return { ...m, empfohlen: false, nichtEmpfohlen: false };
+    return {
+      ...m,
+      empfohlen:      Number.isFinite(m.score) && m.score < median * 0.75,
+      nichtEmpfohlen: !Number.isFinite(m.score) || m.score > median * 2.0,
+    };
+  });
 }
 
 export function vorlauftemperaturFuer(typ) {
@@ -493,10 +518,11 @@ export const NOTE_FARBEN = {
 };
 
 export const PAKET_FARBEN = {
-  rot:    { bg: "#E30613", text: "#FFFFFF", hell: "#FADBD8" },
-  orange: { bg: "#F07D00", text: "#FFFFFF", hell: "#FBE3CE" },
-  gelb:   { bg: "#F6D400", text: "#1E1A15", hell: "#FBF2C2" },
-  lila:   { bg: "#7C3AED", text: "#FFFFFF", hell: "#EDE9FE" },
-  gruen:  { bg: "#00843D", text: "#FFFFFF", hell: "#D0E8D8" },
-  blau:   { bg: "#2563EB", text: "#FFFFFF", hell: "#DBEAFE" },
+  rot:     { bg: "#E30613", text: "#FFFFFF", hell: "#FADBD8" },
+  orange:  { bg: "#F07D00", text: "#FFFFFF", hell: "#FBE3CE" },
+  gelb:    { bg: "#F6D400", text: "#1E1A15", hell: "#FBF2C2" },
+  lila:    { bg: "#7C3AED", text: "#FFFFFF", hell: "#EDE9FE" },
+  gruen:   { bg: "#00843D", text: "#FFFFFF", hell: "#D0E8D8" },
+  blau:    { bg: "#2563EB", text: "#FFFFFF", hell: "#DBEAFE" },
+  tuerkis: { bg: "#2A8B7A", text: "#FFFFFF", hell: "#EBF5F3" },
 };

@@ -413,8 +413,6 @@ const PaketBlock = ({ paket, aktiv, onToggle, aktiveMassnahmen, empfohleneMassna
               <span className="text-[11px] tracking-[0.2em] uppercase" style={{ color: "#6B6259", fontFamily: "'Geist Mono', monospace" }}>
                 Paket {paket.nummer}
               </span>
-              <span style={{ background: f.hell, padding: "2px 10px", borderRadius: 100,
-                             fontSize: 11, color: "#1E1A15" }}>{paket.zeitraum}</span>
             </div>
             <h3 className="font-serif" style={{ fontSize: 22, fontWeight: 500, color: "#1E1A15" }}>{paket.titel}</h3>
           </div>
@@ -455,6 +453,11 @@ const PaketBlock = ({ paket, aktiv, onToggle, aktiveMassnahmen, empfohleneMassna
             <div className="mb-4">
               <div className="text-[14.5px] font-medium mb-1.5 flex items-center gap-2 flex-wrap" style={{ color: "#1E1A15" }}>
                 <span style={{ textDecoration: aktiv && !massnahmeAktiv ? "line-through" : "none" }}>{m.titel}</span>
+                {m._isMovedAbgleich && (
+                  <span style={{ background: "#EBF5F3", color: "#1B4840", border: "1px solid #8CBDB5", padding: "1px 8px", borderRadius: 100, fontSize: 10, fontFamily: "'Geist Mono', monospace", flexShrink: 0 }}>
+                    Pflicht nach BEG
+                  </span>
+                )}
                 {empfohleneMassnahmen.includes(m.id) && (
                   <span className="print-hide" title="Kosten-Nutzen deutlich besser als Durchschnitt (< 75 % des Medianwerts in €/MWh Primärenergie)" style={{ background: "#F6D400", color: "#1E1A15", padding: "1px 8px", borderRadius: 100, fontSize: 10, fontFamily: "'Geist Mono', monospace", fontWeight: 600, letterSpacing: "0.06em", flexShrink: 0, cursor: "help" }}>
                     ★ Empfohlen
@@ -482,13 +485,19 @@ const PaketBlock = ({ paket, aktiv, onToggle, aktiveMassnahmen, empfohleneMassna
               <div className="text-[13px] leading-relaxed" style={{ color: "#3A332B" }}>{m.beschreibung}</div>
             </div>
             {m.id === "M4" && (() => {
-              const vt = vorlauftemperaturFuer(gebaeude.waermeverteilung);
+              const m7Geplant = (bauteile_state.verteilung || 2) >= 6;
+              const vt = m7Geplant ? 35 : vorlauftemperaturFuer(gebaeude.waermeverteilung);
               const envAvg = ((bauteile_state.waende || 3) + (bauteile_state.dach || 3)) / 2;
               const wpRec = wpTypEmpfehlung(vt, envAvg);
               return (
                 <div style={{ marginBottom: 12, background: "#F8F5EF", border: "1px solid #D3CAB9", borderRadius: 3, padding: "8px 12px", fontSize: 12 }}>
                   <div style={{ fontWeight: 600, color: "#1E1A15", marginBottom: 3 }}>WP-Typ-Empfehlung: {wpRec.typ}</div>
-                  <div style={{ color: "#6B6259" }}>Vorlauftemperatur: {vt} °C · {gebaeude.waermeverteilung || "–"}</div>
+                  <div style={{ color: "#6B6259" }}>
+                    Vorlauftemperatur: {vt} °C · {m7Geplant ? "Fußbodenheizung (M7 geplant)" : (gebaeude.waermeverteilung || "–")}
+                  </div>
+                  {m7Geplant && (
+                    <div style={{ color: "#2A8B7A", fontSize: 11, marginTop: 2 }}>✓ Heizkreisumbau geplant — Monovalent-Betrieb erreichbar</div>
+                  )}
                   <div style={{ color: "#3A332B", marginTop: 4 }}>→ {wpRec.note}</div>
                 </div>
               );
@@ -803,16 +812,15 @@ const EEK_ZONEN = [
 ];
 
 const EnergieVerlaufChart = ({ ist, kumuliert }) => {
-  const W = 620, H = 260;
-  const PAD = { top: 44, right: 36, bottom: 44, left: 52 };
+  const W = 620, H = 284;
+  const PAD = { top: 68, right: 36, bottom: 44, left: 52 };
   const pw = W - PAD.left - PAD.right;
   const ph = H - PAD.top - PAD.bottom;
 
   const punkte = [
-    { label: "Heute", sub: null, pe: ist.primaerenergie, bg: "#6E2E1E", klasse: berechneEffizienzklasse(ist.primaerenergie) },
+    { label: "Heute", pe: ist.primaerenergie, bg: "#6E2E1E", klasse: berechneEffizienzklasse(ist.primaerenergie) },
     ...kumuliert.map(r => ({
-      label: `P${r.paket.nummer}`,
-      sub: r.paket.zeitraum,
+      label: r.paket.titel,
       pe: r.nachher.primaerenergie,
       bg: PAKET_FARBEN[r.paket.farbe].bg,
       klasse: r.nachher.effizienzklasse,
@@ -889,12 +897,8 @@ const EnergieVerlaufChart = ({ ist, kumuliert }) => {
               <text x={x} y={y - 18} textAnchor="middle" fontSize={12} fontWeight={700}
                 fontFamily="'Fraunces', serif" fill={textColorFor(pt.klasse)}>{pt.klasse}</text>
               <circle cx={x} cy={y} r={5.5} fill={pt.bg} stroke="#FFF" strokeWidth={2} />
-              <text x={x} y={H - 26} textAnchor="middle" fontSize={10} fill={pt.bg}
+              <text x={x} y={14} textAnchor="middle" fontSize={8.5} fill={pt.bg}
                 fontFamily="'Geist Mono', monospace" fontWeight={600}>{pt.label}</text>
-              {pt.sub && (
-                <text x={x} y={H - 13} textAnchor="middle" fontSize={8} fill="#9B8E82"
-                  fontFamily="'Geist', sans-serif">{pt.sub}</text>
-              )}
             </g>
           );
         })}
@@ -1100,7 +1104,6 @@ const ISFPPrintReport = ({ ist, k, heizkostenIst, aktivePakete, aktiveMassnahmen
                 <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
                   <span style={{ fontSize: 8.5, letterSpacing: "0.22em", writingMode: "vertical-rl", transform: "rotate(180deg)", opacity: 0.92, fontWeight: 600, textTransform: "uppercase" }}>{paket.titel}</span>
                 </div>
-                <div style={{ fontSize: 7.5, opacity: 0.75, letterSpacing: "0.1em", marginTop: 10, textAlign: "center", padding: "0 6px", lineHeight: 1.4 }}>{paket.zeitraum}</div>
               </div>
 
               {/* RECHTER INHALT */}
@@ -1306,7 +1309,7 @@ const WieFunktioniertSection = () => {
             <b>Endenergie</b> ist die dem Gebäude zugeführte Energie (Öl, Gas, Strom). <b>Primärenergie</b> = Endenergie × Primärenergiefaktor — berücksichtigt die Verluste bei Gewinnung und Transport des Energieträgers. Die <b>Effizienzklasse A+–H</b> basiert auf der Primärenergie nach GEG §86. Die Bauteil-Stufen 1–7 beschreiben den Sanierungsstand; sie bestimmen, wie groß die Einsparung jeder Maßnahme für Ihr Haus konkret ist.
           </Sub>
           <Sub title="Wie wird die Reihenfolge der Maßnahmen bestimmt?">
-            Jede Maßnahme erhält eine Punktzahl: Netto-Investition ÷ eingesparte Primärenergie [€/MWh]. Niedrig = wirtschaftlich sinnvoll. Der hydraulische Abgleich steht immer zuerst (günstige Voraussetzung für alle weiteren Maßnahmen). Alle anderen Pakete werden nach Punktzahl sortiert und aktualisieren sich automatisch, wenn Sie Gebäudedaten oder Bauteil-Stufen ändern. Die <b>★ Empfohlen</b>-Markierung zeigt die Top-3-Maßnahmen; Maßnahmen ohne nennenswerte Wirkung (&lt; 3 kWh/(m²·a)) werden als <b>✕ Nicht empfohlen</b> gekennzeichnet.
+            Jede Maßnahme erhält eine Punktzahl: Netto-Investition ÷ eingesparte Primärenergie [€/MWh]. Niedrig = wirtschaftlich sinnvoll. Die Pakete werden nach dieser Punktzahl sortiert und aktualisieren sich automatisch, wenn Sie Gebäudedaten oder Bauteil-Stufen ändern. Die <b>★ Empfohlen</b>-Markierung zeigt Maßnahmen mit deutlich besserem Kosten-Nutzen als der Durchschnitt (Score &lt; 75 % des Medians). <b>✕ Nicht empfohlen</b> kennzeichnet Maßnahmen mit sehr hohem Score (&gt; 2× Median) oder ohne messbaren Primärenergie-Effekt.
           </Sub>
           <Sub title="Wie werden die Förderungen berechnet?">
             <b>BEG EM (BAFA)</b>: 15 % Grundförderung auf den energetisch bedingten Mehraufwand (Investition minus Sowieso-Kosten). <b>Wärmepumpe (KfW 458)</b>: bis zu 50 % (30 % Grundförderung + 20 % Klimageschwindigkeits-Bonus möglich). <b>iSFP-Bonus</b>: +5 % auf alle Maßnahmen, die im Fahrplan hinterlegt sind — das ist der Kern des iSFP-Verfahrens.
@@ -1470,7 +1473,7 @@ export default function App() {
   };
 
   const togglePaket = (id) => {
-    const paket = MASSNAHMENPAKETE.find(p => p.id === id);
+    const paket = dynamicPakete.find(p => p.id === id);
     if (!paket) return;
     const mIds = paket.massnahmen.map(m => m.id);
     const allActive = mIds.every(mid => aktiveMassnahmen.includes(mid));
@@ -1495,11 +1498,17 @@ export default function App() {
     return bs;
   }, [bauteile]);
 
+  // When M7 (Heizkreisumbau) is active, treat verteilung as floor-heating level so M4's COP malus is lifted.
+  const effectiveBauteilState = useMemo(() => {
+    if (aktiveMassnahmen.includes("M7")) return { ...bauteile_state, verteilung: 7 };
+    return bauteile_state;
+  }, [bauteile_state, aktiveMassnahmen]);
+
   const effectivePakete = useMemo(() => {
     const allMerged = MASSNAHMENPAKETE.flatMap(p =>
       p.massnahmen.map(m => ({ ...m, ...(massnahmenOverrides[m.id] || {}) }))
     );
-    const scored = bewerteMassnahmen(allMerged, bauteile_state, gebaeude);
+    const scored = bewerteMassnahmen(allMerged, effectiveBauteilState, gebaeude);
     const scoreMap = Object.fromEntries(scored.map(s => [s.id, s.score]));
     const pakete = MASSNAHMENPAKETE.map(p => {
       const sortedM = p.massnahmen
@@ -1511,11 +1520,34 @@ export default function App() {
     const [p1, ...rest] = pakete; // P1 always first (Sofortmaßnahmen / hydraulischer Abgleich)
     const ordered = [p1, ...rest.sort((a, b) => a._bestScore - b._bestScore)];
     return ordered.map((p, idx) => ({ ...p, nummer: idx + 1 }));
-  }, [massnahmenOverrides, bauteile_state, gebaeude]);
+  }, [massnahmenOverrides, effectiveBauteilState, gebaeude]);
+
+  // M1 (Hydraulischer Abgleich) must be redone after WP or floor heating install (BEG requirement).
+  // Move it from P1 into the relevant later package so it's counted once in the right step.
+  const dynamicPakete = useMemo(() => {
+    const m4Active = aktiveMassnahmen.includes("M4");
+    const m7Active = aktiveMassnahmen.includes("M7");
+    if (!m4Active && !m7Active) return effectivePakete;
+
+    const targetId = m4Active ? "P3" : "P3a";
+    const p1 = effectivePakete.find(p => p.id === "P1");
+    const m1Measure = p1?.massnahmen.find(m => m.id === "M1");
+    if (!m1Measure) return effectivePakete;
+
+    const result = effectivePakete
+      .filter(p => !(p.id === "P1"))  // Remove P1 (its only measure M1 moves)
+      .map(p => {
+        if (p.id === targetId) {
+          return { ...p, massnahmen: [{ ...m1Measure, _isMovedAbgleich: true }, ...p.massnahmen] };
+        }
+        return p;
+      });
+    return result.map((p, idx) => ({ ...p, nummer: idx + 1 }));
+  }, [effectivePakete, aktiveMassnahmen]);
 
   const aktivePakete = useMemo(() =>
-    effectivePakete.filter(p => p.massnahmen.some(m => aktiveMassnahmen.includes(m.id))).map(p => p.id),
-    [effectivePakete, aktiveMassnahmen]
+    dynamicPakete.filter(p => p.massnahmen.some(m => aktiveMassnahmen.includes(m.id))).map(p => p.id),
+    [dynamicPakete, aktiveMassnahmen]
   );
 
   const heizkosten = useMemo(
@@ -1524,12 +1556,12 @@ export default function App() {
   );
   const heizkostenWE = useMemo(() => gebaeude.wohneinheiten > 0 ? Math.round(heizkosten / gebaeude.wohneinheiten) : 0, [heizkosten, gebaeude.wohneinheiten]);
   const effizienzklasse = useMemo(() => berechneEffizienzklasse(ist.primaerenergie), [ist.primaerenergie]);
-  const gebaeudeWithState = useMemo(() => ({ ...gebaeude, bauteile_state }), [gebaeude, bauteile_state]);
-  const k = useMemo(() => berechneNachMassnahmen(aktiveMassnahmen, ist, gebaeudeWithState, effectivePakete), [aktiveMassnahmen, ist, gebaeudeWithState, effectivePakete]);
-  const kumuliert = useMemo(() => berechneKumuliert(aktiveMassnahmen, ist, gebaeudeWithState, effectivePakete), [aktiveMassnahmen, ist, gebaeudeWithState, effectivePakete]);
+  const gebaeudeWithState = useMemo(() => ({ ...gebaeude, bauteile_state: effectiveBauteilState }), [gebaeude, effectiveBauteilState]);
+  const k = useMemo(() => berechneNachMassnahmen(aktiveMassnahmen, ist, gebaeudeWithState, dynamicPakete), [aktiveMassnahmen, ist, gebaeudeWithState, dynamicPakete]);
+  const kumuliert = useMemo(() => berechneKumuliert(aktiveMassnahmen, ist, gebaeudeWithState, dynamicPakete), [aktiveMassnahmen, ist, gebaeudeWithState, dynamicPakete]);
   const bewertung = useMemo(() =>
-    bewerteMassnahmen(effectivePakete.flatMap(p => p.massnahmen), bauteile_state, gebaeude),
-    [effectivePakete, bauteile_state, gebaeude]
+    bewerteMassnahmen(effectivePakete.flatMap(p => p.massnahmen), effectiveBauteilState, gebaeude),
+    [effectivePakete, effectiveBauteilState, gebaeude]
   );
   const empfohleneMassnahmen      = useMemo(() => bewertung.filter(m => m.empfohlen).map(m => m.id),      [bewertung]);
   const nichtEmpfohleneMassnahmen = useMemo(() => bewertung.filter(m => m.nichtEmpfohlen).map(m => m.id), [bewertung]);
@@ -1664,7 +1696,7 @@ export default function App() {
 
         {/* Fahrplan */}
         <Section id="fahrplan" eyebrow="Schritt 2 · Fahrplan" title="Empfohlene Maßnahmenpakete"
-          subtitle="Reihenfolge nach Kosten-Nutzen (€/MWh Primärenergie). ★ = deutlich günstiger als Median; ✕ = deutlich teurer. Pakete können für Szenarienvergleich ausgeblendet werden.">
+          subtitle="Reihenfolge nach Kosten-Nutzen (€/MWh Primärenergie). ★ = deutlich günstiger als Median; ✕ = deutlich teurer.">
           <div className="mb-10" style={{ overflowX: "auto", WebkitOverflowScrolling: "touch", marginLeft: -4, marginRight: -4 }}>
             <div className="flex items-start justify-between gap-2 relative" style={{ padding: "0 12px", minWidth: 480 }}>
               <div className="absolute" style={{ left: 60, right: 60, top: 28, height: 2, background: "linear-gradient(to right, #E30613, #F07D00, #7C3AED, #F6D400, #00843D, #2563EB)" }} />
@@ -1673,14 +1705,13 @@ export default function App() {
                 <div className="text-[10.5px] tracking-[0.18em] uppercase text-center" style={{ color: "#6B6259", fontFamily: "'Geist Mono', monospace" }}>Heute</div>
                 <div className="text-[11.5px]" style={{ color: "#3A332B" }}>Klasse {effizienzklasse}</div>
               </div>
-              {effectivePakete.map(p => (
+              {dynamicPakete.map(p => (
                 <div key={p.id} className="flex flex-col items-center gap-2 relative" style={{ opacity: aktivePakete.includes(p.id) ? 1 : 0.3 }}>
                   <button className="print-hide" style={{ background: "none", border: "none", padding: 0, cursor: "pointer", display: "block" }}
                     onClick={() => document.getElementById(`paket-${p.id}`)?.scrollIntoView({ behavior: "smooth", block: "start" })}
                     title={`Zu Paket ${p.nummer}: ${p.titel} springen`}>
                     <PaketHaus farbe={p.farbe} aktiv={aktivePakete.includes(p.id)} nummer={p.nummer} size={56} />
                   </button>
-                  <div className="text-[10.5px] tracking-[0.18em] uppercase text-center" style={{ color: "#6B6259", fontFamily: "'Geist Mono', monospace" }}>{p.zeitraum}</div>
                   <div className="text-[11.5px] text-center max-w-[110px] leading-tight" style={{ color: "#3A332B" }}>{p.titel}</div>
                 </div>
               ))}
@@ -1695,13 +1726,13 @@ export default function App() {
           </div>
 
           <div className="space-y-5">
-            {effectivePakete.map(p => (
+            {dynamicPakete.map(p => (
               <PaketBlock key={p.id} paket={p} aktiv={aktivePakete.includes(p.id)} onToggle={() => togglePaket(p.id)}
                 aktiveMassnahmen={aktiveMassnahmen}
                 empfohleneMassnahmen={empfohleneMassnahmen}
                 nichtEmpfohleneMassnahmen={nichtEmpfohleneMassnahmen}
                 gebaeude={gebaeude}
-                bauteile_state={bauteile_state} />
+                bauteile_state={effectiveBauteilState} />
             ))}
           </div>
 
@@ -1746,7 +1777,7 @@ export default function App() {
                     </tr>
                   </thead>
                   <tbody>
-                    {effectivePakete.map(p => {
+                    {dynamicPakete.map(p => {
                       const active = aktivePakete.includes(p.id);
                       const invest = active ? p.massnahmen.reduce((s, m) => s + m.investition, 0) : 0;
                       const foerd = active ? p.massnahmen.reduce((s, m) => {
