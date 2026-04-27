@@ -336,9 +336,11 @@ export const MASSNAHMENPAKETE = [
         impact: bs => {
           const variante = WP_VARIANTEN[(bs||{}).wpVariante] || WP_VARIANTEN.monovalent;
           const base = _imp([[-75,-60,24],[-70,-55,22],[-55,-43,17],[-40,-32,12],[-20,-16,6],[-8,-6,2],[0,0,0]], (bs||{}).heizung);
-          const envAvg = (((bs||{}).waende || 2) + ((bs||{}).dach || 2)) / 2;
+          // Use actual flow temperature from Wärmeverteilung dropdown; M7 (floor heating) overrides to 35 °C.
           const distrib = (bs||{}).verteilung || 2;
-          const malus = distrib >= 6 ? 0 : Math.max(0, (4 - envAvg) * 0.15);
+          const vorlaufTemp = distrib >= 6 ? 35 : ((bs||{}).vorlauftemp || 65);
+          // Malus scales 0–0.30: no penalty at 35 °C (COP ~4.5), 30 % at 65 °C (COP ~2).
+          const malus = Math.max(0, Math.min(0.30, (vorlaufTemp - 35) / 100));
           return {
             endenergie_delta: Math.round(base.endenergie_delta * variante.ee_mult),
             primaerenergie_delta: Math.round(base.primaerenergie_delta * variante.pe_mult * (1 - malus)),

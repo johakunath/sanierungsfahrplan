@@ -1563,7 +1563,7 @@ export default function App() {
     if (wpVariante === "auto" && resolvedVariant === "hybrid" && /Heizöl/i.test(gebaeude.heizung_typ || "")) {
       resolvedVariant = "monoenergetisch";
     }
-    return { ...state, wpVariante: resolvedVariant };
+    return { ...state, wpVariante: resolvedVariant, vorlauftemp: vt };
   }, [bauteile_state, aktiveMassnahmen, wpVariante, gebaeude.waermeverteilung, gebaeude.heizung_typ]);
   const resolvedWpVariante = effectiveBauteilState.wpVariante || "monovalent";
 
