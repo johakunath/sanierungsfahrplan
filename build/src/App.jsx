@@ -384,7 +384,7 @@ const BauteilKachel = ({ bauteil, onNoteChange }) => {
 };
 
 // ═══ PAKET-BLOCK mit Kostenherleitung-Tooltip ═══════════════════════════
-const PaketBlock = ({ paket, aktiv, onToggle, aktiveMassnahmen, empfohleneMassnahmen = [], nichtEmpfohleneMassnahmen = [], gebaeude = {}, bauteile_state = {}, wpVariante = "auto", resolvedWpVariante = "monovalent", onWpVarianteChange = () => {} }) => {
+const PaketBlock = ({ paket, aktiv, onToggle, onToggleMassnahme = () => {}, aktiveMassnahmen, empfohleneMassnahmen = [], nichtEmpfohleneMassnahmen = [], gebaeude = {}, bauteile_state = {}, wpVariante = "auto", resolvedWpVariante = "monovalent", onWpVarianteChange = () => {} }) => {
   const f = PAKET_FARBEN[paket.farbe];
   const aktiveMassnahmenInPaket = paket.massnahmen.filter(m => aktiveMassnahmen.includes(m.id));
   const summe_invest  = aktiveMassnahmenInPaket.reduce((s, m) => s + m.investition, 0);
@@ -454,6 +454,10 @@ const PaketBlock = ({ paket, aktiv, onToggle, aktiveMassnahmen, empfohleneMassna
           <div key={m.id} className="p-5" style={{ borderBottom: i < paket.massnahmen.length - 1 ? "1px solid #E2DBD0" : "none", opacity: massnahmeAktiv ? 1 : 0.45, transition: "opacity 0.15s" }}>
             <div className="mb-4">
               <div className="text-[14.5px] font-medium mb-1.5 flex items-center gap-2 flex-wrap" style={{ color: "#1E1A15" }}>
+                <label className="print-hide" style={{ display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer", fontSize: 11, color: "#6B6259", fontFamily: "'Geist Mono', monospace", letterSpacing: "0.05em" }}>
+                  <input type="checkbox" checked={massnahmeAktiv} onChange={() => onToggleMassnahme(m.id)}
+                    style={{ accentColor: "#2A8B7A", width: 14, height: 14, cursor: "pointer" }} />
+                </label>
                 <span style={{ textDecoration: aktiv && !massnahmeAktiv ? "line-through" : "none" }}>{m.titel}</span>
                 {m._isMovedAbgleich && (
                   <span style={{ background: "#EBF5F3", color: "#1B4840", border: "1px solid #8CBDB5", padding: "1px 8px", borderRadius: 100, fontSize: 10, fontFamily: "'Geist Mono', monospace", flexShrink: 0 }}>
@@ -523,7 +527,7 @@ const PaketBlock = ({ paket, aktiv, onToggle, aktiveMassnahmen, empfohleneMassna
                   {m7Geplant && <div style={{ color: "#2A8B7A", fontSize: 11, marginBottom: 4 }}>✓ Heizkreisumbau (M7) geplant — niedrige Vorlauftemperatur erreichbar</div>}
                   {!m7Geplant && autoKey !== "monovalent" && (
                     <div style={{ color: "#2A8B7A", fontSize: 11, marginBottom: 4 }}>
-                      💡 Paket P3a (Heizkreisumbau) prüfen — senkt Vorlauftemperatur und ermöglicht Monovalent-Betrieb.
+                      💡 Maßnahme „Erneuerung Wärmeverteilung" (M7) aktivieren — senkt Vorlauftemperatur und ermöglicht Monovalent-Betrieb.
                     </div>
                   )}
                   <div style={{ color: "#6B6259", fontSize: 11.5 }}>Vorlauftemperatur: {vt} °C · {m7Geplant ? "Fußbodenheizung" : (gebaeude.waermeverteilung || "–")}</div>
@@ -1492,10 +1496,18 @@ export default function App() {
     const neueBauteile = ableiteBauteile(p.gebaeude.baujahr, p.gebaeude.heizung_typ, p.gebaeude.lueftung, p.gebaeude.warmwasser);
     const bs = {};
     neueBauteile.forEach(b => { bs[b.id] = b.note; });
+    const vt = vorlauftemperaturFuer(p.gebaeude.waermeverteilung);
+    const fossil = /Heizöl|Erdgas|Fernwärme \(Gas/i.test(p.gebaeude.heizung_typ || "");
     const defaultAktive = MASSNAHMENPAKETE.flatMap(pkg =>
-      pkg.massnahmen
-        .filter(m => Math.abs((m.impact ? m.impact(bs) : { primaerenergie_delta: m.primaerenergie_delta || 0 }).primaerenergie_delta) >= 3)
-        .map(m => m.id)
+      pkg.massnahmen.filter(m => {
+        // M7: nur aktivieren wenn VT > 50 °C (Hochtemperatur-Heizkörper).
+        if (m.id === "M7") return vt > 50;
+        // M4: immer aktivieren bei fossiler Heizung — Heizungstausch ist sinnvoll.
+        if (m.id === "M4") return fossil;
+        // Alle anderen Maßnahmen: nach PE-Wirkungsschwelle (>= 3 kWh/m²a).
+        const imp = m.impact ? m.impact(bs) : { primaerenergie_delta: m.primaerenergie_delta || 0 };
+        return Math.abs(imp.primaerenergie_delta) >= 3;
+      }).map(m => m.id)
     );
     setPresetId(id);
     setGebaeude(p.gebaeude);
@@ -1565,14 +1577,23 @@ export default function App() {
     }
   };
 
+  // Package toggle = "select all / deselect all" of its measures.
+  // Off if any measure is active; turning on activates all measures of the package.
   const togglePaket = (id) => {
     const paket = dynamicPakete.find(p => p.id === id);
     if (!paket) return;
     const mIds = paket.massnahmen.map(m => m.id);
-    const allActive = mIds.every(mid => aktiveMassnahmen.includes(mid));
-    setAktiveMassnahmen(prev => allActive
+    const anyActive = mIds.some(mid => aktiveMassnahmen.includes(mid));
+    setAktiveMassnahmen(prev => anyActive
       ? prev.filter(x => !mIds.includes(x))
       : [...prev.filter(x => !mIds.includes(x)), ...mIds]
+    );
+  };
+
+  const toggleMassnahme = (mid) => {
+    setAktiveMassnahmen(prev => prev.includes(mid)
+      ? prev.filter(x => x !== mid)
+      : [...prev, mid]
     );
   };
 
@@ -1633,39 +1654,26 @@ export default function App() {
     return ordered.map((p, idx) => ({ ...p, nummer: idx + 1 }));
   }, [massnahmenOverrides, effectiveBauteilState, gebaeude]);
 
-  // P3a (Heizkreisumbau) must always precede P3 (Wärmepumpe) — floor heating before WP install.
-  const orderedPakete = useMemo(() => {
-    const arr = [...effectivePakete];
-    const idxP3a = arr.findIndex(p => p.id === "P3a");
-    const idxP3  = arr.findIndex(p => p.id === "P3");
-    if (idxP3a !== -1 && idxP3 !== -1 && idxP3a > idxP3) {
-      [arr[idxP3a], arr[idxP3]] = [arr[idxP3], arr[idxP3a]];
-    }
-    return arr.map((p, idx) => ({ ...p, nummer: idx + 1 }));
-  }, [effectivePakete]);
-
-  // M1 (Hydraulischer Abgleich) must be redone after WP or floor heating install (BEG requirement).
-  // Move it from P1 into the relevant later package so it's counted once in the right step.
+  // M1 (Hydraulischer Abgleich) must be redone after WP install (BEG requirement).
+  // Move it from P1 to the END of P3 so the install sequence reads: M7 → M4 → M1.
   const dynamicPakete = useMemo(() => {
     const m4Active = aktiveMassnahmen.includes("M4");
-    const m7Active = aktiveMassnahmen.includes("M7");
-    if (!m4Active && !m7Active) return orderedPakete;
+    if (!m4Active) return effectivePakete;
 
-    const targetId = m4Active ? "P3" : "P3a";
-    const p1 = orderedPakete.find(p => p.id === "P1");
+    const p1 = effectivePakete.find(p => p.id === "P1");
     const m1Measure = p1?.massnahmen.find(m => m.id === "M1");
-    if (!m1Measure) return orderedPakete;
+    if (!m1Measure) return effectivePakete;
 
-    const result = orderedPakete
-      .filter(p => !(p.id === "P1"))  // Remove P1 (its only measure M1 moves)
+    const result = effectivePakete
+      .filter(p => p.id !== "P1")  // Remove P1 (its only measure M1 moves)
       .map(p => {
-        if (p.id === targetId) {
-          return { ...p, massnahmen: [{ ...m1Measure, _isMovedAbgleich: true }, ...p.massnahmen] };
+        if (p.id === "P3") {
+          return { ...p, massnahmen: [...p.massnahmen, { ...m1Measure, _isMovedAbgleich: true }] };
         }
         return p;
       });
     return result.map((p, idx) => ({ ...p, nummer: idx + 1 }));
-  }, [orderedPakete, aktiveMassnahmen]);
+  }, [effectivePakete, aktiveMassnahmen]);
 
   const aktivePakete = useMemo(() =>
     dynamicPakete.filter(p => p.massnahmen.some(m => aktiveMassnahmen.includes(m.id))).map(p => p.id),
@@ -1879,6 +1887,7 @@ export default function App() {
           <div className="space-y-5">
             {dynamicPakete.map(p => (
               <PaketBlock key={p.id} paket={p} aktiv={aktivePakete.includes(p.id)} onToggle={() => togglePaket(p.id)}
+                onToggleMassnahme={toggleMassnahme}
                 aktiveMassnahmen={aktiveMassnahmen}
                 empfohleneMassnahmen={empfohleneMassnahmen}
                 nichtEmpfohleneMassnahmen={nichtEmpfohleneMassnahmen}

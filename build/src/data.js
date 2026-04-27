@@ -335,30 +335,21 @@ export const MASSNAHMENPAKETE = [
     ],
   },
   {
-    id: "P3a", nummer: 3, titel: "Heizkreisumbau", zeitraum: "2028 – 2031", farbe: "tuerkis",
-    begruendung: "Voraussetzung für optimalen WP-Betrieb. Fußbodenheizung senkt Vorlauftemperatur auf <40 °C — COP der Wärmepumpe steigt von ~2 auf ~4–5.",
-    zu_beachten: "Heizkreisumbau erfordert Öffnung von Estrich und Fußbodenbelägen. Bauzeit 3–5 Wochen. Koordination mit WP-Einbau sinnvoll — idealerweise innerhalb eines Jahres.",
-    komfortsteigerung: "Gleichmäßige Strahlungswärme, kein Überheizen. Kein Staubaufwirbeln durch Konvektion. Fußbodenwärme kombinierbar mit Kühlung im Sommer.",
+    id: "P3", nummer: 3, titel: "Wärmeerzeugung & Verteilung", zeitraum: "2030 – 2034", farbe: "gelb",
+    begruendung: "Wärmepumpe entfaltet ihr volles Potenzial nur mit niedriger Vorlauftemperatur. Heizkreis erst anpassen (falls nötig), dann WP einbauen, danach hydraulisch abgleichen.",
+    zu_beachten: "Reihenfolge wichtig: 1) Wärmeverteilung umbauen oder Heizkörper auf NT-Tauglichkeit prüfen. 2) WP-Außengerät installieren — Schallschutzgutachten empfohlen. 3) Hydraulischer Abgleich mit neuen Massenströmen. GEG §71 ab 2026 zwingend bei Heizungstausch.",
+    komfortsteigerung: "Konstante Vorlauftemperaturen, leiser Betrieb außen. Bei Fußbodenheizung: gleichmäßige Strahlungswärme, im Sommer als Kühlung nutzbar.",
     massnahmen: [
-      { id: "M7", titel: "Heizkreisumbau auf Niedertemperatur / Fußbodenheizung",
-        beschreibung: "Umbau auf Fußbodenheizung (Trocken- oder Nassestrich) oder Heizkreisoptimierung für NT-Betrieb ≤ 40 °C. Inkl. hydraulischem Abgleich. Ermöglicht Monovalent-Betrieb der Wärmepumpe (COP ~4–5 statt ~2).",
+      { id: "M7", rolle: "enabler", titel: "Erneuerung Wärmeverteilung (Niedertemperatur / Fußbodenheizung)",
+        beschreibung: "Umbau auf Fußbodenheizung (Trocken- oder Nassestrich) oder Heizkreisoptimierung für NT-Betrieb ≤ 40 °C inkl. hydraulischem Abgleich. Voraussetzung für Monovalent-WP-Betrieb (COP ~4–5 statt ~2).",
         investition: 12000, ohnehin_anteil: 500, foerderquote: 0.15,
         co2_reduktion: 1.0,
         foerderung_rechtsgrundlage: "BEG EM", foerderung_stelle: "BAFA",
         kostenherleitung: "~100 €/m² Fußbodenheizung (Trockenbau) für EFH 120 m² · inkl. hydraulischem Abgleich und Estricharbeiten",
-        rolle: "enabler",
         impact: bs => {
           const vNote = ((bs||{}).verteilung) || 2;
           return _imp([[-5,-4,1.0],[-4,-3,0.8],[-3,-3,0.6],[-2,-2,0.4],[-1,-1,0.2],[0,0,0],[0,0,0]], vNote);
         } },
-    ],
-  },
-  {
-    id: "P3", nummer: 3, titel: "Wärmeerzeugung", zeitraum: "2030 – 2032", farbe: "gelb",
-    begruendung: "Umstieg auf Wärmepumpe wirtschaftlich erst nach Hüllsanierung sinnvoll. KfW 458 mit bis zu 50 % Förderung verfügbar.",
-    zu_beachten: "Wärmepumpe benötigt ausreichend Aufstellfläche außen (mind. 2 m² Abstand zu Grundstücksgrenze, je nach Bundesland). Schallschutzgutachten empfohlen. Heizkörper auf Niedertemperatur-Tauglichkeit prüfen. GEG §71 ab 2026 zwingend bei Heizungstausch.",
-    komfortsteigerung: "Wärmepumpe liefert konstante Vorlauftemperaturen — kein Aufheizen nach Nachtabsenkung spürbar. Keine Brennstofflieferung mehr nötig. Geringere Wartungskosten.",
-    massnahmen: [
       { id: "M4", rolle: "systempfad", titel: "Luft-Wasser-Wärmepumpe (12 kW, monovalent)",
         beschreibung: "Monoblock-WP außen, neuer Pufferspeicher 300 L, Heizkörpertausch wo nötig.",
         investition: 32000, ohnehin_anteil: 5000, foerderquote: 0.30,
@@ -586,5 +577,4 @@ export const PAKET_FARBEN = {
   lila:    { bg: "#7C3AED", text: "#FFFFFF", hell: "#EDE9FE" },
   gruen:   { bg: "#00843D", text: "#FFFFFF", hell: "#D0E8D8" },
   blau:    { bg: "#2563EB", text: "#FFFFFF", hell: "#DBEAFE" },
-  tuerkis: { bg: "#2A8B7A", text: "#FFFFFF", hell: "#EBF5F3" },
 };
