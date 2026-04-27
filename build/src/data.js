@@ -152,7 +152,7 @@ export const PRESETS = {
       heizung_bj: 2015, heizung_typ: "Erdgas Brennwert",
       warmwasser: "zentral, über Heizung", lueftung: "Fensterlüftung",
       erneuerbare: "keine", denkmalschutz: false, registriernummer: "—",
-      waermeverteilung: "Heizkörper (Hochtemperatur, >60 °C)",
+      waermeverteilung: "Heizkörper (Niedertemperatur, 45–55 °C)",
     },
     ist: { endenergie: 155, primaerenergie: 172, co2: 41 },
   },
@@ -184,7 +184,7 @@ export const PRESETS = {
       heizung_bj: 2005, heizung_typ: "Erdgas Niedertemperatur",
       warmwasser: "zentral, über Heizung", lueftung: "Fensterlüftung",
       erneuerbare: "keine", denkmalschutz: false, registriernummer: "—",
-      waermeverteilung: "Heizkörper (Hochtemperatur, >60 °C)",
+      waermeverteilung: "Heizkörper (Niedertemperatur, 45–55 °C)",
     },
     ist: { endenergie: 128, primaerenergie: 145, co2: 35 },
   },
@@ -362,8 +362,8 @@ export const MASSNAHMENPAKETE = [
           // Use actual flow temperature from Wärmeverteilung dropdown; M7 (floor heating) overrides to 35 °C.
           const distrib = (bs||{}).verteilung || 2;
           const vorlaufTemp = distrib >= 6 ? 35 : ((bs||{}).vorlauftemp || 65);
-          // Malus scales 0–0.30: no penalty at 35 °C (COP ~4.5), 30 % at 65 °C (COP ~2).
-          const malus = Math.max(0, Math.min(0.30, (vorlaufTemp - 35) / 100));
+          // Malus scales 0–0.20 (linear from 35 °C to 65 °C): aligned with realistic modern WP COPs.
+          const malus = Math.max(0, Math.min(0.20, (vorlaufTemp - 35) / 150));
           return {
             endenergie_delta: Math.round(base.endenergie_delta * variante.ee_mult),
             primaerenergie_delta: Math.round(base.primaerenergie_delta * variante.pe_mult * (1 - malus)),
