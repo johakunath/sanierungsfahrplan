@@ -790,9 +790,21 @@ const KumuliertTabelle = ({ kumuliert, ist, heizkostenIst }) => (
       <thead>
         <tr style={{ borderBottom: "1.25px solid #1E1A15" }}>
           <th className="text-left py-2.5 font-medium">Schritt</th>
-          <th className="text-right py-2.5 font-medium">Endenergie</th>
-          <th className="text-right py-2.5 font-medium">Primärenergie</th>
-          <th className="text-right py-2.5 font-medium">CO₂</th>
+          <th className="text-right py-2.5 font-medium">
+            <Tooltip content="Tatsächlich gelieferter Energieträger (Gas, Strom, Öl) in kWh pro m² Wohnfläche und Jahr. Entspricht dem Energieausweis-Verbrauchswert.">
+              <span className="cursor-help border-b border-dashed border-current">Endenergie</span>
+            </Tooltip>
+          </th>
+          <th className="text-right py-2.5 font-medium">
+            <Tooltip content="Gesamtenergieeinsatz inkl. Gewinnung und Transport des Energieträgers (Primärenergiefaktor). Basis für die Energieeffizienzklasse nach GEG §86.">
+              <span className="cursor-help border-b border-dashed border-current">Primärenergie</span>
+            </Tooltip>
+          </th>
+          <th className="text-right py-2.5 font-medium">
+            <Tooltip content="CO₂-Emissionen aus dem Heizenergieverbrauch in kg pro m² Wohnfläche und Jahr. Inkl. Vorkette des Energieträgers.">
+              <span className="cursor-help border-b border-dashed border-current">CO₂</span>
+            </Tooltip>
+          </th>
           <th className="text-right py-2.5 font-medium">Klasse</th>
         </tr>
       </thead>
@@ -981,7 +993,7 @@ const ISFPPrintReport = ({ ist, k, heizkostenIst, aktivePakete, aktiveMassnahmen
     <div className="print-only" style={{ fontFamily: "'Geist', sans-serif", color: "#1E1A15" }}>
 
       {/* ═══ SEITE 1: ÜBERBLICK ═══ */}
-      <div style={{ padding: "18px 22px 16px", pageBreakAfter: "always", minHeight: "270mm", display: "flex", flexDirection: "column" }}>
+      <div style={{ padding: "18px 22px 16px", marginBottom: "16mm", pageBreakInside: "avoid", display: "flex", flexDirection: "column" }}>
 
         {/* Header */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 }}>
@@ -1149,7 +1161,7 @@ const ISFPPrintReport = ({ ist, k, heizkostenIst, aktivePakete, aktiveMassnahmen
           .join(" · ");
 
         return (
-          <div key={paket.id} style={{ pageBreakBefore: "always", minHeight: "270mm", display: "flex", flexDirection: "column" }}>
+          <div key={paket.id} style={{ marginBottom: "12mm", pageBreakInside: "avoid", display: "flex", flexDirection: "column" }}>
 
             {/* Seitenkopf */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", padding: "14px 22px 5px" }}>
@@ -1209,7 +1221,7 @@ const ISFPPrintReport = ({ ist, k, heizkostenIst, aktivePakete, aktiveMassnahmen
                 <div style={{ marginBottom: 11 }}>
                   <div style={{ fontSize: 8.5, letterSpacing: "0.18em", color: "#B5623E", fontFamily: "'Geist Mono', monospace", textTransform: "uppercase", marginBottom: 5 }}>Maßnahmen</div>
                   {paket.massnahmen.map(m => (
-                    <div key={m.id} style={{ paddingLeft: 14, position: "relative", marginBottom: 6, fontSize: 11, lineHeight: 1.5 }}>
+                    <div key={m.id} style={{ paddingLeft: 14, position: "relative", marginBottom: 6, fontSize: 13, lineHeight: 1.5 }}>
                       <span style={{ position: "absolute", left: 0, color: farbe.bg, fontWeight: 700 }}>→</span>
                       <span style={{ fontWeight: 600, color: "#1E1A15" }}>{m.titel}</span>
                       {m.beschreibung && <span style={{ color: "#3A332B" }}> — {m.beschreibung}</span>}
