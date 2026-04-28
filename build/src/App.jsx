@@ -493,7 +493,7 @@ function getWarum(measureId, ctx) {
         ? "Wände teilgedämmt — Aufdopplung lohnt nur bei sowieso fälliger Putzerneuerung."
         : "Fassade bereits gut gedämmt — Dämmung lohnt energetisch kaum.";
       const jetzt = nichtEmpfohlen
-        ? "Ihr €/MWh-Score liegt deutlich über dem Median — andere Maßnahmen sind effizienter."
+        ? "Ihr €/kWh-Score liegt deutlich über dem Median — andere Maßnahmen sind effizienter."
         : "Idealerweise gemeinsam mit fälliger Putzerneuerung umsetzen — Gerüstkosten bereits eingerechnet.";
       return { grund, jetzt };
     }
@@ -604,12 +604,12 @@ const PaketBlock = ({ paket, aktiv, onToggle, onToggleMassnahme = () => {}, akti
                   </span>
                 )}
                 {empfohleneMassnahmen.includes(m.id) && (
-                  <span className="print-hide" title="Kosten-Nutzen deutlich besser als Durchschnitt (< 75 % des Medianwerts in €/MWh Primärenergie)" style={{ background: "#F6D400", color: "#1E1A15", padding: "1px 8px", borderRadius: 100, fontSize: 10, fontFamily: "'Geist Mono', monospace", fontWeight: 600, letterSpacing: "0.06em", flexShrink: 0, cursor: "help" }}>
+                  <span className="print-hide" title="Kosten-Nutzen deutlich besser als Durchschnitt (< 75 % des Medianwerts in €/kWh Primärenergie)" style={{ background: "#F6D400", color: "#1E1A15", padding: "1px 8px", borderRadius: 100, fontSize: 10, fontFamily: "'Geist Mono', monospace", fontWeight: 600, letterSpacing: "0.06em", flexShrink: 0, cursor: "help" }}>
                     ★ Empfohlen
                   </span>
                 )}
                 {nichtEmpfohleneMassnahmen.includes(m.id) && !empfohleneMassnahmen.includes(m.id) && (
-                  <span className="print-hide" title="Kosten-Nutzen deutlich schlechter als Durchschnitt (> 2× Medianwert in €/MWh Primärenergie)" style={{ background: "#E2DBD0", color: "#6B6259", padding: "1px 8px", borderRadius: 100, fontSize: 10, fontFamily: "'Geist Mono', monospace", fontWeight: 600, letterSpacing: "0.06em", flexShrink: 0, cursor: "help" }}>
+                  <span className="print-hide" title="Kosten-Nutzen deutlich schlechter als Durchschnitt (> 2× Medianwert in €/kWh Primärenergie)" style={{ background: "#E2DBD0", color: "#6B6259", padding: "1px 8px", borderRadius: 100, fontSize: 10, fontFamily: "'Geist Mono', monospace", fontWeight: 600, letterSpacing: "0.06em", flexShrink: 0, cursor: "help" }}>
                     ✕ Nicht empfohlen
                   </span>
                 )}
@@ -1551,7 +1551,7 @@ const WieFunktioniertSection = () => {
             <b>Endenergie</b> ist die dem Gebäude zugeführte Energie (Öl, Gas, Strom). <b>Primärenergie</b> = Endenergie × Primärenergiefaktor — berücksichtigt die Verluste bei Gewinnung und Transport des Energieträgers. Die <b>Effizienzklasse A+–H</b> basiert auf der Primärenergie nach GEG §86. Die Bauteil-Stufen 1–7 beschreiben den Sanierungsstand; sie bestimmen, wie groß die Einsparung jeder Maßnahme für Ihr Haus konkret ist.
           </Sub>
           <Sub title="Wie wird die Reihenfolge der Maßnahmen bestimmt?">
-            Jede Maßnahme erhält eine Punktzahl: Netto-Investition ÷ eingesparte Primärenergie [€/MWh]. Niedrig = wirtschaftlich sinnvoll. Die Pakete werden nach dieser Punktzahl sortiert und aktualisieren sich automatisch, wenn Sie Gebäudedaten oder Bauteil-Stufen ändern. Die <b>★ Empfohlen</b>-Markierung zeigt Maßnahmen mit deutlich besserem Kosten-Nutzen als der Durchschnitt (Score &lt; 75 % des Medians). <b>✕ Nicht empfohlen</b> kennzeichnet Maßnahmen mit sehr hohem Score (&gt; 2× Median) oder ohne messbaren Primärenergie-Effekt.
+            Jede Maßnahme erhält eine Punktzahl: Netto-Investition ÷ eingesparte Primärenergie [€/kWh]. Niedrig = wirtschaftlich sinnvoll. Die Pakete werden nach dieser Punktzahl sortiert und aktualisieren sich automatisch, wenn Sie Gebäudedaten oder Bauteil-Stufen ändern. Die <b>★ Empfohlen</b>-Markierung zeigt Maßnahmen mit deutlich besserem Kosten-Nutzen als der Durchschnitt (Score &lt; 75 % des Medians). <b>✕ Nicht empfohlen</b> kennzeichnet Maßnahmen mit sehr hohem Score (&gt; 2× Median) oder ohne messbaren Primärenergie-Effekt.
           </Sub>
           <Sub title="Wie werden die Förderungen berechnet?">
             <b>BEG EM (BAFA)</b>: 15 % Grundförderung auf den energetisch bedingten Mehraufwand (Investition minus Sowieso-Kosten). <b>Wärmepumpe (KfW 458)</b>: bis zu 50 % (30 % Grundförderung + 20 % Klimageschwindigkeits-Bonus möglich). <b>iSFP-Bonus</b>: +5 % auf alle Maßnahmen, die im Fahrplan hinterlegt sind — das ist der Kern des iSFP-Verfahrens.
@@ -1863,17 +1863,17 @@ export default function App() {
   const nichtEmpfohleneMassnahmen = useMemo(() => bewertung.filter(m => m.nichtEmpfohlen).map(m => m.id), [bewertung]);
   const reportSummaryMeasures = useMemo(() => {
     const all = effectivePakete.flatMap(p => p.massnahmen);
-    const activeRecommended = empfohleneMassnahmen.filter(id => aktiveMassnahmen.includes(id)).slice(0, 3);
-    return activeRecommended.map((id) => {
+    const activeMeasureIds = aktiveMassnahmen.slice();
+    return activeMeasureIds.map((id) => {
       const m = all.find(x => x.id === id);
       if (!m) return null;
       const netto = m.investition - m.ohnehin_anteil;
       const quote = m.foerderquote > 0 ? Math.min(m.foerderquote + BEG_BONUS.isfp_bonus, 0.5) : 0;
       const foerder = netto * quote;
-      const warum = getWarum(id, { bauteile_state: effectiveBauteilState, gebaeude, aktiveMassnahmen, empfohlen: true, nichtEmpfohlen: false });
+      const warum = getWarum(id, { bauteile_state: effectiveBauteilState, gebaeude, aktiveMassnahmen, empfohlen: empfohleneMassnahmen.includes(id), nichtEmpfohlen: nichtEmpfohleneMassnahmen.includes(id) });
       return { ...m, foerder, eigenanteil: m.investition - foerder, reason: warum.grund || warum.jetzt || m.beschreibung };
     }).filter(Boolean);
-  }, [effectivePakete, empfohleneMassnahmen, aktiveMassnahmen, effectiveBauteilState, gebaeude]);
+  }, [effectivePakete, aktiveMassnahmen, empfohleneMassnahmen, nichtEmpfohleneMassnahmen, effectiveBauteilState, gebaeude]);
 
   const handleExport = () => {
     exportAsPDF();
@@ -2223,7 +2223,7 @@ export default function App() {
           <div style={{ background: "#FFFFFF", border: "1.25px solid #D3CAB9", borderRadius: 3, padding: "10px 12px", marginTop: 10 }}>
             <div className="text-[10.5px] tracking-[0.18em] uppercase mb-2" style={{ color: "#B5623E", fontFamily: "'Geist Mono', monospace" }}>Maßnahmen-Übersicht</div>
             {reportSummaryMeasures.length === 0 ? (
-              <div style={{ fontSize: 12, color: "#6B6259" }}>Noch keine empfohlenen Maßnahmen aktiv.</div>
+              <div style={{ fontSize: 12, color: "#6B6259" }}>Noch keine Maßnahmen aktiv.</div>
             ) : reportSummaryMeasures.map((m, idx) => (
               <div key={m.id} style={{ padding: "8px 0", borderBottom: idx < reportSummaryMeasures.length - 1 ? "1px solid #E2DBD0" : "none" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "baseline" }}>

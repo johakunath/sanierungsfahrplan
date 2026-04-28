@@ -519,7 +519,7 @@ export function bewerteMassnahmen(massnahmen, bauteile_state, gebaeude) {
   const bs = bauteile_state || {};
   const scored = massnahmen.map(m => {
     const impact = m.impact ? m.impact(bs) : { primaerenergie_delta: m.primaerenergie_delta || 0 };
-    const pe_saved = Math.abs(impact.primaerenergie_delta) * wf / 1000;
+    const pe_saved = Math.abs(impact.primaerenergie_delta) * wf;
     const invest_netto = m.investition - m.ohnehin_anteil;
     const score = pe_saved > 0 ? invest_netto / pe_saved : Infinity;
     return { id: m.id, score, pe_saved, invest_netto };
