@@ -25,10 +25,10 @@ const SANIERUNGSSTAND_STUFEN = {
 };
 const SANIERUNGSSTAND_LEVEL_ORDER = ["unsaniert", "teilsaniert", "saniert", "neubau"];
 const SANIERUNGSSTAND_OPTIONS = [
-  { value: "unsaniert", label: "Altbau (Stufe 2)" },
-  { value: "teilsaniert", label: "Teilsaniert (Stufe 3–4)" },
-  { value: "saniert", label: "Saniert (Stufe 4–5)" },
-  { value: "neubau", label: "Neubau (Stufe 5–6)" },
+  { value: "unsaniert", label: "Altbau" },
+  { value: "teilsaniert", label: "Teilsaniert" },
+  { value: "saniert", label: "Saniert" },
+  { value: "neubau", label: "Neubau" },
 ];
 const SANIERUNGSSTAND_BAUTEILE = [
   { id: "waende", label: "Wände" },
@@ -36,6 +36,12 @@ const SANIERUNGSSTAND_BAUTEILE = [
   { id: "boden", label: "Boden" },
   { id: "fenster", label: "Fenster" },
 ];
+const SANIERUNGSSTAND_BAUTEIL_TOOLTIPS = {
+  waende: "Außenwand-Qualität steuert vor allem die Wirkung der Fassadendämmung (M5) und die spätere Heizlast.",
+  dach: "Dachzustand beeinflusst direkt das Potenzial der Dachdämmung (M2). Schlechter Zustand = hohe Einsparwirkung.",
+  boden: "Boden/Kellerdecke wirkt indirekt auf die Gebäudehülle und Heizlast; wichtig für das Gesamtniveau vor Heizungstausch.",
+  fenster: "Fensterzustand bestimmt die Wirkung des Fenstertauschs (M3) und beeinflusst Komfort/Zugluft stark.",
+};
 const sanierungsstandAusBauteile = (bauteile) => {
   const result = {};
   SANIERUNGSSTAND_BAUTEILE.forEach(({ id }) => {
@@ -1649,7 +1655,11 @@ export default function App() {
   }, []);
 
   const updateBauteilNote = useCallback((id, note) => {
-    setBauteile(prev => prev.map(b => b.id === id ? bauteilMitAktualisierterNote(b, note) : b));
+    setBauteile(prev => {
+      const next = prev.map(b => b.id === id ? bauteilMitAktualisierterNote(b, note) : b);
+      setSanierungsstandProBauteil(sanierungsstandAusBauteile(next));
+      return next;
+    });
   }, []);
 
   const applyPreset = useCallback((id) => {
@@ -1853,7 +1863,8 @@ export default function App() {
   const nichtEmpfohleneMassnahmen = useMemo(() => bewertung.filter(m => m.nichtEmpfohlen).map(m => m.id), [bewertung]);
   const reportSummaryMeasures = useMemo(() => {
     const all = effectivePakete.flatMap(p => p.massnahmen);
-    return empfohleneMassnahmen.slice(0, 3).map((id) => {
+    const activeRecommended = empfohleneMassnahmen.filter(id => aktiveMassnahmen.includes(id)).slice(0, 3);
+    return activeRecommended.map((id) => {
       const m = all.find(x => x.id === id);
       if (!m) return null;
       const netto = m.investition - m.ohnehin_anteil;
@@ -1862,7 +1873,7 @@ export default function App() {
       const warum = getWarum(id, { bauteile_state: effectiveBauteilState, gebaeude, aktiveMassnahmen, empfohlen: true, nichtEmpfohlen: false });
       return { ...m, foerder, eigenanteil: m.investition - foerder, reason: warum.grund || warum.jetzt || m.beschreibung };
     }).filter(Boolean);
-  }, [effectivePakete, empfohleneMassnahmen, effectiveBauteilState, gebaeude, aktiveMassnahmen]);
+  }, [effectivePakete, empfohleneMassnahmen, aktiveMassnahmen, effectiveBauteilState, gebaeude]);
 
   const handleExport = () => {
     exportAsPDF();
@@ -1968,8 +1979,8 @@ export default function App() {
                 tooltip="Bestimmt Vorlauftemperatur und empfohlene WP-Betriebsart (Monovalent / Monoenergetic / Bivalent)." />
               <div style={{ marginTop: 14 }}>
                 <div style={{ fontSize: 11, color: "#6B6259", marginBottom: 6, fontFamily: "'Geist Mono', monospace", textTransform: "uppercase", letterSpacing: "0.1em" }}>
-                  Sanierungsstand Hülle (grob)
-                  <Tooltip content="Schnellzuordnung je Bauteil: Altbau = weitgehend unsaniert, Teilsaniert = einzelne Modernisierungen, Saniert = durchgehend modernisiert, Neubau = aktueller Effizienzstandard. Setzt die jeweilige Bauteil-Note und kann anschließend in Schritt 2 feinjustiert werden."><span style={{ color: "#B5623E", marginLeft: 4 }}><InfoIcon size={10} /></span></Tooltip>
+                  Sanierungsstand Hülle
+                  
                 </div>
                 <div>
                   {SANIERUNGSSTAND_BAUTEILE.map(({ id, label }) => (
@@ -1979,6 +1990,7 @@ export default function App() {
                       value={sanierungsstandProBauteil[id] || "unsaniert"}
                       onChange={v => applySanierungsstandFuerBauteil(id, v)}
                       options={SANIERUNGSSTAND_OPTIONS}
+                      tooltip={SANIERUNGSSTAND_BAUTEIL_TOOLTIPS[id]}
                     />
                   ))}
                 </div>
@@ -2021,12 +2033,12 @@ export default function App() {
 
         {/* Fahrplan */}
         <Section id="fahrplan" eyebrow="Schritt 2 · Fahrplan" title="Empfohlene Maßnahmenpakete"
-          subtitle="Reihenfolge nach Kosten-Nutzen (€/MWh Primärenergie). ★ = deutlich günstiger als Median; ✕ = deutlich teurer.">
+          subtitle="Reihenfolge nach Kosten-Nutzen (€/kWh Primärenergie). ★ = deutlich günstiger als Median; ✕ = deutlich teurer.">
           <div className="mb-10" style={{ overflowX: "auto", WebkitOverflowScrolling: "touch", marginLeft: -4, marginRight: -4 }}>
             <div className="flex items-start justify-between gap-2 relative" style={{ padding: "0 12px", minWidth: 480 }}>
               <div className="absolute" style={{ left: 60, right: 60, top: 28, height: 2, background: "linear-gradient(to right, #E30613, #F07D00, #7C3AED, #F6D400, #00843D, #2563EB)" }} />
               <div className="flex flex-col items-center gap-2 relative">
-                <div style={{ width: 52, height: 56, background: "#6E2E1E", borderRadius: 3, border: "1.5px solid #1E1A15" }} />
+                <div style={{ width: 52, height: 56, background: EFFIZIENZ_FARBEN[effizienzklasse] || "#6B6259", borderRadius: 3, border: "1.5px solid #1E1A15", display: "flex", alignItems: "center", justifyContent: "center" }}><span className="font-serif text-[18px]" style={{ color: ["C","D","E"].includes(effizienzklasse) ? "#1E1A15" : "#FFF" }}>{effizienzklasse}</span></div>
                 <div className="text-[10.5px] tracking-[0.18em] uppercase text-center" style={{ color: "#6B6259", fontFamily: "'Geist Mono', monospace" }}>Heute</div>
                 <div className="text-[11.5px]" style={{ color: "#3A332B" }}>Klasse {effizienzklasse}</div>
               </div>
@@ -2208,6 +2220,23 @@ export default function App() {
             </div>
           </div>
 
+          <div style={{ background: "#FFFFFF", border: "1.25px solid #D3CAB9", borderRadius: 3, padding: "10px 12px", marginTop: 10 }}>
+            <div className="text-[10.5px] tracking-[0.18em] uppercase mb-2" style={{ color: "#B5623E", fontFamily: "'Geist Mono', monospace" }}>Maßnahmen-Übersicht</div>
+            {reportSummaryMeasures.length === 0 ? (
+              <div style={{ fontSize: 12, color: "#6B6259" }}>Noch keine empfohlenen Maßnahmen aktiv.</div>
+            ) : reportSummaryMeasures.map((m, idx) => (
+              <div key={m.id} style={{ padding: "8px 0", borderBottom: idx < reportSummaryMeasures.length - 1 ? "1px solid #E2DBD0" : "none" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "baseline" }}>
+                  <div style={{ fontSize: 12.5, color: "#1E1A15", fontWeight: 500 }}>{idx + 1}. {m.titel}</div>
+                  <div style={{ fontSize: 10.5, color: "#3A332B", fontFamily: "'Geist Mono', monospace", textAlign: "right" }}>
+                    I {fmtEur(m.investition)} · F −{fmtEur(m.foerder)} · E {fmtEur(m.eigenanteil)}
+                  </div>
+                </div>
+                <div style={{ fontSize: 11.5, color: "#6B6259", marginTop: 3 }}>{m.reason}</div>
+              </div>
+            ))}
+          </div>
+
           {/* Metrics table with % and absolute values */}
           <div style={{ background: "#FFFFFF", border: "1.25px solid #D3CAB9", borderRadius: 3,
                         padding: "8px 12px", marginBottom: 10 }}>
@@ -2255,22 +2284,6 @@ export default function App() {
             </div>
           </div>
 
-          <div style={{ background: "#FFFFFF", border: "1.25px solid #D3CAB9", borderRadius: 3, padding: "10px 12px", marginTop: 10 }}>
-            <div className="text-[10.5px] tracking-[0.18em] uppercase mb-2" style={{ color: "#B5623E", fontFamily: "'Geist Mono', monospace" }}>Report summary</div>
-            {reportSummaryMeasures.length === 0 ? (
-              <div style={{ fontSize: 12, color: "#6B6259" }}>Noch keine empfohlenen Maßnahmen aktiv.</div>
-            ) : reportSummaryMeasures.map((m, idx) => (
-              <div key={m.id} style={{ padding: "8px 0", borderBottom: idx < reportSummaryMeasures.length - 1 ? "1px solid #E2DBD0" : "none" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "baseline" }}>
-                  <div style={{ fontSize: 12.5, color: "#1E1A15", fontWeight: 500 }}>{idx + 1}. {m.titel}</div>
-                  <div style={{ fontSize: 10.5, color: "#3A332B", fontFamily: "'Geist Mono', monospace", textAlign: "right" }}>
-                    I {fmtEur(m.investition)} · F −{fmtEur(m.foerder)} · E {fmtEur(m.eigenanteil)}
-                  </div>
-                </div>
-                <div style={{ fontSize: 11.5, color: "#6B6259", marginTop: 3 }}>{m.reason}</div>
-              </div>
-            ))}
-          </div>
         </aside>
 
         </div>{/* end 2-col grid */}
