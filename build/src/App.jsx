@@ -17,6 +17,43 @@ import { exportAsPDF } from "./printExport.js";
 // ═══ HELPERS ════════════════════════════════════════════════════════════
 const fmt = (n) => new Intl.NumberFormat("de-DE").format(Math.round(n));
 const fmtEur = (n) => fmt(n) + " €";
+const SANIERUNGSSTAND_STUFEN = {
+  unsaniert:  { waende: 2, dach: 2, boden: 2, fenster: 2 },
+  teilsaniert:{ waende: 3, dach: 4, boden: 3, fenster: 4 },
+  saniert:    { waende: 5, dach: 5, boden: 4, fenster: 5 },
+  neubau:     { waende: 6, dach: 6, boden: 5, fenster: 6 },
+};
+const SANIERUNGSSTAND_LEVEL_ORDER = ["unsaniert", "teilsaniert", "saniert", "neubau"];
+const SANIERUNGSSTAND_OPTIONS = [
+  { value: "unsaniert", label: "Altbau (Stufe 2)" },
+  { value: "teilsaniert", label: "Teilsaniert (Stufe 3–4)" },
+  { value: "saniert", label: "Saniert (Stufe 4–5)" },
+  { value: "neubau", label: "Neubau (Stufe 5–6)" },
+];
+const SANIERUNGSSTAND_BAUTEILE = [
+  { id: "waende", label: "Wände" },
+  { id: "dach", label: "Dach" },
+  { id: "boden", label: "Boden" },
+  { id: "fenster", label: "Fenster" },
+];
+const sanierungsstandAusBauteile = (bauteile) => {
+  const result = {};
+  SANIERUNGSSTAND_BAUTEILE.forEach(({ id }) => {
+    const note = bauteile.find(b => b.id === id)?.note ?? 2;
+    const level = SANIERUNGSSTAND_LEVEL_ORDER.reduce((best, key) => {
+      const target = SANIERUNGSSTAND_STUFEN[key][id];
+      const bestTarget = SANIERUNGSSTAND_STUFEN[best][id];
+      return Math.abs(note - target) < Math.abs(note - bestTarget) ? key : best;
+    }, SANIERUNGSSTAND_LEVEL_ORDER[0]);
+    result[id] = level;
+  });
+  return result;
+};
+const bauteilMitAktualisierterNote = (bauteil, note) => ({
+  ...bauteil,
+  note,
+  info: (BAUTEIL_STUFEN[bauteil.id] && BAUTEIL_STUFEN[bauteil.id][note]) || bauteil.info,
+});
 
 // ═══ ICONS ══════════════════════════════════════════════════════════════
 const HouseIcon = ({ size = 24, color = "currentColor" }) => (
@@ -169,7 +206,10 @@ const SelectInput = ({ label, value, onChange, options, tooltip }) => (
                backgroundRepeat: "no-repeat", backgroundPosition: "right 8px center",
                cursor: "pointer", outline: "none", fontSize: 13,
                minWidth: 0, maxWidth: "min(220px, 55%)" }}>
-      {options.map(o => <option key={o} value={o}>{o}</option>)}
+      {options.map(o => {
+        const opt = typeof o === "string" ? { value: o, label: o } : o;
+        return <option key={opt.value} value={opt.value}>{opt.label}</option>;
+      })}
     </select>
   </RowShell>
 );
@@ -1572,7 +1612,14 @@ export default function App() {
   const [massnahmenOverrides, setMassnahmenOverrides] = useState({});
   const [wpVariante, setWpVariante] = useState("auto");
   const [extraction, setExtraction] = useState(null);
-  const [sanierungsstand, setSanierungsstand] = useState(null);
+  const [sanierungsstandProBauteil, setSanierungsstandProBauteil] = useState(() =>
+    sanierungsstandAusBauteile(ableiteBauteile(
+      PRESETS.efhNachkrieg.gebaeude.baujahr,
+      PRESETS.efhNachkrieg.gebaeude.heizung_typ,
+      PRESETS.efhNachkrieg.gebaeude.lueftung,
+      PRESETS.efhNachkrieg.gebaeude.warmwasser,
+    ))
+  );
   const [activeTab, setActiveTab] = useState("gebaeude");
 
   // Scroll observer für sticky tabs
@@ -1596,7 +1643,9 @@ export default function App() {
       const next = { ...prev, [field]: value };
       // Auto-derive Bauteile wenn baujahr/heizung/lueftung/warmwasser ändern
       if (["baujahr", "heizung_typ", "lueftung", "warmwasser"].includes(field)) {
-        setBauteile(ableiteBauteile(next.baujahr, next.heizung_typ, next.lueftung, next.warmwasser));
+        const neueBauteile = ableiteBauteile(next.baujahr, next.heizung_typ, next.lueftung, next.warmwasser);
+        setBauteile(neueBauteile);
+        setSanierungsstandProBauteil(sanierungsstandAusBauteile(neueBauteile));
       }
       return next;
     });
@@ -1607,11 +1656,7 @@ export default function App() {
   }, []);
 
   const updateBauteilNote = useCallback((id, note) => {
-    setBauteile(prev => prev.map(b => b.id === id ? {
-      ...b,
-      note,
-      info: (BAUTEIL_STUFEN[id] && BAUTEIL_STUFEN[id][note]) || b.info,
-    } : b));
+    setBauteile(prev => prev.map(b => b.id === id ? bauteilMitAktualisierterNote(b, note) : b));
   }, []);
 
   const applyPreset = useCallback((id) => {
@@ -1641,21 +1686,13 @@ export default function App() {
     setMassnahmenOverrides({});
     setWpVariante("auto");
     setExtraction(null);
-    setSanierungsstand(null);
+    setSanierungsstandProBauteil(sanierungsstandAusBauteile(neueBauteile));
   }, []);
-
-  const SANIERUNGSSTAND_STUFEN = {
-    unsaniert:  { waende: 2, dach: 2, boden: 2, fenster: 2 },
-    teilsaniert:{ waende: 3, dach: 4, boden: 3, fenster: 4 },
-    saniert:    { waende: 5, dach: 5, boden: 4, fenster: 5 },
-    neubau:     { waende: 6, dach: 6, boden: 5, fenster: 6 },
-  };
-
-  const applySanierungsstand = useCallback((level) => {
+  const applySanierungsstandFuerBauteil = useCallback((bauteilId, level) => {
     const stufen = SANIERUNGSSTAND_STUFEN[level];
-    if (!stufen) return;
-    setBauteile(prev => prev.map(b => stufen[b.id] !== undefined ? { ...b, note: stufen[b.id] } : b));
-    setSanierungsstand(level);
+    if (!stufen || stufen[bauteilId] === undefined) return;
+    setBauteile(prev => prev.map(b => b.id === bauteilId ? bauteilMitAktualisierterNote(b, stufen[bauteilId]) : b));
+    setSanierungsstandProBauteil(prev => ({ ...prev, [bauteilId]: level }));
   }, []);
 
   const fileInputRef = useRef(null);
@@ -1666,7 +1703,9 @@ export default function App() {
     if (result.gebaeude && Object.keys(result.gebaeude).length > 0) {
       setGebaeude(prev => {
         const next = { ...prev, ...result.gebaeude };
-        setBauteile(ableiteBauteile(next.baujahr, next.heizung_typ, next.lueftung, next.warmwasser));
+        const neueBauteile = ableiteBauteile(next.baujahr, next.heizung_typ, next.lueftung, next.warmwasser);
+        setBauteile(neueBauteile);
+        setSanierungsstandProBauteil(sanierungsstandAusBauteile(neueBauteile));
         return next;
       });
     }
@@ -1922,27 +1961,18 @@ export default function App() {
               <div style={{ marginTop: 14 }}>
                 <div style={{ fontSize: 11, color: "#6B6259", marginBottom: 6, fontFamily: "'Geist Mono', monospace", textTransform: "uppercase", letterSpacing: "0.1em" }}>
                   Sanierungsstand Hülle (grob)
-                  <Tooltip content="Setzt Bauteil-Noten für Wand, Dach, Boden und Fenster auf einen Startwert. Kann danach in der Bauteilbewertung fein justiert werden."><span style={{ color: "#B5623E", marginLeft: 4 }}><InfoIcon size={10} /></span></Tooltip>
+                  <Tooltip content="Schnellzuordnung je Bauteil: Altbau = weitgehend unsaniert, Teilsaniert = einzelne Modernisierungen, Saniert = durchgehend modernisiert, Neubau = aktueller Effizienzstandard. Setzt die jeweilige Bauteil-Note und kann anschließend in Schritt 2 feinjustiert werden."><span style={{ color: "#B5623E", marginLeft: 4 }}><InfoIcon size={10} /></span></Tooltip>
                 </div>
-                <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-                  {[
-                    { key: "unsaniert",   label: "Altbau", sub: "Stud. 2" },
-                    { key: "teilsaniert", label: "Teilsaniert", sub: "Stud. 3–4" },
-                    { key: "saniert",     label: "Saniert", sub: "Stud. 5" },
-                    { key: "neubau",      label: "Neubau", sub: "Stud. 6" },
-                  ].map(({ key, label, sub }) => {
-                    const active = sanierungsstand === key;
-                    return (
-                      <button key={key} onClick={() => applySanierungsstand(key)}
-                        style={{ flex: 1, minWidth: 60, padding: "5px 6px", borderRadius: 3, cursor: "pointer", fontSize: 11,
-                          border: active ? "1.5px solid #2A8B7A" : "1.5px solid #D3CAB9",
-                          background: active ? "#EBF5F3" : "#FAFAF8", color: active ? "#1B4840" : "#3A332B",
-                          fontWeight: active ? 600 : 400 }}>
-                        <div>{label}</div>
-                        <div style={{ fontSize: 9.5, color: active ? "#2A8B7A" : "#6B6259", fontFamily: "'Geist Mono', monospace" }}>{sub}</div>
-                      </button>
-                    );
-                  })}
+                <div>
+                  {SANIERUNGSSTAND_BAUTEILE.map(({ id, label }) => (
+                    <SelectInput
+                      key={id}
+                      label={label}
+                      value={sanierungsstandProBauteil[id] || "unsaniert"}
+                      onChange={v => applySanierungsstandFuerBauteil(id, v)}
+                      options={SANIERUNGSSTAND_OPTIONS}
+                    />
+                  ))}
                 </div>
               </div>
             </Card>
