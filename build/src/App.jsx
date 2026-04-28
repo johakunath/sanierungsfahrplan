@@ -585,7 +585,8 @@ const PaketBlock = ({ paket, aktiv, onToggle, onToggleMassnahme = () => {}, akti
           return (
           <div key={m.id} className="p-5" style={{ borderBottom: i < paket.massnahmen.length - 1 ? "1px solid #E2DBD0" : "none", opacity: massnahmeAktiv ? 1 : 0.45, transition: "opacity 0.15s" }}>
             <div className="mb-4">
-              <div className="text-[14.5px] font-medium mb-1.5 flex items-center gap-2 flex-wrap" style={{ color: "#1E1A15" }}>
+              <div className="mb-1.5" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 14 }}>
+                <div className="text-[14.5px] font-medium flex items-center gap-2 flex-wrap" style={{ color: "#1E1A15", flex: 1 }}>
                 <label className="print-hide" style={{ display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer", fontSize: 11, color: "#6B6259", fontFamily: "'Geist Mono', monospace", letterSpacing: "0.05em" }}>
                   <input type="checkbox" checked={massnahmeAktiv} onChange={() => onToggleMassnahme(m.id)}
                     style={{ accentColor: "#2A8B7A", width: 14, height: 14, cursor: "pointer" }} />
@@ -624,6 +625,20 @@ const PaketBlock = ({ paket, aktiv, onToggle, onToggleMassnahme = () => {}, akti
                 }>
                   <span style={{ color: "#B5623E" }}><InfoIcon /></span>
                 </Tooltip>
+                </div>
+                <div className="print-hide" style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4, minWidth: 140 }}>
+                  {m.co2_reduktion > 0 && (
+                    <div style={{ fontFamily: "'Geist Mono', monospace", fontSize: 11.5, color: "#6B6259", textAlign: "right" }}>
+                      CO₂ −{m.co2_reduktion} kg/(m²·a)
+                    </div>
+                  )}
+                  <button onClick={() => toggleWarum(m.id)}
+                    style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12.5,
+                             color: "#B5623E", background: "none", border: "none", padding: 0,
+                             cursor: "pointer", fontFamily: "'Geist Mono', monospace" }}>
+                    Warum {warumOffen.has(m.id) ? "▾" : "▸"}
+                  </button>
+                </div>
               </div>
               <div className="text-[13px] leading-relaxed" style={{ color: "#3A332B" }}>{m.beschreibung}</div>
             </div>
@@ -701,39 +716,17 @@ const PaketBlock = ({ paket, aktiv, onToggle, onToggleMassnahme = () => {}, akti
                 </div>
               );
             })()}
-            {m.co2_reduktion > 0 && (
-              <div style={{ fontFamily: "'Geist Mono', monospace", fontSize: 11.5, color: "#6B6259", marginTop: 2 }}>
-                CO₂ −{m.co2_reduktion} kg/(m²·a)
-              </div>
-            )}
-            <button onClick={() => toggleWarum(m.id)} className="print-hide"
-              style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13,
-                       color: warumOffen.has(m.id) ? "#F8F5EF" : "#B5623E",
-                       background: warumOffen.has(m.id) ? "#B5623E" : "none",
-                       border: "1px solid #B5623E", borderRadius: 3,
-                       padding: "4px 12px", cursor: "pointer", marginTop: 10,
-                       letterSpacing: "0.04em", fontFamily: "'Geist Mono', monospace" }}>
-              Warum {warumOffen.has(m.id) ? "▴" : "▸"}
-            </button>
             {warumOffen.has(m.id) && (
               <div style={{ marginTop: 8, background: "#EBF4F2", border: "1px solid #A8D5CD",
                             borderRadius: 3, padding: "12px 14px", fontSize: 12, lineHeight: 1.6, color: "#1E3A35" }}>
                 {warum.grund && (
                   <div style={{ marginBottom: 10 }}>
-                    <div style={{ fontWeight: 600, fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase",
-                                  fontFamily: "'Geist Mono', monospace", color: "#2A8B7A", marginBottom: 4 }}>
-                      Warum diese Maßnahme
-                    </div>
-                    {warum.grund}
+                    <span style={{ fontWeight: 600, color: "#B5623E" }}>Warum diese Maßnahme: </span>{warum.grund}
                   </div>
                 )}
                 {warum.jetzt && (
                   <div>
-                    <div style={{ fontWeight: 600, fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase",
-                                  fontFamily: "'Geist Mono', monospace", color: "#2A8B7A", marginBottom: 4 }}>
-                      Warum jetzt
-                    </div>
-                    {warum.jetzt}
+                    <span style={{ fontWeight: 600, color: "#B5623E" }}>Warum jetzt: </span>{warum.jetzt}
                   </div>
                 )}
               </div>
@@ -1858,6 +1851,18 @@ export default function App() {
   );
   const empfohleneMassnahmen      = useMemo(() => bewertung.filter(m => m.empfohlen).map(m => m.id),      [bewertung]);
   const nichtEmpfohleneMassnahmen = useMemo(() => bewertung.filter(m => m.nichtEmpfohlen).map(m => m.id), [bewertung]);
+  const reportSummaryMeasures = useMemo(() => {
+    const all = effectivePakete.flatMap(p => p.massnahmen);
+    return empfohleneMassnahmen.slice(0, 3).map((id) => {
+      const m = all.find(x => x.id === id);
+      if (!m) return null;
+      const netto = m.investition - m.ohnehin_anteil;
+      const quote = m.foerderquote > 0 ? Math.min(m.foerderquote + BEG_BONUS.isfp_bonus, 0.5) : 0;
+      const foerder = netto * quote;
+      const warum = getWarum(id, { bauteile_state: effectiveBauteilState, gebaeude, aktiveMassnahmen, empfohlen: true, nichtEmpfohlen: false });
+      return { ...m, foerder, eigenanteil: m.investition - foerder, reason: warum.grund || warum.jetzt || m.beschreibung };
+    }).filter(Boolean);
+  }, [effectivePakete, empfohleneMassnahmen, effectiveBauteilState, gebaeude, aktiveMassnahmen]);
 
   const handleExport = () => {
     exportAsPDF();
@@ -1900,31 +1905,34 @@ export default function App() {
 
       <main className="mx-auto max-w-[1400px] print-hide px-5 md:px-10" style={{ paddingTop: 36, paddingBottom: 80 }}>
 
-        {/* Preset-Picker */}
-        <Section id="presets" eyebrow="Schnellstart">
-          <div className="flex items-center justify-between gap-4 mb-5 print-hide">
-            <h2 className="font-serif leading-[1.05]" style={{ fontSize: 22, fontWeight: 500, color: "#1E1A15" }}>
-              Startpunkt wählen
-            </h2>
-          </div>
-          <PresetPicker activeId={presetId} onPick={applyPreset}
-            onUploadClick={() => fileInputRef.current?.click()}
-            uploadLoading={uploadLoading} />
-          <input ref={fileInputRef} type="file" accept="application/pdf,.pdf" style={{ display: "none" }}
-            onChange={(e) => { handleFileSelect(e.target.files?.[0]); e.target.value = ""; }} />
-          {uploadError && (
-            <div className="mt-3 text-[13px]" style={{ color: "#E30613" }}>{uploadError}</div>
-          )}
-          {extraction && (
-            <div className="mt-3">
-              <ExtractionResult result={extraction} onDismiss={() => setExtraction(null)} />
-            </div>
-          )}
-        </Section>
-
         {/* 2-col layout on xl+: left=scrollable content, right=sticky Ergebnis sidebar */}
         <div className="xl:grid xl:grid-cols-[minmax(0,1fr)_380px] xl:gap-8 xl:items-start">
         <div>
+
+
+        {/* Preset-Picker */}
+        <Section id="presets" eyebrow="Schnellstart">
+          <Card style={{ padding: 20 }}>
+            <div className="flex items-center justify-between gap-4 mb-5 print-hide">
+              <h2 className="font-serif leading-[1.05]" style={{ fontSize: 22, fontWeight: 500, color: "#1E1A15" }}>
+                Startpunkt wählen
+              </h2>
+            </div>
+            <PresetPicker activeId={presetId} onPick={applyPreset}
+              onUploadClick={() => fileInputRef.current?.click()}
+              uploadLoading={uploadLoading} />
+            <input ref={fileInputRef} type="file" accept="application/pdf,.pdf" style={{ display: "none" }}
+              onChange={(e) => { handleFileSelect(e.target.files?.[0]); e.target.value = ""; }} />
+            {uploadError && (
+              <div className="mt-3 text-[13px]" style={{ color: "#E30613" }}>{uploadError}</div>
+            )}
+            {extraction && (
+              <div className="mt-3">
+                <ExtractionResult result={extraction} onDismiss={() => setExtraction(null)} />
+              </div>
+            )}
+          </Card>
+        </Section>
 
         {/* Gebäude & Bestand */}
         <Section id="gebaeude" eyebrow="Schritt 1 · Erfassung" title="Ihr Gebäude heute"
@@ -2245,6 +2253,23 @@ export default function App() {
               <span>Eigenanteil</span>
               <span style={{ fontFamily: "'Geist Mono', monospace" }}>{fmtEur(k.eigenanteil)}</span>
             </div>
+          </div>
+
+          <div style={{ background: "#FFFFFF", border: "1.25px solid #D3CAB9", borderRadius: 3, padding: "10px 12px", marginTop: 10 }}>
+            <div className="text-[10.5px] tracking-[0.18em] uppercase mb-2" style={{ color: "#B5623E", fontFamily: "'Geist Mono', monospace" }}>Report summary</div>
+            {reportSummaryMeasures.length === 0 ? (
+              <div style={{ fontSize: 12, color: "#6B6259" }}>Noch keine empfohlenen Maßnahmen aktiv.</div>
+            ) : reportSummaryMeasures.map((m, idx) => (
+              <div key={m.id} style={{ padding: "8px 0", borderBottom: idx < reportSummaryMeasures.length - 1 ? "1px solid #E2DBD0" : "none" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "baseline" }}>
+                  <div style={{ fontSize: 12.5, color: "#1E1A15", fontWeight: 500 }}>{idx + 1}. {m.titel}</div>
+                  <div style={{ fontSize: 10.5, color: "#3A332B", fontFamily: "'Geist Mono', monospace", textAlign: "right" }}>
+                    I {fmtEur(m.investition)} · F −{fmtEur(m.foerder)} · E {fmtEur(m.eigenanteil)}
+                  </div>
+                </div>
+                <div style={{ fontSize: 11.5, color: "#6B6259", marginTop: 3 }}>{m.reason}</div>
+              </div>
+            ))}
           </div>
         </aside>
 
