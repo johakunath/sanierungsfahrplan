@@ -11,10 +11,12 @@ const PDFJS_CDNS = [
 ];
 
 let _pdfjsPromise = null;
+let _loadedPdfJsBase = null;
 
 const setWorkerFromBase = (base) => {
-  if (!window.pdfjsLib) return;
+  if (!window.pdfjsLib || !base) return;
   window.pdfjsLib.GlobalWorkerOptions.workerSrc = `${base}/pdf.worker.min.js`;
+  _loadedPdfJsBase = base;
 };
 
 const loadScript = (src) => new Promise((resolve, reject) => {
@@ -27,7 +29,7 @@ const loadScript = (src) => new Promise((resolve, reject) => {
 
 export function loadPdfJs() {
   if (window.pdfjsLib) {
-    setWorkerFromBase(PDFJS_CDNS[0]);
+    if (_loadedPdfJsBase) setWorkerFromBase(_loadedPdfJsBase);
     return Promise.resolve(window.pdfjsLib);
   }
   if (_pdfjsPromise) return _pdfjsPromise;
