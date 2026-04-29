@@ -125,7 +125,7 @@ export class ErrorBoundary extends React.Component {
           <pre style={{ fontSize: 12, whiteSpace: "pre-wrap", color: "#3A332B", marginBottom: 16 }}>
             {this.state.error.message}
           </pre>
-          <button onClick={() => this.setState({ error: null })}
+          <button onClick={() => window.location.reload()}
             style={{ padding: "8px 16px", background: "#B5623E", color: "#fff", border: "none", borderRadius: 3, cursor: "pointer" }}>
             Neu versuchen
           </button>
@@ -1416,7 +1416,7 @@ const ISFPPrintReport = ({ ist, k, heizkostenIst, aktivePakete, aktiveMassnahmen
                 <div style={{ marginBottom: 11 }}>
                   <div style={{ fontSize: 8.5, letterSpacing: "0.18em", color: "#B5623E", fontFamily: "'Geist Mono', monospace", textTransform: "uppercase", marginBottom: 5 }}>Maßnahmen</div>
                   {paket.massnahmen.map(m => (
-                    <div key={p.id} style={{ paddingLeft: 14, position: "relative", marginBottom: 6, fontSize: 13, lineHeight: 1.5 }}>
+                    <div key={m.id} style={{ paddingLeft: 14, position: "relative", marginBottom: 6, fontSize: 13, lineHeight: 1.5 }}>
                       <span style={{ position: "absolute", left: 0, color: farbe.bg, fontWeight: 700 }}>→</span>
                       <span style={{ fontWeight: 600, color: "#1E1A15" }}>{m.titel}</span>
                       {m.beschreibung && <span style={{ color: "#3A332B" }}> — {m.beschreibung}</span>}
