@@ -136,6 +136,134 @@ export class ErrorBoundary extends React.Component {
   }
 }
 
+// ═══ MOBILE RESULTS DRAWER ═════════════════════════════════════════════
+const MobileResultsDrawer = ({ effizienzklasse, k, ist, heizkosten, aktiveEmpfohleneMassnahmen, reportSummaryPackages }) => {
+  const [open, setOpen] = useState(false);
+  const peReduction = ist.primaerenergie > 0 ? Math.round((1 - k.primaerenergie / ist.primaerenergie) * 100) : 0;
+  const zielColor = EFFIZIENZ_FARBEN[k.effizienzklasse] || "#00843D";
+  const istColor  = EFFIZIENZ_FARBEN[effizienzklasse]   || "#6B6259";
+  const zielText  = ["B","C","D"].includes(k.effizienzklasse) ? "#1E1A15" : "#FFF";
+  const istText   = ["C","D","E"].includes(effizienzklasse)   ? "#1E1A15" : "#FFF";
+
+  return (
+    <div className="lg:hidden print:hidden" style={{
+      position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 40,
+      transform: open ? "translateY(0)" : "translateY(calc(100% - 68px))",
+      transition: "transform 0.28s cubic-bezier(0.4,0,0.2,1)",
+      maxHeight: "75vh",
+      background: "var(--paper)",
+      borderTop: "1.5px solid #D3CAB9",
+      borderRadius: "12px 12px 0 0",
+      boxShadow: "0 -6px 32px rgba(30,26,21,0.13)",
+      display: "flex", flexDirection: "column",
+    }}>
+      {/* Collapsed handle strip — always visible, tappable */}
+      <button onClick={() => setOpen(o => !o)} style={{
+        width: "100%", padding: "6px 16px 10px", background: "transparent", border: "none",
+        cursor: "pointer", flexShrink: 0, textAlign: "left",
+      }}>
+        <div style={{ width: 36, height: 4, background: "#D3CAB9", borderRadius: 2, margin: "0 auto 8px" }} />
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {/* EEK IST → ZIEL */}
+          <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+            <div style={{ width: 30, height: 30, background: istColor, borderRadius: 3, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: 700, fontFamily: "'Fraunces', serif", color: istText }}>{effizienzklasse}</div>
+            <span style={{ fontSize: 13, color: "#B5623E" }}>→</span>
+            <div style={{ width: 30, height: 30, background: zielColor, borderRadius: 3, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: 700, fontFamily: "'Fraunces', serif", color: zielText }}>{k.effizienzklasse}</div>
+          </div>
+          {/* Key numbers */}
+          <div style={{ flex: 1, display: "flex", gap: 14, fontSize: 11, fontFamily: "'Geist Mono', monospace", color: "#3A332B", flexWrap: "wrap" }}>
+            <span style={{ color: "#00843D", fontWeight: 600 }}>PE −{peReduction} %</span>
+            <span>Eigenanteil {fmtEur(k.eigenanteil)}</span>
+          </div>
+          <span style={{ fontSize: 10, color: "#6B6259", transform: open ? "rotate(180deg)" : "none", transition: "transform 0.28s", flexShrink: 0 }}>▼</span>
+        </div>
+      </button>
+
+      {/* Expanded scrollable content */}
+      <div style={{ overflowY: "auto", padding: "4px 16px 32px", flex: 1, scrollbarWidth: "thin" }}>
+        <div className="text-[9.5px] tracking-[0.18em] uppercase mb-3"
+             style={{ color: "#B5623E", fontFamily: "'Geist Mono', monospace" }}>Ergebnis · Live</div>
+
+        {/* EEK comparison */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+          <div style={{ flex: 1, background: "#FFF", border: "1.25px solid #D3CAB9", borderRadius: 3, padding: "12px 10px", textAlign: "center" }}>
+            <div style={{ fontSize: 9, letterSpacing: "0.2em", color: "#6B6259", fontFamily: "'Geist Mono', monospace", textTransform: "uppercase", marginBottom: 6 }}>Heute</div>
+            <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 44, height: 44, background: istColor, borderRadius: 3, fontSize: 22, fontWeight: 600, fontFamily: "'Fraunces', serif", color: istText }}>{effizienzklasse}</div>
+          </div>
+          <span style={{ fontSize: 22, color: "#B5623E", flexShrink: 0 }}>→</span>
+          <div style={{ flex: 1, background: zielColor, border: "1.25px solid #1E1A15", borderRadius: 3, padding: "12px 10px", textAlign: "center" }}>
+            <div style={{ fontSize: 9, letterSpacing: "0.2em", fontFamily: "'Geist Mono', monospace", textTransform: "uppercase", marginBottom: 6, color: zielText === "#FFF" ? "rgba(248,245,239,0.7)" : "rgba(30,26,21,0.6)" }}>Ziel</div>
+            <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 44, height: 44, background: "#F8F5EF", borderRadius: 3, fontSize: 22, fontWeight: 600, fontFamily: "'Fraunces', serif", color: zielColor }}>{k.effizienzklasse}</div>
+          </div>
+        </div>
+
+        {/* Metrics */}
+        <div style={{ background: "#FFF", border: "1.25px solid #D3CAB9", borderRadius: 3, padding: "8px 12px", marginBottom: 10 }}>
+          {[
+            ["Primärenergie", ist.primaerenergie, k.primaerenergie, "kWh/(m²·a)"],
+            ["Endenergie",    ist.endenergie,    k.endenergie,    "kWh/(m²·a)"],
+            ["CO₂-Emissionen",ist.co2,           k.co2,          "kg/(m²·a)"],
+            ["Heizkosten",    heizkosten,         k.heizkosten_gesamt, "€/a"],
+          ].map(([label, v, w, unit], i, arr) => {
+            const pct = v > 0 ? Math.round(Math.abs(w - v) / v * 100) : 0;
+            const down = w < v;
+            const fmtAbs = n => unit === "€/a" ? fmtEur(n) : new Intl.NumberFormat("de-DE").format(Math.round(n));
+            return (
+              <div key={label} style={{ padding: "6px 0", borderBottom: i < arr.length - 1 ? "1px solid #E2DBD0" : "none" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", fontSize: 12 }}>
+                  <span style={{ color: "#6B6259" }}>{label}</span>
+                  <span style={{ fontFamily: "'Geist Mono', monospace", color: down ? "#00843D" : "#B5623E", fontWeight: 600 }}>
+                    {down ? "−" : "+"}{pct} %
+                  </span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "flex-end", fontSize: 10.5, color: "#8B7B6E", fontFamily: "'Geist Mono', monospace", marginTop: 1 }}>
+                  {fmtAbs(v)} → {fmtAbs(w)} {unit}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Paket-Übersicht */}
+        <div style={{ background: "#FFF", border: "1.25px solid #D3CAB9", borderRadius: 3, padding: "10px 12px", marginBottom: 10 }}>
+          <div className="text-[10.5px] tracking-[0.18em] uppercase mb-2" style={{ color: "#B5623E", fontFamily: "'Geist Mono', monospace" }}>Paket-Übersicht</div>
+          <div style={{ fontSize: 11, color: "#6B6259", marginBottom: 6 }}>
+            Aktive empfohlene Maßnahmen: <b>{aktiveEmpfohleneMassnahmen.length}</b>
+          </div>
+          {reportSummaryPackages.length === 0 ? (
+            <div style={{ fontSize: 12, color: "#6B6259" }}>Noch keine Maßnahmen aktiv.</div>
+          ) : reportSummaryPackages.map((p, idx) => (
+            <div key={p.id} style={{ padding: "8px 0", borderBottom: idx < reportSummaryPackages.length - 1 ? "1px solid #E2DBD0" : "none" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "baseline" }}>
+                <div style={{ fontSize: 12.5, color: "#1E1A15", fontWeight: 500 }}>Paket {p.nummer} · {p.titel}</div>
+                <div style={{ fontSize: 10.5, color: "#3A332B", fontFamily: "'Geist Mono', monospace", textAlign: "right" }}>
+                  {fmtEur(p.kosten)}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Investment summary */}
+        <div style={{ background: "#F8F5EF", border: "1px solid #D3CAB9", borderRadius: 3, padding: "10px 12px", fontSize: 12 }}>
+          <div className="flex justify-between mb-1.5" style={{ color: "#3A332B" }}>
+            <span>Investition</span>
+            <span style={{ fontFamily: "'Geist Mono', monospace" }}>{fmtEur(k.invest_gesamt)}</span>
+          </div>
+          <div className="flex justify-between mb-1.5" style={{ color: "#00843D" }}>
+            <span>Förderung</span>
+            <span style={{ fontFamily: "'Geist Mono', monospace" }}>−{fmtEur(k.foerderung_gesamt)}</span>
+          </div>
+          <div className="flex justify-between font-medium" style={{ color: "#1E1A15", marginTop: 4, paddingTop: 6, borderTop: "1px solid #D3CAB9" }}>
+            <span>Eigenanteil</span>
+            <span style={{ fontFamily: "'Geist Mono', monospace" }}>{fmtEur(k.eigenanteil)}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ═══ TOOLTIP ═══════════════════════════════════════════════════════════
 const Tooltip = ({ content, children, align = "center" }) => {
   const [show, setShow] = useState(false);
@@ -1946,8 +2074,8 @@ export default function App() {
       <main className="mx-auto max-w-[1400px] print-hide px-5 md:px-10" style={{ paddingTop: 36, paddingBottom: 80 }}>
 
         {/* 2-col layout on xl+: left=scrollable content, right=sticky Ergebnis sidebar */}
-        <div className="flex flex-col lg:grid lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-8 lg:items-start">
-        <div className="order-2 lg:order-none">
+        <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-8 lg:items-start">
+        <div>
 
 
         {/* Preset-Picker */}
@@ -2116,8 +2244,8 @@ export default function App() {
         {/* Ergebnis section — inside left column so sidebar stays visible throughout */}
         <Section id="ergebnis" eyebrow="Schritt 3 · Ergebnis" title="Ihr Gebäude nach der Sanierung"
           subtitle="Alle Kennzahlen, Einsparungen und Förderungen im Überblick. Kumulierte Wirkung nach BAFA-Logik: jedes Paket baut auf dem vorigen auf.">
-          {/* On xl+ VorherNachher is in the sticky sidebar; here only for mobile/tablet and print */}
-          <div className="lg:hidden print:block">
+          {/* VorherNachher: hidden on screen (sidebar on lg+, drawer on mobile); kept for print */}
+          <div className="hidden print:block">
             <VorherNachher ist={ist} k={k} heizkostenIst={heizkosten} gebaeude={gebaeude} />
             <div className="mt-10">
               <h3 className="font-serif mb-4" style={{ fontSize: 22, fontWeight: 500, color: "#1E1A15" }}>Einsparungen im Überblick</h3>
@@ -2219,8 +2347,8 @@ export default function App() {
 
         </div>{/* end left column */}
 
-        {/* Sidebar — static block on mobile (shows below Ergebnis), sticky right column on xl+ */}
-        <aside className="order-1 lg:order-none block print:hidden lg:sticky lg:top-[92px] lg:max-h-[calc(100vh-110px)] lg:overflow-y-auto mb-8 lg:mb-0 lg:mt-0"
+        {/* Sidebar — sticky right column on lg+; hidden on mobile (replaced by MobileResultsDrawer) */}
+        <aside className="hidden lg:block print:hidden lg:sticky lg:top-[92px] lg:max-h-[calc(100vh-110px)] lg:overflow-y-auto"
                style={{ scrollbarWidth: "thin", paddingBottom: 24 }}>
           <div className="text-[9.5px] tracking-[0.18em] uppercase mb-3"
                style={{ color: "#B5623E", fontFamily: "'Geist Mono', monospace" }}>Ergebnis · Live</div>
@@ -2321,6 +2449,15 @@ export default function App() {
         </div>{/* end 2-col grid */}
 
       </main>
+
+      <MobileResultsDrawer
+        effizienzklasse={effizienzklasse}
+        k={k}
+        ist={ist}
+        heizkosten={heizkosten}
+        aktiveEmpfohleneMassnahmen={aktiveEmpfohleneMassnahmen}
+        reportSummaryPackages={reportSummaryPackages}
+      />
 
       <footer className="print-hide px-5 md:px-10" style={{ borderTop: "1px solid #D3CAB9", paddingTop: 32, paddingBottom: 32, marginTop: 40 }}>
         <div className="mx-auto max-w-[1400px] flex items-center justify-between flex-wrap gap-4 text-[11.5px]"
