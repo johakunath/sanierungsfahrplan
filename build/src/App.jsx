@@ -612,7 +612,7 @@ const PaketBlock = ({ paket, aktiv, onToggle, onToggleMassnahme = () => {}, akti
             nichtEmpfohlen: nichtEmpfohleneMassnahmen.includes(m.id),
           });
           return (
-          <div key={p.id} className="p-5" style={{ borderBottom: i < paket.massnahmen.length - 1 ? "1px solid #E2DBD0" : "none", opacity: massnahmeAktiv ? 1 : 0.45, transition: "opacity 0.15s" }}>
+          <div key={m.id} className="p-5" style={{ borderBottom: i < paket.massnahmen.length - 1 ? "1px solid #E2DBD0" : "none", opacity: massnahmeAktiv ? 1 : 0.45, transition: "opacity 0.15s" }}>
             <div className="mb-4">
               <div className="mb-1.5" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 14 }}>
                 <div className="text-[14.5px] font-medium flex items-center gap-2 flex-wrap" style={{ color: "#1E1A15", flex: 1 }}>
@@ -1497,7 +1497,7 @@ const MassnahmenEditor = ({ overrides, onUpdate, onReset }) => {
                 const quote = ov.foerderquote !== undefined ? ov.foerderquote : m.foerderquote;
                 const changed = ov.investition !== undefined || ov.foerderquote !== undefined;
                 return (
-                  <tr key={p.id} style={{ borderBottom: "1px solid #E2DBD0" }}>
+                  <tr key={m.id} style={{ borderBottom: "1px solid #E2DBD0" }}>
                     <td className="py-3 px-5">
                       <div className="flex items-center gap-2">
                         <span style={{ width: 8, height: 8, borderRadius: 100, background: PAKET_FARBEN[m.paketFarbe].bg, flexShrink: 0, display: "inline-block" }} />
