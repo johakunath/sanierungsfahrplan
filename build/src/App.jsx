@@ -172,7 +172,7 @@ const NumberInput = ({ label, value, onChange, unit, min, max, step = 1, tooltip
     <RowShell>
       <span style={labelStyle} className="flex items-center gap-1.5">
         {label}
-        {tooltip && <Tooltip content={tooltip}><span style={{ color: "#B5623E" }}><InfoIcon /></span></Tooltip>}
+        {tooltip && <Tooltip align="right" content={tooltip}><span style={{ color: "#B5623E" }}><InfoIcon /></span></Tooltip>}
       </span>
       <span className="flex items-baseline gap-1.5">
         <input type="text" inputMode="decimal" value={local}
@@ -589,7 +589,7 @@ const PaketBlock = ({ paket, aktiv, onToggle, onToggleMassnahme = () => {}, akti
             nichtEmpfohlen: nichtEmpfohleneMassnahmen.includes(m.id),
           });
           return (
-          <div key={m.id} className="p-5" style={{ borderBottom: i < paket.massnahmen.length - 1 ? "1px solid #E2DBD0" : "none", opacity: massnahmeAktiv ? 1 : 0.45, transition: "opacity 0.15s" }}>
+          <div key={p.id} className="p-5" style={{ borderBottom: i < paket.massnahmen.length - 1 ? "1px solid #E2DBD0" : "none", opacity: massnahmeAktiv ? 1 : 0.45, transition: "opacity 0.15s" }}>
             <div className="mb-4">
               <div className="mb-1.5" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 14 }}>
                 <div className="text-[14.5px] font-medium flex items-center gap-2 flex-wrap" style={{ color: "#1E1A15", flex: 1 }}>
@@ -1393,7 +1393,7 @@ const ISFPPrintReport = ({ ist, k, heizkostenIst, aktivePakete, aktiveMassnahmen
                 <div style={{ marginBottom: 11 }}>
                   <div style={{ fontSize: 8.5, letterSpacing: "0.18em", color: "#B5623E", fontFamily: "'Geist Mono', monospace", textTransform: "uppercase", marginBottom: 5 }}>Maßnahmen</div>
                   {paket.massnahmen.map(m => (
-                    <div key={m.id} style={{ paddingLeft: 14, position: "relative", marginBottom: 6, fontSize: 13, lineHeight: 1.5 }}>
+                    <div key={p.id} style={{ paddingLeft: 14, position: "relative", marginBottom: 6, fontSize: 13, lineHeight: 1.5 }}>
                       <span style={{ position: "absolute", left: 0, color: farbe.bg, fontWeight: 700 }}>→</span>
                       <span style={{ fontWeight: 600, color: "#1E1A15" }}>{m.titel}</span>
                       {m.beschreibung && <span style={{ color: "#3A332B" }}> — {m.beschreibung}</span>}
@@ -1474,7 +1474,7 @@ const MassnahmenEditor = ({ overrides, onUpdate, onReset }) => {
                 const quote = ov.foerderquote !== undefined ? ov.foerderquote : m.foerderquote;
                 const changed = ov.investition !== undefined || ov.foerderquote !== undefined;
                 return (
-                  <tr key={m.id} style={{ borderBottom: "1px solid #E2DBD0" }}>
+                  <tr key={p.id} style={{ borderBottom: "1px solid #E2DBD0" }}>
                     <td className="py-3 px-5">
                       <div className="flex items-center gap-2">
                         <span style={{ width: 8, height: 8, borderRadius: 100, background: PAKET_FARBEN[m.paketFarbe].bg, flexShrink: 0, display: "inline-block" }} />
