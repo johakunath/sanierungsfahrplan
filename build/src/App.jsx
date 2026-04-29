@@ -113,6 +113,29 @@ const PaketHaus = ({ farbe, aktiv, nummer, size = 68 }) => {
   );
 };
 
+// ═══ ERROR BOUNDARY ════════════════════════════════════════════════════
+export class ErrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { error: null }; }
+  static getDerivedStateFromError(error) { return { error }; }
+  render() {
+    if (this.state.error) {
+      return (
+        <div style={{ padding: 32, fontFamily: "'Geist Mono', monospace", color: "#B5623E", background: "#F8F5EF", minHeight: "100vh" }}>
+          <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>App-Fehler — bitte Seite neu laden</div>
+          <pre style={{ fontSize: 12, whiteSpace: "pre-wrap", color: "#3A332B", marginBottom: 16 }}>
+            {this.state.error.message}
+          </pre>
+          <button onClick={() => this.setState({ error: null })}
+            style={{ padding: "8px 16px", background: "#B5623E", color: "#fff", border: "none", borderRadius: 3, cursor: "pointer" }}>
+            Neu versuchen
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 // ═══ TOOLTIP ═══════════════════════════════════════════════════════════
 const Tooltip = ({ content, children, align = "center" }) => {
   const [show, setShow] = useState(false);
@@ -349,7 +372,7 @@ const PresetPicker = ({ activeId, onPick, onUploadClick, uploadLoading }) => (
 // ═══ UPLOAD ZONE ═══════════════════════════════════════════════════════
 
 const ExtractionResult = ({ result, onDismiss }) => {
-  const matchedCount = result.matched.length;
+  const matchedCount = result.matched?.length ?? 0;
   return (
     <div className="print-hide" style={{
       background: matchedCount > 0 ? "#F1F7F1" : "#FBF2E8",
@@ -379,12 +402,12 @@ const ExtractionResult = ({ result, onDismiss }) => {
                 <span key={i}>
                   <span style={{ color: "#6B6259" }}>{m.label}:</span>{" "}
                   <span style={{ fontFamily: "'Geist Mono', monospace", color: "#1E1A15" }}>{String(m.value)}</span>
-                  {i < result.matched.length - 1 && <span style={{ color: "#D3CAB9" }}>  ·  </span>}
+                  {i < (result.matched?.length ?? 0) - 1 && <span style={{ color: "#D3CAB9" }}>  ·  </span>}
                 </span>
               ))}
             </div>
           )}
-          {result.missed.length > 0 && (
+          {(result.missed?.length ?? 0) > 0 && (
             <div className="text-[11.5px] mt-2 italic" style={{ color: "#6B6259" }}>
               Nicht automatisch erkannt: {result.missed.join(", ")} — bitte manuell prüfen.
             </div>
@@ -1866,14 +1889,14 @@ export default function App() {
   );
   const empfohleneMassnahmen      = useMemo(() => bewertung.filter(m => m.empfohlen).map(m => m.id),      [bewertung]);
   const nichtEmpfohleneMassnahmen = useMemo(() => bewertung.filter(m => m.nichtEmpfohlen).map(m => m.id), [bewertung]);
-const aktiveEmpfohleneMassnahmen = useMemo(() => empfohleneMassnahmen.filter(id => aktiveMassnahmen.includes(id)), [empfohleneMassnahmen, aktiveMassnahmen]);
+  const aktiveEmpfohleneMassnahmen = useMemo(() => empfohleneMassnahmen.filter(id => aktiveMassnahmen.includes(id)), [empfohleneMassnahmen, aktiveMassnahmen]);
   const reportSummaryPackages = useMemo(() => {
     return dynamicPakete.map((paket) => {
       const aktiveInPaket = paket.massnahmen.filter((m) => aktiveMassnahmen.includes(m.id));
       if (aktiveInPaket.length === 0) return null;
       const investition = aktiveInPaket.reduce((sum, m) => sum + m.investition, 0);
       const foerderung = aktiveInPaket.reduce((sum, m) => {
-        const netto = m.investition - m.ohnehin_anteil;
+        const netto = m.investition - (m.ohnehin_anteil ?? 0);
         const quote = m.foerderquote > 0 ? Math.min(m.foerderquote + BEG_BONUS.isfp_bonus, 0.5) : 0;
         return sum + netto * quote;
       }, 0);

@@ -49,7 +49,7 @@ export function loadPdfJs() {
     throw new Error(`PDF.js konnte nicht geladen werden (${PDFJS_CDNS.join(" oder ")})${lastErr ? `: ${lastErr.message || lastErr}` : ""}`);
   })().catch((err) => {
     _pdfjsPromise = null;
-    throw err;
+    return Promise.reject(err);
   });
 
   return _pdfjsPromise;
