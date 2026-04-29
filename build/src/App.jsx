@@ -2226,7 +2226,7 @@ export default function App() {
           </div>
 
           <div style={{ background: "#FFFFFF", border: "1.25px solid #D3CAB9", borderRadius: 3, padding: "10px 12px", marginTop: 10 }}>
-            <div className="text-[10.5px] tracking-[0.18em] uppercase mb-2" style={{ color: "#B5623E", fontFamily: "'Geist Mono', monospace" }}>Maßnahmen-Übersicht</div>
+            <div className="text-[10.5px] tracking-[0.18em] uppercase mb-2" style={{ color: "#B5623E", fontFamily: "'Geist Mono', monospace" }}>Paket-Übersicht</div>
             {reportSummaryPackages.length === 0 ? (
               <div style={{ fontSize: 12, color: "#6B6259" }}>Noch keine Maßnahmen aktiv.</div>
             ) : reportSummaryPackages.map((p, idx) => (
