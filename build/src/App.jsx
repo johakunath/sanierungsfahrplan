@@ -604,7 +604,7 @@ const PaketBlock = ({ paket, aktiv, onToggle, onToggleMassnahme = () => {}, akti
                   </span>
                 )}
                 {empfohleneMassnahmen.includes(m.id) && (
-                  <span className="print-hide" title="Kosten-Nutzen deutlich besser als Durchschnitt (< 75 % des Medianwerts in €/kWh Primärenergie)" style={{ background: "#F6D400", color: "#1E1A15", padding: "1px 8px", borderRadius: 100, fontSize: 10, fontFamily: "'Geist Mono', monospace", fontWeight: 600, letterSpacing: "0.06em", flexShrink: 0, cursor: "help" }}>
+                  <span className="print-hide" title="Kosten-Nutzen deutlich besser als Durchschnitt (< 75 % des Medianwerts in €/MWh Primärenergie)" style={{ background: "#F6D400", color: "#1E1A15", padding: "1px 8px", borderRadius: 100, fontSize: 10, fontFamily: "'Geist Mono', monospace", fontWeight: 600, letterSpacing: "0.06em", flexShrink: 0, cursor: "help" }}>
                     ★ Empfohlen
                   </span>
                 )}
@@ -614,7 +614,7 @@ const PaketBlock = ({ paket, aktiv, onToggle, onToggleMassnahme = () => {}, akti
                   </span>
                 )}
                 {nichtEmpfohleneMassnahmen.includes(m.id) && !empfohleneMassnahmen.includes(m.id) && (
-                  <span className="print-hide" title="Kosten-Nutzen deutlich schlechter als Durchschnitt (> 2× Medianwert in €/kWh Primärenergie)" style={{ background: "#E2DBD0", color: "#6B6259", padding: "1px 8px", borderRadius: 100, fontSize: 10, fontFamily: "'Geist Mono', monospace", fontWeight: 600, letterSpacing: "0.06em", flexShrink: 0, cursor: "help" }}>
+                  <span className="print-hide" title="Kosten-Nutzen deutlich schlechter als Durchschnitt (> 2× Medianwert in €/MWh Primärenergie)" style={{ background: "#E2DBD0", color: "#6B6259", padding: "1px 8px", borderRadius: 100, fontSize: 10, fontFamily: "'Geist Mono', monospace", fontWeight: 600, letterSpacing: "0.06em", flexShrink: 0, cursor: "help" }}>
                     ✕ Nicht empfohlen
                   </span>
                 )}
@@ -637,13 +637,13 @@ const PaketBlock = ({ paket, aktiv, onToggle, onToggleMassnahme = () => {}, akti
                   <span style={{ color: "#B5623E" }}><InfoIcon /></span>
                 </Tooltip>
                 </div>
-                <div className="print-hide" style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4, minWidth: 140 }}>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4, minWidth: 140 }}>
                   {m.co2_reduktion > 0 && (
                     <div style={{ fontFamily: "'Geist Mono', monospace", fontSize: 11.5, color: "#6B6259", textAlign: "right" }}>
                       CO₂ −{m.co2_reduktion} kg/(m²·a)
                     </div>
                   )}
-                  <button onClick={() => toggleWarum(m.id)}
+                  <button className="print-hide" onClick={() => toggleWarum(m.id)}
                     style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12.5,
                              color: "#B5623E", background: "none", border: "none", padding: 0,
                              cursor: "pointer", fontFamily: "'Geist Mono', monospace" }}>
@@ -1556,7 +1556,7 @@ const WieFunktioniertSection = () => {
             <b>Endenergie</b> ist die dem Gebäude zugeführte Energie (Öl, Gas, Strom). <b>Primärenergie</b> = Endenergie × Primärenergiefaktor — berücksichtigt die Verluste bei Gewinnung und Transport des Energieträgers. Die <b>Effizienzklasse A+–H</b> basiert auf der Primärenergie nach GEG §86. Die Bauteil-Stufen 1–7 beschreiben den Sanierungsstand; sie bestimmen, wie groß die Einsparung jeder Maßnahme für Ihr Haus konkret ist.
           </Sub>
           <Sub title="Wie wird die Reihenfolge der Maßnahmen bestimmt?">
-            Jede Maßnahme erhält eine Punktzahl: Netto-Investition ÷ eingesparte Primärenergie [€/kWh]. Niedrig = wirtschaftlich sinnvoll. Die Pakete werden nach dieser Punktzahl sortiert und aktualisieren sich automatisch, wenn Sie Gebäudedaten oder Bauteil-Stufen ändern. Die <b>★ Empfohlen</b>-Markierung zeigt Maßnahmen mit deutlich besserem Kosten-Nutzen als der Durchschnitt (Score &lt; 75 % des Medians). <b>✕ Nicht empfohlen</b> kennzeichnet Maßnahmen mit sehr hohem Score (&gt; 2× Median) oder ohne messbaren Primärenergie-Effekt.
+            Jede Maßnahme erhält eine Punktzahl: Netto-Investition ÷ eingesparte Primärenergie [€/MWh]. Niedrig = wirtschaftlich sinnvoll. Die Pakete werden nach dieser Punktzahl sortiert und aktualisieren sich automatisch, wenn Sie Gebäudedaten oder Bauteil-Stufen ändern. Die <b>★ Empfohlen</b>-Markierung zeigt Maßnahmen mit deutlich besserem Kosten-Nutzen als der Durchschnitt (Score &lt; 75 % des Medians). <b>✕ Nicht empfohlen</b> kennzeichnet Maßnahmen mit sehr hohem Score (&gt; 2× Median) oder ohne messbaren Primärenergie-Effekt.
           </Sub>
           <Sub title="Wie werden die Förderungen berechnet?">
             <b>BEG EM (BAFA)</b>: 15 % Grundförderung auf den energetisch bedingten Mehraufwand (Investition minus Sowieso-Kosten). <b>Wärmepumpe (KfW 458)</b>: bis zu 50 % (30 % Grundförderung + 20 % Klimageschwindigkeits-Bonus möglich). <b>iSFP-Bonus</b>: +5 % auf alle Maßnahmen, die im Fahrplan hinterlegt sind — das ist der Kern des iSFP-Verfahrens.
@@ -1866,6 +1866,7 @@ export default function App() {
   );
   const empfohleneMassnahmen      = useMemo(() => bewertung.filter(m => m.empfohlen).map(m => m.id),      [bewertung]);
   const nichtEmpfohleneMassnahmen = useMemo(() => bewertung.filter(m => m.nichtEmpfohlen).map(m => m.id), [bewertung]);
+const aktiveEmpfohleneMassnahmen = useMemo(() => empfohleneMassnahmen.filter(id => aktiveMassnahmen.includes(id)), [empfohleneMassnahmen, aktiveMassnahmen]);
   const reportSummaryPackages = useMemo(() => {
     return dynamicPakete.map((paket) => {
       const aktiveInPaket = paket.massnahmen.filter((m) => aktiveMassnahmen.includes(m.id));
@@ -2038,7 +2039,7 @@ export default function App() {
 
         {/* Fahrplan */}
         <Section id="fahrplan" eyebrow="Schritt 2 · Fahrplan" title="Empfohlene Maßnahmenpakete"
-          subtitle="Reihenfolge nach Kosten-Nutzen (€/kWh Primärenergie). ★ = deutlich günstiger als Median; ✕ = deutlich teurer.">
+          subtitle="Reihenfolge nach Kosten-Nutzen (€/MWh Primärenergie). ★ = deutlich günstiger als Median; ✕ = deutlich teurer.">
           <div className="mb-10" style={{ overflowX: "auto", WebkitOverflowScrolling: "touch", marginLeft: -4, marginRight: -4 }}>
             <div className="flex items-start justify-between gap-2 relative" style={{ padding: "0 12px", minWidth: 480 }}>
               <div className="absolute" style={{ left: 60, right: 60, top: 28, height: 2, background: "linear-gradient(to right, #E30613, #F07D00, #7C3AED, #F6D400, #00843D, #2563EB)" }} />
@@ -2227,6 +2228,9 @@ export default function App() {
 
           <div style={{ background: "#FFFFFF", border: "1.25px solid #D3CAB9", borderRadius: 3, padding: "10px 12px", marginTop: 10 }}>
             <div className="text-[10.5px] tracking-[0.18em] uppercase mb-2" style={{ color: "#B5623E", fontFamily: "'Geist Mono', monospace" }}>Paket-Übersicht</div>
+            <div style={{ fontSize: 11, color: "#6B6259", marginBottom: 6 }}>
+              Aktive empfohlene Maßnahmen: <b>{aktiveEmpfohleneMassnahmen.length}</b>
+            </div>
             {reportSummaryPackages.length === 0 ? (
               <div style={{ fontSize: 12, color: "#6B6259" }}>Noch keine Maßnahmen aktiv.</div>
             ) : reportSummaryPackages.map((p, idx) => (
