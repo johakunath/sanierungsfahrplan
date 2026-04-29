@@ -114,7 +114,7 @@ const PaketHaus = ({ farbe, aktiv, nummer, size = 68 }) => {
 };
 
 // ═══ TOOLTIP ═══════════════════════════════════════════════════════════
-const Tooltip = ({ content, children }) => {
+const Tooltip = ({ content, children, align = "center" }) => {
   const [show, setShow] = useState(false);
   return (
     <span style={{ position: "relative", display: "inline-flex", alignItems: "center", cursor: "help" }}
@@ -124,12 +124,12 @@ const Tooltip = ({ content, children }) => {
       {show && (
         <span style={{
           position: "absolute", bottom: "calc(100% + 8px)", left: "50%",
-          transform: "translateX(-50%)", zIndex: 100,
+          transform: align === "right" ? "translateX(-100%)" : (align === "left" ? "translateX(0)" : "translateX(-50%)"), zIndex: 100,
           background: "#1E1A15", color: "#F8F5EF",
           padding: "10px 14px", borderRadius: 3, fontSize: 12,
           lineHeight: 1.5, width: 280, textAlign: "left",
           boxShadow: "0 4px 18px rgba(30,26,21,0.25)", fontWeight: 400,
-          pointerEvents: "none",
+          pointerEvents: "none", maxWidth: "min(92vw, 320px)",
         }}>
           {content}
           <span style={{ position: "absolute", top: "100%", left: "50%",
@@ -589,7 +589,7 @@ const PaketBlock = ({ paket, aktiv, onToggle, onToggleMassnahme = () => {}, akti
             nichtEmpfohlen: nichtEmpfohleneMassnahmen.includes(m.id),
           });
           return (
-          <div key={m.id} className="p-5" style={{ borderBottom: i < paket.massnahmen.length - 1 ? "1px solid #E2DBD0" : "none", opacity: massnahmeAktiv ? 1 : 0.45, transition: "opacity 0.15s" }}>
+          <div key={p.id} className="p-5" style={{ borderBottom: i < paket.massnahmen.length - 1 ? "1px solid #E2DBD0" : "none", opacity: massnahmeAktiv ? 1 : 0.45, transition: "opacity 0.15s" }}>
             <div className="mb-4">
               <div className="mb-1.5" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 14 }}>
                 <div className="text-[14.5px] font-medium flex items-center gap-2 flex-wrap" style={{ color: "#1E1A15", flex: 1 }}>
@@ -606,6 +606,11 @@ const PaketBlock = ({ paket, aktiv, onToggle, onToggleMassnahme = () => {}, akti
                 {empfohleneMassnahmen.includes(m.id) && (
                   <span className="print-hide" title="Kosten-Nutzen deutlich besser als Durchschnitt (< 75 % des Medianwerts in €/kWh Primärenergie)" style={{ background: "#F6D400", color: "#1E1A15", padding: "1px 8px", borderRadius: 100, fontSize: 10, fontFamily: "'Geist Mono', monospace", fontWeight: 600, letterSpacing: "0.06em", flexShrink: 0, cursor: "help" }}>
                     ★ Empfohlen
+                  </span>
+                )}
+                {empfohleneMassnahmen.includes(m.id) && !massnahmeAktiv && (
+                  <span className="print-hide" title="Empfohlene Maßnahme wurde deaktiviert" style={{ background: "#FEF2E8", color: "#B5623E", border: "1px solid #F5C09A", padding: "1px 8px", borderRadius: 100, fontSize: 10, fontFamily: "'Geist Mono', monospace", fontWeight: 600, letterSpacing: "0.06em", flexShrink: 0 }}>
+                    ⚠ Abgewählt
                   </span>
                 )}
                 {nichtEmpfohleneMassnahmen.includes(m.id) && !empfohleneMassnahmen.includes(m.id) && (
@@ -959,17 +964,17 @@ const KumuliertTabelle = ({ kumuliert, ist, heizkostenIst }) => (
           <th className="text-left py-2.5 font-medium">Schritt</th>
           <th className="text-right py-2.5 font-medium">
             <Tooltip content="Tatsächlich gelieferter Energieträger (Gas, Strom, Öl) in kWh pro m² Wohnfläche und Jahr. Entspricht dem Energieausweis-Verbrauchswert.">
-              <span className="cursor-help border-b border-dashed border-current">Endenergie</span>
+              <span style={{ color: "#B5623E", display: "inline-flex", verticalAlign: "middle" }}><InfoIcon size={11} /></span><span style={{ marginLeft: 6 }}>Endenergie</span>
             </Tooltip>
           </th>
           <th className="text-right py-2.5 font-medium">
             <Tooltip content="Gesamtenergieeinsatz inkl. Gewinnung und Transport des Energieträgers (Primärenergiefaktor). Basis für die Energieeffizienzklasse nach GEG §86.">
-              <span className="cursor-help border-b border-dashed border-current">Primärenergie</span>
+              <span style={{ color: "#B5623E", display: "inline-flex", verticalAlign: "middle" }}><InfoIcon size={11} /></span><span style={{ marginLeft: 6 }}>Primärenergie</span>
             </Tooltip>
           </th>
           <th className="text-right py-2.5 font-medium">
             <Tooltip content="CO₂-Emissionen aus dem Heizenergieverbrauch in kg pro m² Wohnfläche und Jahr. Inkl. Vorkette des Energieträgers.">
-              <span className="cursor-help border-b border-dashed border-current">CO₂</span>
+              <span style={{ color: "#B5623E", display: "inline-flex", verticalAlign: "middle" }}><InfoIcon size={11} /></span><span style={{ marginLeft: 6 }}>CO₂</span>
             </Tooltip>
           </th>
           <th className="text-right py-2.5 font-medium">Klasse</th>
@@ -1388,7 +1393,7 @@ const ISFPPrintReport = ({ ist, k, heizkostenIst, aktivePakete, aktiveMassnahmen
                 <div style={{ marginBottom: 11 }}>
                   <div style={{ fontSize: 8.5, letterSpacing: "0.18em", color: "#B5623E", fontFamily: "'Geist Mono', monospace", textTransform: "uppercase", marginBottom: 5 }}>Maßnahmen</div>
                   {paket.massnahmen.map(m => (
-                    <div key={m.id} style={{ paddingLeft: 14, position: "relative", marginBottom: 6, fontSize: 13, lineHeight: 1.5 }}>
+                    <div key={p.id} style={{ paddingLeft: 14, position: "relative", marginBottom: 6, fontSize: 13, lineHeight: 1.5 }}>
                       <span style={{ position: "absolute", left: 0, color: farbe.bg, fontWeight: 700 }}>→</span>
                       <span style={{ fontWeight: 600, color: "#1E1A15" }}>{m.titel}</span>
                       {m.beschreibung && <span style={{ color: "#3A332B" }}> — {m.beschreibung}</span>}
@@ -1469,7 +1474,7 @@ const MassnahmenEditor = ({ overrides, onUpdate, onReset }) => {
                 const quote = ov.foerderquote !== undefined ? ov.foerderquote : m.foerderquote;
                 const changed = ov.investition !== undefined || ov.foerderquote !== undefined;
                 return (
-                  <tr key={m.id} style={{ borderBottom: "1px solid #E2DBD0" }}>
+                  <tr key={p.id} style={{ borderBottom: "1px solid #E2DBD0" }}>
                     <td className="py-3 px-5">
                       <div className="flex items-center gap-2">
                         <span style={{ width: 8, height: 8, borderRadius: 100, background: PAKET_FARBEN[m.paketFarbe].bg, flexShrink: 0, display: "inline-block" }} />
@@ -1490,7 +1495,7 @@ const MassnahmenEditor = ({ overrides, onUpdate, onReset }) => {
                       <div className="flex items-baseline justify-end gap-1.5">
                         {m.foerderquote > 0 ? (
                           <>
-                            <input type="number" min={0} max={50} step={5} value={Math.round(quote * 100)}
+                            <input type="number" min={0} max={50} step={1} value={Math.round(quote * 100)}
                               onChange={e => onUpdate(m.id, "foerderquote", Math.max(0, Math.min(50, parseInt(e.target.value, 10) || 0)) / 100)}
                               style={{ width: 50, fontFamily: "'Geist Mono', monospace", fontSize: 12.5, textAlign: "right",
                                 background: ov.foerderquote !== undefined ? "#FFFBE6" : "transparent",
@@ -1861,19 +1866,19 @@ export default function App() {
   );
   const empfohleneMassnahmen      = useMemo(() => bewertung.filter(m => m.empfohlen).map(m => m.id),      [bewertung]);
   const nichtEmpfohleneMassnahmen = useMemo(() => bewertung.filter(m => m.nichtEmpfohlen).map(m => m.id), [bewertung]);
-  const reportSummaryMeasures = useMemo(() => {
-    const all = effectivePakete.flatMap(p => p.massnahmen);
-    const activeMeasureIds = aktiveMassnahmen.slice();
-    return activeMeasureIds.map((id) => {
-      const m = all.find(x => x.id === id);
-      if (!m) return null;
-      const netto = m.investition - m.ohnehin_anteil;
-      const quote = m.foerderquote > 0 ? Math.min(m.foerderquote + BEG_BONUS.isfp_bonus, 0.5) : 0;
-      const foerder = netto * quote;
-      const warum = getWarum(id, { bauteile_state: effectiveBauteilState, gebaeude, aktiveMassnahmen, empfohlen: empfohleneMassnahmen.includes(id), nichtEmpfohlen: nichtEmpfohleneMassnahmen.includes(id) });
-      return { ...m, foerder, eigenanteil: m.investition - foerder, reason: warum.grund || warum.jetzt || m.beschreibung };
+  const reportSummaryPackages = useMemo(() => {
+    return dynamicPakete.map((paket) => {
+      const aktiveInPaket = paket.massnahmen.filter((m) => aktiveMassnahmen.includes(m.id));
+      if (aktiveInPaket.length === 0) return null;
+      const investition = aktiveInPaket.reduce((sum, m) => sum + m.investition, 0);
+      const foerderung = aktiveInPaket.reduce((sum, m) => {
+        const netto = m.investition - m.ohnehin_anteil;
+        const quote = m.foerderquote > 0 ? Math.min(m.foerderquote + BEG_BONUS.isfp_bonus, 0.5) : 0;
+        return sum + netto * quote;
+      }, 0);
+      return { id: paket.id, nummer: paket.nummer, titel: paket.titel, farbe: paket.farbe, kosten: investition - foerderung };
     }).filter(Boolean);
-  }, [effectivePakete, aktiveMassnahmen, empfohleneMassnahmen, nichtEmpfohleneMassnahmen, effectiveBauteilState, gebaeude]);
+  }, [dynamicPakete, aktiveMassnahmen]);
 
   const handleExport = () => {
     exportAsPDF();
@@ -2221,18 +2226,18 @@ export default function App() {
           </div>
 
           <div style={{ background: "#FFFFFF", border: "1.25px solid #D3CAB9", borderRadius: 3, padding: "10px 12px", marginTop: 10 }}>
-            <div className="text-[10.5px] tracking-[0.18em] uppercase mb-2" style={{ color: "#B5623E", fontFamily: "'Geist Mono', monospace" }}>Maßnahmen-Übersicht</div>
-            {reportSummaryMeasures.length === 0 ? (
+            <div className="text-[10.5px] tracking-[0.18em] uppercase mb-2" style={{ color: "#B5623E", fontFamily: "'Geist Mono', monospace" }}>Paket-Übersicht</div>
+            {reportSummaryPackages.length === 0 ? (
               <div style={{ fontSize: 12, color: "#6B6259" }}>Noch keine Maßnahmen aktiv.</div>
-            ) : reportSummaryMeasures.map((m, idx) => (
-              <div key={m.id} style={{ padding: "8px 0", borderBottom: idx < reportSummaryMeasures.length - 1 ? "1px solid #E2DBD0" : "none" }}>
+            ) : reportSummaryPackages.map((p, idx) => (
+              <div key={p.id} style={{ padding: "8px 0", borderBottom: idx < reportSummaryPackages.length - 1 ? "1px solid #E2DBD0" : "none" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "baseline" }}>
-                  <div style={{ fontSize: 12.5, color: "#1E1A15", fontWeight: 500 }}>{idx + 1}. {m.titel}</div>
+                  <div style={{ fontSize: 12.5, color: "#1E1A15", fontWeight: 500 }}>Paket {p.nummer} · {p.titel}</div>
                   <div style={{ fontSize: 10.5, color: "#3A332B", fontFamily: "'Geist Mono', monospace", textAlign: "right" }}>
-                    I {fmtEur(m.investition)} · F −{fmtEur(m.foerder)} · E {fmtEur(m.eigenanteil)}
+                    Kosten inkl. Förderung: {fmtEur(p.kosten)}
                   </div>
                 </div>
-                <div style={{ fontSize: 11.5, color: "#6B6259", marginTop: 3 }}>{m.reason}</div>
+                
               </div>
             ))}
           </div>
