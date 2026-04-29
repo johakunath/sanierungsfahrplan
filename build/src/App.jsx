@@ -637,13 +637,13 @@ const PaketBlock = ({ paket, aktiv, onToggle, onToggleMassnahme = () => {}, akti
                   <span style={{ color: "#B5623E" }}><InfoIcon /></span>
                 </Tooltip>
                 </div>
-                <div className="print-hide" style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4, minWidth: 140 }}>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4, minWidth: 140 }}>
                   {m.co2_reduktion > 0 && (
                     <div style={{ fontFamily: "'Geist Mono', monospace", fontSize: 11.5, color: "#6B6259", textAlign: "right" }}>
                       CO₂ −{m.co2_reduktion} kg/(m²·a)
                     </div>
                   )}
-                  <button onClick={() => toggleWarum(m.id)}
+                  <button className="print-hide" onClick={() => toggleWarum(m.id)}
                     style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12.5,
                              color: "#B5623E", background: "none", border: "none", padding: 0,
                              cursor: "pointer", fontFamily: "'Geist Mono', monospace" }}>
@@ -1866,6 +1866,7 @@ export default function App() {
   );
   const empfohleneMassnahmen      = useMemo(() => bewertung.filter(m => m.empfohlen).map(m => m.id),      [bewertung]);
   const nichtEmpfohleneMassnahmen = useMemo(() => bewertung.filter(m => m.nichtEmpfohlen).map(m => m.id), [bewertung]);
+const aktiveEmpfohleneMassnahmen = useMemo(() => empfohleneMassnahmen.filter(id => aktiveMassnahmen.includes(id)), [empfohleneMassnahmen, aktiveMassnahmen]);
   const reportSummaryPackages = useMemo(() => {
     return dynamicPakete.map((paket) => {
       const aktiveInPaket = paket.massnahmen.filter((m) => aktiveMassnahmen.includes(m.id));
@@ -2227,6 +2228,9 @@ export default function App() {
 
           <div style={{ background: "#FFFFFF", border: "1.25px solid #D3CAB9", borderRadius: 3, padding: "10px 12px", marginTop: 10 }}>
             <div className="text-[10.5px] tracking-[0.18em] uppercase mb-2" style={{ color: "#B5623E", fontFamily: "'Geist Mono', monospace" }}>Paket-Übersicht</div>
+            <div style={{ fontSize: 11, color: "#6B6259", marginBottom: 6 }}>
+              Aktive empfohlene Maßnahmen: <b>{aktiveEmpfohleneMassnahmen.length}</b>
+            </div>
             {reportSummaryPackages.length === 0 ? (
               <div style={{ fontSize: 12, color: "#6B6259" }}>Noch keine Maßnahmen aktiv.</div>
             ) : reportSummaryPackages.map((p, idx) => (

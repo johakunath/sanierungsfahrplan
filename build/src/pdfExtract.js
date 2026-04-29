@@ -5,27 +5,53 @@
 
 // Lazy-load PDF.js (v3.11 UMD — läuft als script-tag, keine ESM-Probleme)
 const PDFJS_VERSION = "3.11.174";
-const PDFJS_CDN = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDFJS_VERSION}`;
+const PDFJS_CDNS = [
+  `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDFJS_VERSION}`,
+  `https://unpkg.com/pdfjs-dist@${PDFJS_VERSION}/build`,
+];
 
 let _pdfjsPromise = null;
+let _loadedPdfJsBase = null;
+
+const setWorkerFromBase = (base) => {
+  if (!window.pdfjsLib || !base) return;
+  window.pdfjsLib.GlobalWorkerOptions.workerSrc = `${base}/pdf.worker.min.js`;
+  _loadedPdfJsBase = base;
+};
+
+const loadScript = (src) => new Promise((resolve, reject) => {
+  const s = document.createElement("script");
+  s.src = src;
+  s.onload = resolve;
+  s.onerror = reject;
+  document.head.appendChild(s);
+});
 
 export function loadPdfJs() {
+  if (window.pdfjsLib) {
+    if (_loadedPdfJsBase) setWorkerFromBase(_loadedPdfJsBase);
+    return Promise.resolve(window.pdfjsLib);
+  }
   if (_pdfjsPromise) return _pdfjsPromise;
-  _pdfjsPromise = new Promise((resolve, reject) => {
-    if (window.pdfjsLib) {
-      window.pdfjsLib.GlobalWorkerOptions.workerSrc = `${PDFJS_CDN}/pdf.worker.min.js`;
-      return resolve(window.pdfjsLib);
+
+  _pdfjsPromise = (async () => {
+    let lastErr = null;
+    for (const base of PDFJS_CDNS) {
+      try {
+        await loadScript(`${base}/pdf.min.js`);
+        if (!window.pdfjsLib) throw new Error("pdfjsLib nicht verfügbar nach Laden");
+        setWorkerFromBase(base);
+        return window.pdfjsLib;
+      } catch (e) {
+        lastErr = e;
+      }
     }
-    const s = document.createElement("script");
-    s.src = `${PDFJS_CDN}/pdf.min.js`;
-    s.onload = () => {
-      if (!window.pdfjsLib) return reject(new Error("pdfjsLib nicht verfügbar nach Laden"));
-      window.pdfjsLib.GlobalWorkerOptions.workerSrc = `${PDFJS_CDN}/pdf.worker.min.js`;
-      resolve(window.pdfjsLib);
-    };
-    s.onerror = () => reject(new Error(`PDF.js konnte nicht geladen werden (${PDFJS_CDN})`));
-    document.head.appendChild(s);
+    throw new Error(`PDF.js konnte nicht geladen werden (${PDFJS_CDNS.join(" oder ")})${lastErr ? `: ${lastErr.message || lastErr}` : ""}`);
+  })().catch((err) => {
+    _pdfjsPromise = null;
+    throw err;
   });
+
   return _pdfjsPromise;
 }
 
