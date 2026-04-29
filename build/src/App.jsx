@@ -1946,8 +1946,8 @@ export default function App() {
       <main className="mx-auto max-w-[1400px] print-hide px-5 md:px-10" style={{ paddingTop: 36, paddingBottom: 80 }}>
 
         {/* 2-col layout on xl+: left=scrollable content, right=sticky Ergebnis sidebar */}
-        <div className="xl:grid xl:grid-cols-[minmax(0,1fr)_380px] xl:gap-8 xl:items-start">
-        <div>
+        <div className="flex flex-col lg:grid lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-8 lg:items-start">
+        <div className="order-2 lg:order-none">
 
 
         {/* Preset-Picker */}
@@ -2117,7 +2117,7 @@ export default function App() {
         <Section id="ergebnis" eyebrow="Schritt 3 · Ergebnis" title="Ihr Gebäude nach der Sanierung"
           subtitle="Alle Kennzahlen, Einsparungen und Förderungen im Überblick. Kumulierte Wirkung nach BAFA-Logik: jedes Paket baut auf dem vorigen auf.">
           {/* On xl+ VorherNachher is in the sticky sidebar; here only for mobile/tablet and print */}
-          <div className="xl:hidden print:block">
+          <div className="lg:hidden print:block">
             <VorherNachher ist={ist} k={k} heizkostenIst={heizkosten} gebaeude={gebaeude} />
             <div className="mt-10">
               <h3 className="font-serif mb-4" style={{ fontSize: 22, fontWeight: 500, color: "#1E1A15" }}>Einsparungen im Überblick</h3>
@@ -2220,7 +2220,7 @@ export default function App() {
         </div>{/* end left column */}
 
         {/* Sidebar — static block on mobile (shows below Ergebnis), sticky right column on xl+ */}
-        <aside className="block print:hidden xl:sticky xl:top-[92px] xl:max-h-[calc(100vh-110px)] xl:overflow-y-auto mt-8 xl:mt-0"
+        <aside className="order-1 lg:order-none block print:hidden lg:sticky lg:top-[92px] lg:max-h-[calc(100vh-110px)] lg:overflow-y-auto mb-8 lg:mb-0 lg:mt-0"
                style={{ scrollbarWidth: "thin", paddingBottom: 24 }}>
           <div className="text-[9.5px] tracking-[0.18em] uppercase mb-3"
                style={{ color: "#B5623E", fontFamily: "'Geist Mono', monospace" }}>Ergebnis · Live</div>
