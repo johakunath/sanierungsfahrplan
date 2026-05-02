@@ -290,3 +290,34 @@ Do not remove this or weaken the wording. It is a legal/trust safeguard.
 - **Vorlauftemperatur → WP COP linkage**: Wire `vorlauftemperaturFuer()` into the WP PE savings calculation (M4 impact function) so high-temp radiator buildings correctly show lower WP savings — currently the envelope malus proxies for this but doesn't account for the heating circuit directly.
 - **Preset Wärmeverteilung auto-suggest**: When user selects Heizung = Wärmepumpe, suggest switching to Fußbodenheizung if current distribution is Hochtemperatur.
 - **Multi-step Förderdeckel**: Enforce BEG per-measure caps (60.000 € förderfähige Kosten) and correctly limit the iSFP-Bonus stacking.
+
+---
+
+## Agent quickstart (for Claude/Codex, token-saving)
+
+Use this minimal path before deep analysis:
+
+1. Read only these sections first:
+   - **What this is**
+   - **Product boundaries**
+   - **Architecture**
+   - **Build rules**
+2. Open only the file needed for your task:
+   - UI/state issues → `build/src/App.jsx`
+   - energy/subsidy math → `build/src/data.js`
+   - PDF import/parsing → `build/src/pdfExtract.js`
+   - print/export behavior → `build/src/printExport.js`
+   - styling issues → `build/src/input.css`
+3. For quick regression checks after logic changes:
+   - Validate package/measure order remains physically plausible (P1→P4, M1→M6).
+   - Compare one known output against the **Calculation reference** table.
+4. Build only when required:
+   - Source edits in `build/src/*` require `npm run build` from `build/`.
+   - Doc-only edits do not.
+
+### High-signal facts to avoid re-deriving
+
+- Root `index.html` is generated output; edit sources only.
+- `effectivePakete` is the canonical dataset for downstream calculations/UI.
+- Recommendation badges are median-relative (`0.75×` and `2.0×` thresholds), not fixed top-N.
+- This is an EFH-focused demonstrator, not a BAFA-certified planning artifact.
