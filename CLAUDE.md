@@ -36,18 +36,24 @@ Key German regulatory context:
 ```
 build/
   src/
-    App.jsx          — React UI (components, state, render logic)
-    data.js          — Data model, measures, presets, calculation engine
-    pdfExtract.js    — PDF energy certificate parsing (pdf.js)
-    printExport.js   — window.print() export helper
-    input.css        — Tailwind source
-  build.mjs          — esbuild bundler (JSX → JS, tree-shakes React)
-  assemble.mjs       — Inline JS + CSS into dist/index.html
+    App.jsx               — React UI (main state, hooks, render logic) ~1,850 lines
+    helpers.jsx           — Shared formatting helpers + EnergyBar component
+    data.js               — Data model, measures, presets, calculation engine
+    data.test.js          — Vitest unit tests for data.js functions
+    pdfExtract.js         — PDF energy certificate parsing (pdf.js)
+    printExport.js        — window.print() export helper
+    input.css             — Tailwind source
+    components/
+      ISFPPrintReport.jsx — Print-only iSFP report (Seite 1 Überblick + detail pages per package)
+      MassnahmenEditor.jsx — Collapsible cost/Förderquote editor (Maßnahmen-Datenbank)
+  build.mjs               — esbuild bundler (JSX → JS, tree-shakes React)
+  assemble.mjs            — Inline JS + CSS into dist/index.html
+  verify.mjs              — jsdom smoke test run after every build
   tailwind.config.js
   dist/
-    index.html       — Build output (do not edit directly)
+    index.html            — Build output (do not edit directly)
 
-index.html           — Repo root copy, served by GitHub Pages
+index.html                — Repo root copy, served by GitHub Pages
 ```
 
 ### Build pipeline
@@ -57,10 +63,25 @@ cd build
 node build.mjs                                                      # JSX → JS via esbuild
 npx tailwindcss -i src/input.css -o dist/tailwind.css --minify     # Tailwind scan + compile
 node assemble.mjs                                                   # Inline everything → dist/index.html
+node verify.mjs                                                     # Smoke test (auto-run by npm run build)
 cp dist/index.html ../index.html                                    # Deploy copy
 ```
 
-**Always run all three steps in order.** Skipping `tailwind` loses new utility classes; skipping `assemble` means the root `index.html` is stale.
+Use `npm run build` from `build/` — it runs all four steps in order and exits non-zero on failure.
+
+Run `npm test` from `build/` after any change to `data.js` to verify calculation correctness.
+
+**Always run all steps in order.** Skipping `tailwind` loses new utility classes; skipping `assemble` means the root `index.html` is stale.
+
+### Key components
+
+**`ErrorBoundary`** (`App.jsx`, exported class) — wraps the entire app. Catches any render-time exception and displays the error message instead of a blank page. Added after the `p is not defined` family of bugs made blank-page failures invisible.
+
+**`MobileResultsDrawer`** (`App.jsx`) — bottom-sheet overlay for mobile viewports (<768 px). Shows the Ergebnis panel (EEK badge, cost summary, EEK chart) as a slide-up drawer triggered by a sticky footer button. Desktop layout shows the panel inline in the right column; the drawer is hidden on desktop via CSS.
+
+**`ISFPPrintReport`** (`components/ISFPPrintReport.jsx`) — print-only component (`.print-only` CSS class). Renders Seite 1 Überblick (IST/ZIEL boxes, cascade summary) plus one detail page per active package. Uses `EnergyBar` and formatting helpers from `helpers.jsx`.
+
+**`MassnahmenEditor`** (`components/MassnahmenEditor.jsx`) — collapsible table that lets users override per-measure `investition` and `foerderquote`. Changes are stored in `massnahmenOverrides` state and merged into `effectivePakete`. Uses raw `MASSNAHMENPAKETE` (pre-override base values) — this is intentional.
 
 ---
 
@@ -180,18 +201,17 @@ Applying a preset resets all state (gebaeude, ist, bauteile, aktiveMassnahmen, m
 
 ---
 
-## Calculation reference (efhNachkrieg, all measures active)
+## Calculation reference (efhNachkrieg, all measures active — M1–M7)
+
+These are the values `berechneNachMassnahmen` must produce for the efhNachkrieg preset with all measures active. They are pinned by `data.test.js`; if you change an impact function or preset, the test will break — update both together.
 
 | | IST | ZIEL |
 |--|-----|------|
-| Primärenergie | 236 kWh/(m²·a) | 78 kWh/(m²·a) |
-| Endenergie | 215 | 68 |
-| CO₂ | 63 kg/(m²·a) | 19,8 |
+| Primärenergie | 236 kWh/(m²·a) | 86 kWh/(m²·a) |
 | EEK | G | C |
-| Heizkosten | 3.429 €/a | 2.761 €/a (WP-Tarif) |
-| Investition | 130.800 € | |
-| BEG-Förderung | 20.950 € | |
-| Eigenanteil | 109.850 € | |
+| Investition | 142.800 € | |
+| BEG-Förderung | 23.250 € | |
+| Eigenanteil | 119.550 € | |
 
 ---
 
@@ -201,21 +221,36 @@ GitHub Pages serves `index.html` from the `main` branch root.
 
 ```bash
 # Push to feature branch → open PR → merge to main → auto-deploy
-git push origin <branch>
+git push -u origin <branch>
 ```
 
-Remote needs PAT in URL (`ghp_…`) — set it once with:
+### Git push in Claude Code sessions
+
+The repo at `/home/user/isfp` uses a bare HTTPS remote by default. Pushes will fail with "No such device or address". Fix by switching to the local auth proxy (already configured in `/home/user/iSFP-Schnellcheck`):
+
+```bash
+# The proxy port changes each session — look it up from the sibling clone:
+PROXY_PORT=$(git -C /home/user/iSFP-Schnellcheck remote get-url origin | grep -oP ':\K\d+(?=/)')
+git remote set-url origin http://local_proxy@127.0.0.1:${PROXY_PORT}/git/johakunath/iSFP-Schnellcheck
+git push -u origin <branch>
+```
+
+The proxy handles GitHub auth transparently — no PAT needed. This only works inside Claude Code web sessions; for local dev, use a PAT in the URL instead:
+
 ```bash
 git remote set-url origin https://johakunath:<PAT>@github.com/johakunath/iSFP-Schnellcheck.git
 ```
+
+**MCP `push_files` as fallback**: For individual files ≤~50 KB, `mcp__github__push_files` works without git credentials. Avoid it for large files (index.html ~295 KB, package-lock.json ~106 KB) — those must go via `git push`.
 
 ---
 
 ## Build rules
 
 - **Never edit `index.html` (repo root) directly.** It is overwritten by `npm run build`. Edit source files in `build/src/` only.
-- Run `npm run build` from `build/` after any change to `App.jsx`, `data.js`, `pdfExtract.js`, `printExport.js`, or `input.css`.
-- The full build script: `node build.mjs && npx tailwindcss -i src/input.css -o dist/tailwind.css --minify && node assemble.mjs && cp dist/index.html ../index.html`
+- Run `npm run build` from `build/` after any change to `App.jsx`, `helpers.jsx`, `data.js`, `pdfExtract.js`, `printExport.js`, `input.css`, or any file under `components/`.
+- Run `npm test` from `build/` after any change to `data.js` to verify calculation correctness.
+- The full build script: `node build.mjs && npx tailwindcss -i src/input.css -o dist/tailwind.css --minify && node assemble.mjs && node verify.mjs && cp dist/index.html ../index.html`
 
 ---
 

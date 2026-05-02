@@ -1,28 +1,53 @@
-# AGENTS.md
+# iSFP-Schnellcheck · AGENTS.md
 
-## Purpose
-This file provides quick-start guidance for coding agents and contributors working in this repository.
+Quick-start for AI coding agents. Read CLAUDE.md for full domain context.
 
-## Read order (important)
-1. Read this `AGENTS.md` for execution rules and token-saving workflow.
-2. Read `CLAUDE.md` for full product context.
+## Project type
 
-`CLAUDE.md` remains the main documentation, how-to guide, and README-style source of truth.
+Single-page React app bundled to one `index.html`. No server, no CDN, no runtime deps.
 
-## Fast project context
-- App type: single-page React demonstrator for German iSFP renovation roadmaps.
-- Build model: generated single-file `index.html` from sources under `build/src/`.
-- Critical rule: never hand-edit root `index.html`; rebuild from `build/`.
+## Source files
 
-## Agent workflow (token-efficient)
-- Start with targeted reads only:
-  - `CLAUDE.md` sections: **What this is**, **Architecture**, **Build rules**.
-  - Then open only the source file you need (`build/src/App.jsx`, `data.js`, `pdfExtract.js`, etc.).
-- Avoid broad scans and full-file dumps unless debugging unknown behavior.
-- Summarize findings in short bullets before editing; patch the smallest viable scope.
-- After code changes in `build/src/`, run `npm run build` in `build/` to refresh root `index.html`.
+```
+build/src/
+  App.jsx               — main UI, state, hooks (~1,850 lines)
+  helpers.jsx           — fmt/fmtEur/textColorFor/waermeEEK/EnergyBar
+  data.js               — calculation engine (pure functions, no React)
+  data.test.js          — Vitest unit tests for data.js
+  components/
+    ISFPPrintReport.jsx — print-only report pages
+    MassnahmenEditor.jsx— cost/Förderquote editor table
+```
 
-## Change safety checklist
-- Preserve package ordering logic (P1 → P4) and measure IDs (M1–M6).
-- Keep legal/subsidy disclaimer wording intact unless explicitly requested.
-- If calculation logic changes, sanity-check one known reference scenario from `CLAUDE.md`.
+## Dev workflow
+
+```bash
+cd build
+npm run build   # build + smoke test + copy dist/index.html → ../index.html
+npm test        # Vitest unit tests (run after any change to data.js)
+```
+
+Run `npm run build` after every change that touches source files. Run `npm test` after any change to `data.js` — the tests pin exact PE/EEK/Eigenanteil values for efhNachkrieg.
+
+## Git push in Claude Code sessions
+
+The `/home/user/isfp` remote defaults to bare HTTPS (push fails). Switch to the local auth proxy first — it handles GitHub auth transparently:
+
+```bash
+PROXY_PORT=$(git -C /home/user/iSFP-Schnellcheck remote get-url origin | grep -oP ':\K\d+(?=/)') && git remote set-url origin http://local_proxy@127.0.0.1:${PROXY_PORT}/git/johakunath/iSFP-Schnellcheck
+git push -u origin <branch>
+```
+
+MCP `push_files` works for small files (≤~50 KB) but is unreliable for large ones (`index.html` ~295 KB, `package-lock.json` ~106 KB). Prefer `git push`.
+
+## Change safety rules
+
+1. **Never edit the root `index.html` directly** — it is overwritten by every build.
+2. **effectivePakete rule**: all downstream calculations use `effectivePakete` (the override-merged memo in App.jsx). The three `MASSNAHMENPAKETE` direct usages in App.jsx carry `// intentional:` comments — do not "fix" them.
+3. **Calculation reference**: `berechneNachMassnahmen(allIds, efhNachkrieg)` must produce PE=86, EEK=C, Eigenanteil=119,550. If your change shifts these, update `data.test.js` and CLAUDE.md together.
+4. **One build per PR**: verify `npm run build && npm test` both pass before pushing.
+5. **German naming is intentional**: `bauteile_state`, `effectivePakete`, `bewerteMassnahmen`, etc. Keep it consistent.
+
+## Domain summary
+
+Renovation measures M1–M7 are grouped in packages P1–P4. Each measure has a state-aware `impact(bauteile_state)` function. `effectivePakete` merges user cost overrides from `massnahmenOverrides` into the base `MASSNAHMENPAKETE`. See CLAUDE.md for full EEK, BEG subsidy, and TABULA building-age logic.
