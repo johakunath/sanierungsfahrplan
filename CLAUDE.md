@@ -221,13 +221,25 @@ GitHub Pages serves `index.html` from the `main` branch root.
 
 ```bash
 # Push to feature branch → open PR → merge to main → auto-deploy
-git push origin <branch>
+git push -u origin <branch>
 ```
 
-Remote needs PAT in URL (`ghp_…`) — set it once with:
+### Git push in Claude Code sessions
+
+The repo at `/home/user/isfp` uses a bare HTTPS remote by default. Pushes will fail with "No such device or address". Fix by switching to the local auth proxy (already configured in `/home/user/iSFP-Schnellcheck`):
+
+```bash
+git remote set-url origin http://local_proxy@127.0.0.1:42055/git/johakunath/iSFP-Schnellcheck
+git push -u origin <branch>
+```
+
+The proxy at `127.0.0.1:42055` handles GitHub auth transparently — no PAT needed. This only works inside Claude Code web sessions; for local dev, use a PAT in the URL instead:
+
 ```bash
 git remote set-url origin https://johakunath:<PAT>@github.com/johakunath/iSFP-Schnellcheck.git
 ```
+
+**MCP `push_files` as fallback**: For individual files ≤~50 KB, `mcp__github__push_files` works without git credentials. Avoid it for large files (index.html ~295 KB, package-lock.json ~106 KB) — those must go via `git push`.
 
 ---
 
