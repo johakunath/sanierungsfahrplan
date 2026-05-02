@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "node build.mjs && npx tailwindcss -i src/input.css -o dist/tailwind.css --minify && node assemble.mjs && cp dist/index.html ../index.html",
+    "build": "node build.mjs && npx tailwindcss -i src/input.css -o dist/tailwind.css --minify && node assemble.mjs && node verify.mjs && cp dist/index.html ../index.html",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -15,5 +15,8 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "tailwindcss": "^3.4.19"
+  },
+  "devDependencies": {
+    "jsdom": "^29.1.1"
   }
 }
