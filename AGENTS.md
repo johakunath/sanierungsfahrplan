@@ -29,6 +29,17 @@ npm test        # Vitest unit tests (run after any change to data.js)
 
 Run `npm run build` after every change that touches source files. Run `npm test` after any change to `data.js` — the tests pin exact PE/EEK/Eigenanteil values for efhNachkrieg.
 
+## Git push in Claude Code sessions
+
+The `/home/user/isfp` remote defaults to bare HTTPS (push fails). Switch to the local auth proxy first — it handles GitHub auth transparently:
+
+```bash
+git remote set-url origin http://local_proxy@127.0.0.1:42055/git/johakunath/iSFP-Schnellcheck
+git push -u origin <branch>
+```
+
+MCP `push_files` works for small files (≤~50 KB) but is unreliable for large ones (`index.html` ~295 KB, `package-lock.json` ~106 KB). Prefer `git push`.
+
 ## Change safety rules
 
 1. **Never edit the root `index.html` directly** — it is overwritten by every build.
