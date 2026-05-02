@@ -677,9 +677,9 @@ const PaketBlock = ({ paket, aktiv, onToggle, onToggleMassnahme = () => {}, akti
   const f = PAKET_FARBEN[paket.farbe];
   const aktiveMassnahmenInPaket = paket.massnahmen.filter(m => aktiveMassnahmen.includes(m.id));
   const summe_invest  = aktiveMassnahmenInPaket.reduce((s, m) => s + m.investition, 0);
-  const summe_instand = aktiveMassnahmenInPaket.reduce((s, m) => s + m.ohnehin_anteil, 0);
+  const summe_instand = aktiveMassnahmenInPaket.reduce((s, m) => s + (m.ohnehin_anteil ?? 0), 0);
   const summe_foerder = aktiveMassnahmenInPaket.reduce((s, m) => {
-    const netto = m.investition - m.ohnehin_anteil;
+    const netto = m.investition - (m.ohnehin_anteil ?? 0);
     const bonus = BEG_BONUS.isfp_bonus;
     const quote = m.foerderquote > 0 ? Math.min(m.foerderquote + bonus, 0.5) : 0;
     return s + netto * quote;
@@ -1366,7 +1366,7 @@ const ISFPPrintReport = ({ ist, k, heizkostenIst, aktivePakete, aktiveMassnahmen
           const farbe = PAKET_FARBEN[paket.farbe];
           const summeInvest = paket.massnahmen.reduce((s, m) => s + m.investition, 0);
           const summeFoerder = Math.round(paket.massnahmen.reduce((s, m) => {
-            const netto = m.investition - m.ohnehin_anteil;
+            const netto = m.investition - (m.ohnehin_anteil ?? 0);
             const quote = m.foerderquote > 0 ? Math.min(m.foerderquote + BEG_BONUS.isfp_bonus, 0.5) : 0;
             return s + netto * quote;
           }, 0));
@@ -1471,9 +1471,9 @@ const ISFPPrintReport = ({ ist, k, heizkostenIst, aktivePakete, aktiveMassnahmen
         const waerveEEK = waermeEEK(heizTypFuerEEK);
 
         const summeInvest = paket.massnahmen.reduce((s, m) => s + m.investition, 0);
-        const summeFoerderfaehig = paket.massnahmen.reduce((s, m) => s + (m.investition - m.ohnehin_anteil), 0);
+        const summeFoerderfaehig = paket.massnahmen.reduce((s, m) => s + (m.investition - (m.ohnehin_anteil ?? 0)), 0);
         const summeFoerder = Math.round(paket.massnahmen.reduce((s, m) => {
-          const netto = m.investition - m.ohnehin_anteil;
+          const netto = m.investition - (m.ohnehin_anteil ?? 0);
           const quote = m.foerderquote > 0 ? Math.min(m.foerderquote + BEG_BONUS.isfp_bonus, 0.5) : 0;
           return s + netto * quote;
         }, 0));
@@ -2281,7 +2281,7 @@ export default function App() {
                       const active = aktivePakete.includes(p.id);
                       const invest = active ? p.massnahmen.reduce((s, m) => s + m.investition, 0) : 0;
                       const foerd = active ? p.massnahmen.reduce((s, m) => {
-                        const netto = m.investition - m.ohnehin_anteil;
+                        const netto = m.investition - (m.ohnehin_anteil ?? 0);
                         const quote = m.foerderquote > 0 ? Math.min(m.foerderquote + BEG_BONUS.isfp_bonus, 0.5) : 0;
                         return s + netto * quote;
                       }, 0) : 0;
