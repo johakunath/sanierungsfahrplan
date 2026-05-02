@@ -34,7 +34,7 @@ Run `npm run build` after every change that touches source files. Run `npm test`
 The `/home/user/isfp` remote defaults to bare HTTPS (push fails). Switch to the local auth proxy first — it handles GitHub auth transparently:
 
 ```bash
-git remote set-url origin http://local_proxy@127.0.0.1:42055/git/johakunath/iSFP-Schnellcheck
+PROXY_PORT=$(git -C /home/user/iSFP-Schnellcheck remote get-url origin | grep -oP ':\K\d+(?=/)') && git remote set-url origin http://local_proxy@127.0.0.1:${PROXY_PORT}/git/johakunath/iSFP-Schnellcheck
 git push -u origin <branch>
 ```
 
