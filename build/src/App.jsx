@@ -1702,7 +1702,7 @@ export default function App() {
 
         {/* Gebäude & Bestand */}
         <Section id="gebaeude" eyebrow="Schritt 1 · Erfassung" title="Ihr Gebäude heute"
-          subtitle="Alle Felder editierbar. Laden Sie einen Energieausweis hoch, oder passen Sie die Werte manuell an. Alle Änderungen wirken sofort auf den Fahrplan und das Ergebnis.">
+          subtitle="Alle Felder editierbar — Änderungen wirken sofort auf Fahrplan und Ergebnis.">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
             <Card>
               <CardEyebrow>Stammdaten</CardEyebrow>
@@ -1791,7 +1791,7 @@ export default function App() {
           subtitle="Reihenfolge nach Kosten-Nutzen (€/kWh Primärenergie). ★ = deutlich günstiger als Median; ✕ = deutlich teurer.">
           <div className="mb-10" style={{ overflowX: "auto", WebkitOverflowScrolling: "touch", marginLeft: -4, marginRight: -4 }}>
             <div className="flex items-start justify-between gap-2 relative" style={{ padding: "0 12px", minWidth: 480 }}>
-              <div className="absolute" style={{ left: 60, right: 60, top: 28, height: 2, background: "linear-gradient(to right, #E30613, #F07D00, #7C3AED, #F6D400, #00843D, #2563EB)" }} />
+              <div className="absolute" style={{ left: "calc(50% / 6)", right: "calc(50% / 6)", top: 28, height: 2, background: "linear-gradient(to right, #E30613, #F07D00, #7C3AED, #F6D400, #00843D, #2563EB)" }} />
               <div className="flex flex-col items-center gap-2 relative">
                 <div style={{ width: 52, height: 56, background: EFFIZIENZ_FARBEN[effizienzklasse] || "#6B6259", borderRadius: 3, border: "1.5px solid #1E1A15", display: "flex", alignItems: "center", justifyContent: "center" }}><span className="font-serif text-[18px]" style={{ color: ["C","D","E"].includes(effizienzklasse) ? "#1E1A15" : "#FFF" }}>{effizienzklasse}</span></div>
                 <div className="text-[10.5px] tracking-[0.18em] uppercase text-center" style={{ color: "#6B6259", fontFamily: "'Geist Mono', monospace" }}>Heute</div>
@@ -1980,8 +1980,14 @@ export default function App() {
 
           <div style={{ background: "#FFFFFF", border: "1.25px solid #D3CAB9", borderRadius: 3, padding: "10px 12px", marginTop: 10 }}>
             <div className="text-[10.5px] tracking-[0.18em] uppercase mb-2" style={{ color: "#B5623E", fontFamily: "'Geist Mono', monospace" }}>Paket-Übersicht</div>
-            <div style={{ fontSize: 11, color: "#6B6259", marginBottom: 6 }}>
-              Aktive empfohlene Maßnahmen: <b>{aktiveEmpfohleneMassnahmen.length}</b>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 8 }}>
+              {aktiveMassnahmen.map(id => (
+                <span key={id} style={{
+                  fontSize: 10, padding: "2px 6px", borderRadius: 2, fontFamily: "'Geist Mono', monospace",
+                  background: empfohleneMassnahmen.includes(id) ? "#00843D" : "#E2DBD0",
+                  color: empfohleneMassnahmen.includes(id) ? "#FFF" : "#6B6259",
+                }}>{id}{empfohleneMassnahmen.includes(id) ? " ★" : ""}</span>
+              ))}
             </div>
             {reportSummaryPackages.length === 0 ? (
               <div style={{ fontSize: 12, color: "#6B6259" }}>Noch keine Maßnahmen aktiv.</div>
