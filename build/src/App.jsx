@@ -24,10 +24,10 @@ const SANIERUNGSSTAND_STUFEN = {
 };
 const SANIERUNGSSTAND_LEVEL_ORDER = ["unsaniert", "teilsaniert", "saniert", "neubau"];
 const SANIERUNGSSTAND_OPTIONS = [
-  { value: "unsaniert", label: "Altbau" },
-  { value: "teilsaniert", label: "Teilsaniert" },
-  { value: "saniert", label: "Saniert" },
-  { value: "neubau", label: "Neubau" },
+  { value: "unsaniert",   label: "Unsaniert",   note: "Ungedämmt, kein Wärmedämmverbundsystem" },
+  { value: "teilsaniert", label: "Teilsaniert", note: "Einzelne Maßnahmen, z.B. neue Fenster" },
+  { value: "saniert",     label: "Saniert",     note: "Zeitgemäß gedämmt, EnEV-Niveau" },
+  { value: "neubau",      label: "Neubau/KfW",  note: "Neubau- oder KfW-Standard" },
 ];
 const SANIERUNGSSTAND_BAUTEILE = [
   { id: "waende", label: "Wände" },
@@ -1181,8 +1181,8 @@ const EEK_ZONEN = [
 ];
 
 const EnergieVerlaufChart = ({ ist, kumuliert }) => {
-  const W = 620, H = 284;
-  const PAD = { top: 68, right: 36, bottom: 44, left: 52 };
+  const W = 620, H = 320;
+  const PAD = { top: 60, right: 36, bottom: 40, left: 52 };
   const pw = W - PAD.left - PAD.right;
   const ph = H - PAD.top - PAD.bottom;
 
@@ -1216,7 +1216,7 @@ const EnergieVerlaufChart = ({ ist, kumuliert }) => {
         </div>
         <div style={{ fontSize: 10, color: "#9B8E82", fontFamily: "'Geist Mono', monospace" }}>kWh/(m²·a)</div>
       </div>
-      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", display: "block" }}>
+      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", display: "block", aspectRatio: "620/320", minHeight: 180 }}>
         <defs>
           <clipPath id="evc-clip">
             <rect x={PAD.left} y={PAD.top} width={pw} height={ph} />
@@ -1738,16 +1738,22 @@ export default function App() {
                   
                 </div>
                 <div>
-                  {SANIERUNGSSTAND_BAUTEILE.map(({ id, label }) => (
-                    <SelectInput
-                      key={id}
-                      label={label}
-                      value={sanierungsstandProBauteil[id] || "unsaniert"}
-                      onChange={v => applySanierungsstandFuerBauteil(id, v)}
-                      options={SANIERUNGSSTAND_OPTIONS}
-                      tooltip={SANIERUNGSSTAND_BAUTEIL_TOOLTIPS[id]}
-                    />
-                  ))}
+                  {SANIERUNGSSTAND_BAUTEILE.map(({ id, label }) => {
+                    const selVal = sanierungsstandProBauteil[id] || "unsaniert";
+                    const selNote = SANIERUNGSSTAND_OPTIONS.find(o => o.value === selVal)?.note;
+                    return (
+                      <div key={id}>
+                        <SelectInput
+                          label={label}
+                          value={selVal}
+                          onChange={v => applySanierungsstandFuerBauteil(id, v)}
+                          options={SANIERUNGSSTAND_OPTIONS}
+                          tooltip={SANIERUNGSSTAND_BAUTEIL_TOOLTIPS[id]}
+                        />
+                        {selNote && <div style={{ fontSize: 10, color: "#9B8E82", paddingLeft: 12, marginTop: -4, marginBottom: 4 }}>{selNote}</div>}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </Card>

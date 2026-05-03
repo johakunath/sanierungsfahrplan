@@ -24,7 +24,7 @@ const ISFPPrintReport = ({ ist, k, heizkostenIst, aktivePakete, aktiveMassnahmen
 
         <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 4 }}>
           <span style={{ fontSize: 21, fontWeight: 500, fontFamily: "'Fraunces', serif", letterSpacing: "-0.01em" }}>ÜBERBLICK</span>
-          <span style={{ fontSize: 9.5, color: "#6B6259" }}>Kein offizieller BAFA-iSFP · nur Demonstrator</span>
+          <span style={{ fontSize: 10.5, color: "#6B6259" }}>Kein offizieller BAFA-iSFP · nur Demonstrator</span>
         </div>
         <div style={{ fontSize: 10.5, color: "#3A332B", marginBottom: 12, fontFamily: "'Geist Mono', monospace" }}>
           {gebaeude.strasse} · {gebaeude.plz} {gebaeude.standort} · BJ {gebaeude.baujahr} · {fmt(gebaeude.wohnflaeche)} m² · {gebaeude.heizung_typ}
@@ -38,13 +38,13 @@ const ISFPPrintReport = ({ ist, k, heizkostenIst, aktivePakete, aktiveMassnahmen
           <div style={{ width: 68, display: "flex", alignItems: "center", justifyContent: "center", padding: "13px 6px", flexShrink: 0 }}>
             <div style={{ width: 52, height: 52, background: EFFIZIENZ_FARBEN[istKlasse] || "#C0392B", borderRadius: 3, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", border: "2px solid rgba(255,255,255,0.35)" }}>
               <span style={{ fontSize: 26, fontWeight: 700, fontFamily: "'Fraunces', serif", color: textColorFor(istKlasse), lineHeight: 1 }}>{istKlasse}</span>
-              <span style={{ fontSize: 6.5, color: textColorFor(istKlasse), letterSpacing: "0.12em", marginTop: 1, opacity: 0.75 }}>EEK</span>
+              <span style={{ fontSize: 7.5, color: textColorFor(istKlasse), letterSpacing: "0.12em", marginTop: 1, opacity: 0.75 }}>EEK</span>
             </div>
           </div>
           <div style={{ flex: 1, padding: "13px 16px 11px" }}>
             <EnergyBar label="Jährliche Energiekosten" value={heizkostenIst} maxValue={heizkostenIst} unit="€/a" />
             <EnergyBar label={`CO₂-Emissionen (${fmt(gebaeude.gebaeudenutzflaeche)} m² AN)`} value={co2Gesamt} maxValue={co2Gesamt} unit="kg/a" />
-            <div style={{ display: "flex", gap: 18, marginTop: 5, fontSize: 9, color: "#EEE", fontFamily: "'Geist Mono', monospace" }}>
+            <div style={{ display: "flex", gap: 18, marginTop: 5, fontSize: 10.5, color: "#EEE", fontFamily: "'Geist Mono', monospace" }}>
               <span>Primärenergie: <b>{ist.primaerenergie} kWh/(m²·a)</b></span>
               <span>Endenergie: <b>{ist.endenergie} kWh/(m²·a)</b></span>
               <span>CO₂: <b>{ist.co2} kg/(m²·a)</b></span>
@@ -53,7 +53,7 @@ const ISFPPrintReport = ({ ist, k, heizkostenIst, aktivePakete, aktiveMassnahmen
         </div>
 
         {/* KASKADE */}
-        <div style={{ fontSize: 9, letterSpacing: "0.18em", color: "#6B6259", margin: "9px 0 5px", fontFamily: "'Geist Mono', monospace", textTransform: "uppercase" }}>
+        <div style={{ fontSize: 10, letterSpacing: "0.18em", color: "#6B6259", margin: "9px 0 5px", fontFamily: "'Geist Mono', monospace", textTransform: "uppercase" }}>
           Schrittweise Sanierung — {aktivePaketeObj.length} Maßnahmenpakete
         </div>
 
@@ -81,9 +81,9 @@ const ISFPPrintReport = ({ ist, k, heizkostenIst, aktivePakete, aktiveMassnahmen
               </div>
               <div style={{ flex: 1, padding: "6px 11px", background: "#FFF", borderTop: "1px solid #E2DBD0", borderBottom: "1px solid #E2DBD0" }}>
                 <div style={{ fontWeight: 600, fontSize: 11.5, color: "#1E1A15", marginBottom: 2 }}>{paket.titel}</div>
-                <div style={{ fontSize: 9, color: "#6B6259", lineHeight: 1.35 }}>{paket.massnahmen.map(m => m.titel).join(" · ")}</div>
+                <div style={{ fontSize: 11, color: "#6B6259", lineHeight: 1.35 }}>{paket.massnahmen.map(m => m.titel).join(" · ")}</div>
               </div>
-              <div style={{ width: 192, flexShrink: 0, padding: "6px 11px", background: "#FFF", borderTop: "1px solid #E2DBD0", borderBottom: "1px solid #E2DBD0", borderRight: "1px solid #E2DBD0", fontFamily: "'Geist Mono', monospace", fontSize: 9.5 }}>
+              <div style={{ width: 192, flexShrink: 0, padding: "6px 11px", background: "#FFF", borderTop: "1px solid #E2DBD0", borderBottom: "1px solid #E2DBD0", borderRight: "1px solid #E2DBD0", fontFamily: "'Geist Mono', monospace", fontSize: 10.5 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 2 }}>
                   <span style={{ color: "#6B6259" }}>Investition</span>
                   <span>{fmtEur(summeInvest)}</span>
@@ -105,14 +105,14 @@ const ISFPPrintReport = ({ ist, k, heizkostenIst, aktivePakete, aktiveMassnahmen
         {aktivePaketeObj.length > 1 && (
           <div style={{ display: "flex", alignItems: "center", gap: 0, background: "#F1EDE4", border: "1px solid #D3CAB9", marginTop: 5, marginBottom: 2 }}>
             <div style={{ flex: 1, padding: "9px 14px" }}>
-              <div style={{ fontSize: 8.5, letterSpacing: "0.18em", color: "#6B6259", fontFamily: "'Geist Mono', monospace", textTransform: "uppercase", marginBottom: 3 }}>
+              <div style={{ fontSize: 10, letterSpacing: "0.18em", color: "#6B6259", fontFamily: "'Geist Mono', monospace", textTransform: "uppercase", marginBottom: 3 }}>
                 Alternativ: Sanierung in einem Zug
               </div>
               <div style={{ fontSize: 10, color: "#3A332B", lineHeight: 1.45 }}>
                 Alle {aktivePaketeObj.length} Maßnahmen in einem Projekt — reduziert Baustellenkosten, vermeidet mehrfache Rüstzeiten und ermöglicht optimale Abstimmung der Gewerke aufeinander.
               </div>
             </div>
-            <div style={{ flexShrink: 0, fontFamily: "'Geist Mono', monospace", fontSize: 9.5, padding: "9px 14px", borderLeft: "1px solid #D3CAB9", minWidth: 180 }}>
+            <div style={{ flexShrink: 0, fontFamily: "'Geist Mono', monospace", fontSize: 10.5, padding: "9px 14px", borderLeft: "1px solid #D3CAB9", minWidth: 180 }}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: 12, marginBottom: 3 }}>
                 <span style={{ color: "#6B6259" }}>Gesamt-Invest</span>
                 <span style={{ color: "#1E1A15", fontWeight: 600 }}>{fmtEur(k.invest_gesamt)}</span>
@@ -143,7 +143,7 @@ const ISFPPrintReport = ({ ist, k, heizkostenIst, aktivePakete, aktiveMassnahmen
           <div style={{ flex: 1, padding: "13px 16px 11px" }}>
             <EnergyBar label="Jährliche Energiekosten (Ziel)" value={k.heizkosten_gesamt} maxValue={heizkostenIst} unit="€/a" note={`−${kostenEinsparPct} %`} />
             <EnergyBar label="CO₂-Emissionen (Ziel)" value={co2Ziel} maxValue={co2Gesamt} unit="kg/a" note={co2Gesamt > 0 ? `−${Math.round((1 - co2Ziel / co2Gesamt) * 100)} %` : ""} />
-            <div style={{ display: "flex", gap: 18, marginTop: 5, fontSize: 9, color: "#EEE", fontFamily: "'Geist Mono', monospace" }}>
+            <div style={{ display: "flex", gap: 18, marginTop: 5, fontSize: 10.5, color: "#EEE", fontFamily: "'Geist Mono', monospace" }}>
               <span>Primärenergie: <b>{k.primaerenergie} kWh/(m²·a)</b></span>
               <span>Endenergie: <b>{k.endenergie} kWh/(m²·a)</b></span>
               <span>CO₂: <b>{k.co2} kg/(m²·a)</b></span>
@@ -151,7 +151,7 @@ const ISFPPrintReport = ({ ist, k, heizkostenIst, aktivePakete, aktiveMassnahmen
           </div>
         </div>
 
-        <div style={{ marginTop: "auto", paddingTop: 12, fontSize: 8, color: "#9B8E82", fontStyle: "italic", lineHeight: 1.5, borderTop: "1px solid #E2DBD0" }}>
+        <div style={{ marginTop: "auto", paddingTop: 12, fontSize: 8.5, color: "#9B8E82", fontStyle: "italic", lineHeight: 1.5, borderTop: "1px solid #E2DBD0" }}>
           Demonstrator — kein offizieller BAFA-iSFP. Berechnungen nach TABULA-Baseline und BEG 2026. Für den rechtsverbindlichen iSFP ist ein gelisteter Energieeffizienz-Experte erforderlich.
         </div>
       </div>
@@ -206,7 +206,7 @@ const ISFPPrintReport = ({ ist, k, heizkostenIst, aktivePakete, aktiveMassnahmen
 
                 {/* EEK-Badges + Energiekennzahlen */}
                 <div style={{ background: farbe.hell, padding: "12px 14px", marginBottom: 12, borderBottom: `2px solid ${farbe.bg}` }}>
-                  <div style={{ fontSize: 8.5, letterSpacing: "0.18em", color: "#6B6259", fontFamily: "'Geist Mono', monospace", textTransform: "uppercase", marginBottom: 9 }}>
+                  <div style={{ fontSize: 10, letterSpacing: "0.18em", color: "#6B6259", fontFamily: "'Geist Mono', monospace", textTransform: "uppercase", marginBottom: 9 }}>
                     Energieeffizienz nach Schritt {paket.nummer}
                   </div>
                   <div style={{ display: "flex", alignItems: "flex-start", gap: 0 }}>
@@ -218,7 +218,7 @@ const ISFPPrintReport = ({ ist, k, heizkostenIst, aktivePakete, aktiveMassnahmen
                     ].map(({ label, klasse }, bi) => (
                       <div key={label} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, marginRight: 14 }}>
                         <div style={{ width: 42, height: 42, background: EFFIZIENZ_FARBEN[klasse] || "#6B6259", borderRadius: 3, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, fontWeight: 700, fontFamily: "'Fraunces', serif", color: textColorFor(klasse) }}>{klasse}</div>
-                        <span style={{ fontSize: 7.5, color: "#6B6259", textAlign: "center", lineHeight: 1.25, maxWidth: 52 }}>{label}</span>
+                        <span style={{ fontSize: 8.5, color: "#6B6259", textAlign: "center", lineHeight: 1.25, maxWidth: 52 }}>{label}</span>
                       </div>
                     ))}
                     {/* Divider */}
@@ -229,9 +229,9 @@ const ISFPPrintReport = ({ ist, k, heizkostenIst, aktivePakete, aktiveMassnahmen
                       { label: "Endenergie", value: step.nachher.endenergie },
                     ].map(({ label, value }) => (
                       <div key={label} style={{ display: "flex", flexDirection: "column", gap: 1, marginRight: 20 }}>
-                        <span style={{ fontSize: 8, color: "#6B6259", letterSpacing: "0.1em", textTransform: "uppercase" }}>{label}</span>
+                        <span style={{ fontSize: 9.5, color: "#6B6259", letterSpacing: "0.1em", textTransform: "uppercase" }}>{label}</span>
                         <span style={{ fontSize: 26, fontFamily: "'Geist Mono', monospace", fontWeight: 500, color: "#1E1A15", lineHeight: 1 }}>{value}</span>
-                        <span style={{ fontSize: 7.5, color: "#6B6259" }}>kWh/(m²·a)</span>
+                        <span style={{ fontSize: 8.5, color: "#6B6259" }}>kWh/(m²·a)</span>
                       </div>
                     ))}
                   </div>
@@ -239,7 +239,7 @@ const ISFPPrintReport = ({ ist, k, heizkostenIst, aktivePakete, aktiveMassnahmen
 
                 {/* Maßnahmen */}
                 <div style={{ marginBottom: 11 }}>
-                  <div style={{ fontSize: 8.5, letterSpacing: "0.18em", color: "#B5623E", fontFamily: "'Geist Mono', monospace", textTransform: "uppercase", marginBottom: 5 }}>Maßnahmen</div>
+                  <div style={{ fontSize: 10, letterSpacing: "0.18em", color: "#B5623E", fontFamily: "'Geist Mono', monospace", textTransform: "uppercase", marginBottom: 5 }}>Maßnahmen</div>
                   {paket.massnahmen.map(m => (
                     <div key={m.id} style={{ paddingLeft: 14, position: "relative", marginBottom: 6, fontSize: 13, lineHeight: 1.5 }}>
                       <span style={{ position: "absolute", left: 0, color: farbe.bg, fontWeight: 700 }}>→</span>
@@ -251,7 +251,7 @@ const ISFPPrintReport = ({ ist, k, heizkostenIst, aktivePakete, aktiveMassnahmen
 
                 {/* Investition & Förderung */}
                 <div style={{ marginBottom: 12 }}>
-                  <div style={{ fontSize: 8.5, letterSpacing: "0.18em", color: "#B5623E", fontFamily: "'Geist Mono', monospace", textTransform: "uppercase", marginBottom: 5 }}>Investition &amp; Förderung</div>
+                  <div style={{ fontSize: 10, letterSpacing: "0.18em", color: "#B5623E", fontFamily: "'Geist Mono', monospace", textTransform: "uppercase", marginBottom: 5 }}>Investition &amp; Förderung</div>
                   <div style={{ fontFamily: "'Geist Mono', monospace", fontSize: 11, border: "1px solid #E2DBD0" }}>
                     {[
                       { label: "Investitionskosten gesamt", val: fmtEur(summeInvest), color: "#1E1A15", bg: "#F8F5EF" },
@@ -274,12 +274,12 @@ const ISFPPrintReport = ({ ist, k, heizkostenIst, aktivePakete, aktiveMassnahmen
                   { label: "Komfortsteigerung", text: paket.komfortsteigerung },
                 ].map(({ label, text }) => text ? (
                   <div key={label} style={{ marginBottom: 9 }}>
-                    <div style={{ fontSize: 8.5, letterSpacing: "0.18em", color: "#B5623E", fontFamily: "'Geist Mono', monospace", textTransform: "uppercase", marginBottom: 3 }}>{label}</div>
-                    <div style={{ fontSize: 10.5, color: "#3A332B", lineHeight: 1.55 }}>{text}</div>
+                    <div style={{ fontSize: 10, letterSpacing: "0.18em", color: "#B5623E", fontFamily: "'Geist Mono', monospace", textTransform: "uppercase", marginBottom: 3 }}>{label}</div>
+                    <div style={{ fontSize: 12, color: "#3A332B", lineHeight: 1.55 }}>{text}</div>
                   </div>
                 ) : null)}
 
-                <div style={{ marginTop: "auto", paddingTop: 9, fontSize: 7.5, color: "#9B8E82", borderTop: "1px solid #E2DBD0", fontStyle: "italic" }}>
+                <div style={{ marginTop: "auto", paddingTop: 9, fontSize: 8.5, color: "#9B8E82", borderTop: "1px solid #E2DBD0", fontStyle: "italic" }}>
                   Demonstrator — kein offizieller BAFA-iSFP. Alle Angaben ohne Gewähr.
                 </div>
               </div>
