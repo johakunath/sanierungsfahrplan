@@ -143,7 +143,8 @@ export const PRESETS = {
   efh70er: {
     id: "efh70er",
     label: "EFH 70er-Jahre",
-    beschreibung: "1 WE · 160 m² · Erdgas · Klasse E · Fenster bereits getauscht",
+    beschreibung: "1 WE · 160 m² · Erdgas · Klasse E/F · Fenster bereits getauscht",
+    bauteile_overrides: { fenster: 5 },
     gebaeude: {
       standort: "Hannover", strasse: "Birkenallee 8", plz: "30519",
       baujahr: 1978, typ: "Einfamilienhaus",
@@ -469,7 +470,9 @@ export function berechneNachMassnahmen(aktiveMassnahmen, ist, gebaeude, pakete =
       instand_gesamt += m.ohnehin_anteil;
       const netto = m.investition - m.ohnehin_anteil;
       const bonus = BEG_BONUS.isfp_bonus;
-      const effektive_quote = m.foerderquote > 0 ? Math.min(m.foerderquote + bonus, 0.50) : 0;
+      // Klimageschwindigkeitsbonus: +10 % when replacing fossil heating (Heizöl/Erdgas) with WP
+      const klimaBonus = (m.id === "M4" && /Heizöl|Erdgas/i.test(gebaeude.heizung_typ || "")) ? 0.10 : 0;
+      const effektive_quote = m.foerderquote > 0 ? Math.min(m.foerderquote + bonus + klimaBonus, 0.50) : 0;
       foerderung_gesamt += Math.max(0, netto * effektive_quote);
     });
   });
@@ -525,16 +528,19 @@ export function bewerteMassnahmen(massnahmen, bauteile_state, gebaeude) {
     return { id: m.id, score, pe_saved, invest_netto };
   });
   const sorted = [...scored].sort((a, b) => a.score - b.score);
-  const finite = sorted.filter(m => Number.isFinite(m.score));
-  const median = finite.length ? finite[Math.floor(finite.length / 2)].score : Infinity;
-  const BADGE_EXEMPT = ["enabler", "pflichtschritt", "synergie", "begleitkosten", "systempfad"];
+  // Absolute thresholds: bad buildings naturally score lower → more measures get empfohlen.
+  // Good buildings cluster above EMPFOHLEN_MAX → fewer measures recommended.
+  const EMPFOHLEN_MAX       = 10.5;  // €/(kWh PE saved / year)
+  const NICHT_EMPFOHLEN_MIN = 20.0;
+  // "synergie" (M6 PV) intentionally NOT exempt — it should compete on score like any energetisch measure
+  const BADGE_EXEMPT = ["enabler", "pflichtschritt", "begleitkosten", "systempfad"];
   return sorted.map(m => {
     const orig = massnahmen.find(x => x.id === m.id);
     if (orig && BADGE_EXEMPT.includes(orig.rolle)) return { ...m, empfohlen: false, nichtEmpfohlen: false };
     return {
       ...m,
-      empfohlen:      Number.isFinite(m.score) && m.score < median * 0.75,
-      nichtEmpfohlen: !Number.isFinite(m.score) || m.score > median * 2.0,
+      empfohlen:      Number.isFinite(m.score) && m.score < EMPFOHLEN_MAX,
+      nichtEmpfohlen: !Number.isFinite(m.score) || m.score > NICHT_EMPFOHLEN_MIN,
     };
   });
 }

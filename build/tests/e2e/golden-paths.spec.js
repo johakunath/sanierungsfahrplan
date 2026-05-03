@@ -34,12 +34,12 @@ test("efhNachkrieg preset: IST EEK badge shows G", async ({ page }) => {
   await expect(page.locator("#ergebnis").getByText("G").first()).toBeVisible();
 });
 
-test("efhNachkrieg preset: all measures active → EEK C, Eigenanteil 119.550 €", async ({ page }) => {
+test("efhNachkrieg preset: all measures active → EEK C, Eigenanteil 116.850 €", async ({ page }) => {
   await loadApp(page);
   await selectPreset(page, "EFH Nachkriegszeit 1965");
   const section = page.locator("#ergebnis");
   await expect(section.getByText("C").first()).toBeVisible();
-  await expect(section.getByText(/119[.,]550/).first()).toBeVisible();
+  await expect(section.getByText(/116[.,]850/).first()).toBeVisible();
 });
 
 test("toggling a package off changes its button label", async ({ page }) => {
@@ -77,9 +77,9 @@ test("MassnahmenEditor: override M4 Investition updates Eigenanteil", async ({ p
     await investInput.fill("20000");
     await investInput.dispatchEvent("input");
     await page.waitForTimeout(200);
-    // After reducing M4 cost, Eigenanteil should no longer show 119.550
+    // After reducing M4 cost, Eigenanteil should no longer show 116.850
     await expect(
-      page.locator("#ergebnis").getByText(/119[.,]550/).first()
+      page.locator("#ergebnis").getByText(/116[.,]850/).first()
     ).not.toBeVisible();
   }
 });

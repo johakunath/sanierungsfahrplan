@@ -1419,6 +1419,9 @@ export default function App() {
     const p = PRESETS[id];
     if (!p) return;
     const neueBauteile = ableiteBauteile(p.gebaeude.baujahr, p.gebaeude.heizung_typ, p.gebaeude.lueftung, p.gebaeude.warmwasser);
+    if (p.bauteile_overrides) {
+      neueBauteile.forEach(b => { if (p.bauteile_overrides[b.id] !== undefined) b.note = p.bauteile_overrides[b.id]; });
+    }
     const bs = {};
     neueBauteile.forEach(b => { bs[b.id] = b.note; });
     const vt = vorlauftemperaturFuer(p.gebaeude.waermeverteilung);

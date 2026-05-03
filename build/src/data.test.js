@@ -15,7 +15,8 @@ import {
 function buildGebaeudeWithState(preset) {
   const { gebaeude, ist } = preset;
   const bauteile = ableiteBauteile(gebaeude.baujahr, gebaeude.heizung_typ, gebaeude.lueftung, gebaeude.warmwasser);
-  const bauteile_state = Object.fromEntries(bauteile.map(b => [b.id, b.note]));
+  const overrides = preset.bauteile_overrides || {};
+  const bauteile_state = Object.fromEntries(bauteile.map(b => [b.id, overrides[b.id] ?? b.note]));
   return { gebaeude: { ...gebaeude, bauteile_state }, ist };
 }
 
@@ -59,6 +60,14 @@ describe("ableiteBauteile", () => {
     expect(byId.dach.note).toBeLessThanOrEqual(3);
   });
 
+  it("efh70er preset bauteile_overrides → fenster note 5", () => {
+    const { gebaeude, bauteile_overrides } = PRESETS.efh70er;
+    const b = ableiteBauteile(gebaeude.baujahr, gebaeude.heizung_typ, gebaeude.lueftung, gebaeude.warmwasser);
+    const overrides = bauteile_overrides || {};
+    const byId = Object.fromEntries(b.map(x => [x.id, { ...x, note: overrides[x.id] ?? x.note }]));
+    expect(byId.fenster.note).toBe(5);
+  });
+
   it("efh2000er preset → envelope notes higher than efhNachkrieg", () => {
     const b65 = ableiteBauteile(1965, "Heizöl", "Fensterlüftung", "zentral, über Heizung");
     const b00 = ableiteBauteile(2002, "Erdgas Brennwert", "Fensterlüftung", "zentral, über Heizung");
@@ -92,26 +101,19 @@ describe("wpTypEmpfehlung", () => {
 // ─── bewerteMassnahmen ────────────────────────────────────────────────────
 
 describe("bewerteMassnahmen", () => {
-  const { gebaeude } = buildGebaeudeWithState(PRESETS.efhNachkrieg).gebaeude ? buildGebaeudeWithState(PRESETS.efhNachkrieg) : {};
   const allMassnahmen = MASSNAHMENPAKETE.flatMap(p => p.massnahmen);
 
-  it("empfohlen score < 0.75 × median", () => {
+  it("empfohlen measures have score < 10.5", () => {
     const result = bewerteMassnahmen(allMassnahmen, {}, { wohnflaeche: 145 });
-    const finite = result.filter(m => Number.isFinite(m.score));
-    const sorted = [...finite].sort((a, b) => a.score - b.score);
-    const median = sorted[Math.floor(sorted.length / 2)].score;
     result.filter(m => m.empfohlen).forEach(m => {
-      expect(m.score).toBeLessThan(median * 0.75);
+      expect(m.score).toBeLessThan(10.5);
     });
   });
 
-  it("nichtEmpfohlen score > 2 × median or Infinity", () => {
+  it("nichtEmpfohlen measures have score > 20 or Infinity", () => {
     const result = bewerteMassnahmen(allMassnahmen, {}, { wohnflaeche: 145 });
-    const finite = result.filter(m => Number.isFinite(m.score));
-    const sorted = [...finite].sort((a, b) => a.score - b.score);
-    const median = sorted[Math.floor(sorted.length / 2)].score;
     result.filter(m => m.nichtEmpfohlen).forEach(m => {
-      expect(!Number.isFinite(m.score) || m.score > median * 2.0).toBe(true);
+      expect(!Number.isFinite(m.score) || m.score > 20.0).toBe(true);
     });
   });
 
@@ -122,11 +124,37 @@ describe("bewerteMassnahmen", () => {
     });
   });
 
-  it("single measure → neither empfohlen nor nichtEmpfohlen (no median basis)", () => {
-    const single = [allMassnahmen[0]];
+  it("single BADGE_EXEMPT measure → neither empfohlen nor nichtEmpfohlen", () => {
+    const single = [allMassnahmen[0]]; // M1 is pflichtschritt (BADGE_EXEMPT)
     const result = bewerteMassnahmen(single, {}, { wohnflaeche: 145 });
     expect(result[0].empfohlen).toBe(false);
     expect(result[0].nichtEmpfohlen).toBe(false);
+  });
+
+  it("efhNachkrieg: M2 + M3 + M5 are empfohlen (bad building → major renovation)", () => {
+    const { gebaeude } = buildGebaeudeWithState(PRESETS.efhNachkrieg);
+    const result = bewerteMassnahmen(allMassnahmen, gebaeude.bauteile_state, gebaeude);
+    const byId = Object.fromEntries(result.map(m => [m.id, m]));
+    expect(byId.M2.empfohlen).toBe(true);
+    expect(byId.M3.empfohlen).toBe(true);
+    expect(byId.M5.empfohlen).toBe(true);
+  });
+
+  it("efh70er (fenster=5): M3 is nichtEmpfohlen, M2 + M5 are empfohlen", () => {
+    const { gebaeude } = buildGebaeudeWithState(PRESETS.efh70er);
+    const result = bewerteMassnahmen(allMassnahmen, gebaeude.bauteile_state, gebaeude);
+    const byId = Object.fromEntries(result.map(m => [m.id, m]));
+    expect(byId.M3.nichtEmpfohlen).toBe(true);
+    expect(byId.M2.empfohlen).toBe(true);
+    expect(byId.M5.empfohlen).toBe(true);
+  });
+
+  it("efh2000er: M3 is nichtEmpfohlen, M6 is empfohlen (good building → minimal intervention)", () => {
+    const { gebaeude } = buildGebaeudeWithState(PRESETS.efh2000er);
+    const result = bewerteMassnahmen(allMassnahmen, gebaeude.bauteile_state, gebaeude);
+    const byId = Object.fromEntries(result.map(m => [m.id, m]));
+    expect(byId.M3.nichtEmpfohlen).toBe(true);
+    expect(byId.M6.empfohlen).toBe(true);
   });
 });
 
@@ -145,12 +173,36 @@ describe("berechneNachMassnahmen (efhNachkrieg, all measures)", () => {
     expect(k.effizienzklasse).toBe("C");
   });
 
-  it("Eigenanteil = 119.550 €", () => {
-    expect(k.eigenanteil).toBe(119550);
+  it("Eigenanteil = 116.850 € (incl. Klimageschwindigkeitsbonus for Heizöl→WP)", () => {
+    expect(k.eigenanteil).toBe(116850);
   });
 
   it("invest_gesamt > foerderung_gesamt", () => {
     expect(k.invest_gesamt).toBeGreaterThan(k.foerderung_gesamt);
+  });
+
+  it("eigenanteil = invest_gesamt - foerderung_gesamt", () => {
+    expect(k.eigenanteil).toBe(k.invest_gesamt - k.foerderung_gesamt);
+  });
+});
+
+// ─── berechneNachMassnahmen: efh70er ─────────────────────────────────────
+
+describe("berechneNachMassnahmen (efh70er, all measures, fenster=5 override)", () => {
+  const { gebaeude, ist } = buildGebaeudeWithState(PRESETS.efh70er);
+  const allIds = MASSNAHMENPAKETE.flatMap(p => p.massnahmen.map(m => m.id));
+  const k = berechneNachMassnahmen(allIds, ist, gebaeude);
+
+  it("PE = 65 kWh/(m²·a) — M3 saves little because fenster already at note 5", () => {
+    expect(k.primaerenergie).toBe(65);
+  });
+
+  it("EEK is B", () => {
+    expect(k.effizienzklasse).toBe("B");
+  });
+
+  it("Eigenanteil = 116.850 € (incl. Klimageschwindigkeitsbonus for Erdgas→WP)", () => {
+    expect(k.eigenanteil).toBe(116850);
   });
 
   it("eigenanteil = invest_gesamt - foerderung_gesamt", () => {
