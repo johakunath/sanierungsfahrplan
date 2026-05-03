@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "build": "node build.mjs && npx tailwindcss -i src/input.css -o dist/tailwind.css --minify && node assemble.mjs && node verify.mjs && cp dist/index.html ../index.html",
-    "test": "vitest run",
+    "test": "vitest run --exclude 'tests/**'",
     "test:e2e": "playwright test"
   },
   "keywords": [],
