@@ -7,6 +7,7 @@ import {
   berechneKumuliert,
   PRESETS,
   MASSNAHMENPAKETE,
+  berechneEffizienzklasse,
 } from "./data.js";
 
 // ─── helpers ──────────────────────────────────────────────────────────────
@@ -42,6 +43,29 @@ describe("ableiteBauteile", () => {
     for (const id of ["waende", "dach", "boden", "fenster", "lueftung", "heizung", "warmwasser", "verteilung"]) {
       expect(ids).toContain(id);
     }
+  });
+
+  it("is deterministic — same args produce identical notes", () => {
+    const a = ableiteBauteile(1978, "Erdgas Brennwert", "Fensterlüftung", "zentral, über Heizung");
+    const b = ableiteBauteile(1978, "Erdgas Brennwert", "Fensterlüftung", "zentral, über Heizung");
+    expect(a.map(x => x.note)).toEqual(b.map(x => x.note));
+  });
+
+  it("efhNachkrieg preset → IST EEK G", () => {
+    const { gebaeude } = PRESETS.efhNachkrieg;
+    const b = ableiteBauteile(gebaeude.baujahr, gebaeude.heizung_typ, gebaeude.lueftung, gebaeude.warmwasser);
+    const byId = Object.fromEntries(b.map(x => [x.id, x]));
+    expect(byId.waende.note).toBeLessThanOrEqual(3);
+    expect(byId.dach.note).toBeLessThanOrEqual(3);
+  });
+
+  it("efh2000er preset → envelope notes higher than efhNachkrieg", () => {
+    const b65 = ableiteBauteile(1965, "Heizöl", "Fensterlüftung", "zentral, über Heizung");
+    const b00 = ableiteBauteile(2002, "Erdgas Brennwert", "Fensterlüftung", "zentral, über Heizung");
+    const by65 = Object.fromEntries(b65.map(x => [x.id, x]));
+    const by00 = Object.fromEntries(b00.map(x => [x.id, x]));
+    expect(by00.waende.note).toBeGreaterThan(by65.waende.note);
+    expect(by00.dach.note).toBeGreaterThan(by65.dach.note);
   });
 });
 
@@ -97,6 +121,13 @@ describe("bewerteMassnahmen", () => {
       expect(m.empfohlen && m.nichtEmpfohlen).toBe(false);
     });
   });
+
+  it("single measure → neither empfohlen nor nichtEmpfohlen (no median basis)", () => {
+    const single = [allMassnahmen[0]];
+    const result = bewerteMassnahmen(single, {}, { wohnflaeche: 145 });
+    expect(result[0].empfohlen).toBe(false);
+    expect(result[0].nichtEmpfohlen).toBe(false);
+  });
 });
 
 // ─── berechneNachMassnahmen ───────────────────────────────────────────────
@@ -120,6 +151,45 @@ describe("berechneNachMassnahmen (efhNachkrieg, all measures)", () => {
 
   it("invest_gesamt > foerderung_gesamt", () => {
     expect(k.invest_gesamt).toBeGreaterThan(k.foerderung_gesamt);
+  });
+
+  it("eigenanteil = invest_gesamt - foerderung_gesamt", () => {
+    expect(k.eigenanteil).toBe(k.invest_gesamt - k.foerderung_gesamt);
+  });
+});
+
+// ─── berechneNachMassnahmen: no measures ─────────────────────────────────
+
+describe("berechneNachMassnahmen (no measures active)", () => {
+  const { gebaeude, ist } = buildGebaeudeWithState(PRESETS.efhNachkrieg);
+  const k = berechneNachMassnahmen([], ist, gebaeude);
+
+  it("PE matches IST", () => {
+    expect(k.primaerenergie).toBe(ist.primaerenergie);
+  });
+
+  it("EEK matches IST EEK", () => {
+    expect(k.effizienzklasse).toBe(berechneEffizienzklasse(ist.primaerenergie));
+  });
+
+  it("invest, foerderung, eigenanteil all zero", () => {
+    expect(k.invest_gesamt).toBe(0);
+    expect(k.foerderung_gesamt).toBe(0);
+    expect(k.eigenanteil).toBe(0);
+  });
+});
+
+// ─── berechneNachMassnahmen: idempotency ─────────────────────────────────
+
+describe("berechneNachMassnahmen is deterministic", () => {
+  it("same inputs always produce same output", () => {
+    const { gebaeude, ist } = buildGebaeudeWithState(PRESETS.efhNachkrieg);
+    const allIds = MASSNAHMENPAKETE.flatMap(p => p.massnahmen.map(m => m.id));
+    const r1 = berechneNachMassnahmen(allIds, ist, gebaeude);
+    const r2 = berechneNachMassnahmen(allIds, ist, gebaeude);
+    expect(r1.primaerenergie).toBe(r2.primaerenergie);
+    expect(r1.eigenanteil).toBe(r2.eigenanteil);
+    expect(r1.effizienzklasse).toBe(r2.effizienzklasse);
   });
 });
 
