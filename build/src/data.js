@@ -566,8 +566,8 @@ export const EFFIZIENZ_FARBEN = {
 };
 
 export const NOTE_FARBEN = {
-  1: "#E30613", 2: "#E3501C", 3: "#F07D00", 4: "#F6A400",
-  5: "#C5D62E", 6: "#34A030", 7: "#00843D",
+  1: "#E30613", 2: "#E3501C", 3: "#F07D00", 4: "#F5C800",
+  5: "#ADCF3B", 6: "#34A030", 7: "#00843D",
 };
 
 export const PAKET_FARBEN = {

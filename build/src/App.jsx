@@ -24,10 +24,10 @@ const SANIERUNGSSTAND_STUFEN = {
 };
 const SANIERUNGSSTAND_LEVEL_ORDER = ["unsaniert", "teilsaniert", "saniert", "neubau"];
 const SANIERUNGSSTAND_OPTIONS = [
-  { value: "unsaniert", label: "Altbau" },
-  { value: "teilsaniert", label: "Teilsaniert" },
-  { value: "saniert", label: "Saniert" },
-  { value: "neubau", label: "Neubau" },
+  { value: "unsaniert",   label: "Unsaniert",   note: "Ungedämmt, kein Wärmedämmverbundsystem" },
+  { value: "teilsaniert", label: "Teilsaniert", note: "Einzelne Maßnahmen, z.B. neue Fenster" },
+  { value: "saniert",     label: "Saniert",     note: "Zeitgemäß gedämmt, EnEV-Niveau" },
+  { value: "neubau",      label: "Neubau/KfW",  note: "Neubau- oder KfW-Standard" },
 ];
 const SANIERUNGSSTAND_BAUTEILE = [
   { id: "waende", label: "Wände" },
@@ -1181,8 +1181,8 @@ const EEK_ZONEN = [
 ];
 
 const EnergieVerlaufChart = ({ ist, kumuliert }) => {
-  const W = 620, H = 284;
-  const PAD = { top: 68, right: 36, bottom: 44, left: 52 };
+  const W = 620, H = 320;
+  const PAD = { top: 60, right: 36, bottom: 40, left: 52 };
   const pw = W - PAD.left - PAD.right;
   const ph = H - PAD.top - PAD.bottom;
 
@@ -1216,7 +1216,7 @@ const EnergieVerlaufChart = ({ ist, kumuliert }) => {
         </div>
         <div style={{ fontSize: 10, color: "#9B8E82", fontFamily: "'Geist Mono', monospace" }}>kWh/(m²·a)</div>
       </div>
-      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", display: "block" }}>
+      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", display: "block", aspectRatio: "620/320", minHeight: 180 }}>
         <defs>
           <clipPath id="evc-clip">
             <rect x={PAD.left} y={PAD.top} width={pw} height={ph} />
@@ -1702,7 +1702,7 @@ export default function App() {
 
         {/* Gebäude & Bestand */}
         <Section id="gebaeude" eyebrow="Schritt 1 · Erfassung" title="Ihr Gebäude heute"
-          subtitle="Alle Felder editierbar. Laden Sie einen Energieausweis hoch, oder passen Sie die Werte manuell an. Alle Änderungen wirken sofort auf den Fahrplan und das Ergebnis.">
+          subtitle="Alle Felder editierbar — Änderungen wirken sofort auf Fahrplan und Ergebnis.">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
             <Card>
               <CardEyebrow>Stammdaten</CardEyebrow>
@@ -1738,16 +1738,22 @@ export default function App() {
                   
                 </div>
                 <div>
-                  {SANIERUNGSSTAND_BAUTEILE.map(({ id, label }) => (
-                    <SelectInput
-                      key={id}
-                      label={label}
-                      value={sanierungsstandProBauteil[id] || "unsaniert"}
-                      onChange={v => applySanierungsstandFuerBauteil(id, v)}
-                      options={SANIERUNGSSTAND_OPTIONS}
-                      tooltip={SANIERUNGSSTAND_BAUTEIL_TOOLTIPS[id]}
-                    />
-                  ))}
+                  {SANIERUNGSSTAND_BAUTEILE.map(({ id, label }) => {
+                    const selVal = sanierungsstandProBauteil[id] || "unsaniert";
+                    const selNote = SANIERUNGSSTAND_OPTIONS.find(o => o.value === selVal)?.note;
+                    return (
+                      <div key={id}>
+                        <SelectInput
+                          label={label}
+                          value={selVal}
+                          onChange={v => applySanierungsstandFuerBauteil(id, v)}
+                          options={SANIERUNGSSTAND_OPTIONS}
+                          tooltip={SANIERUNGSSTAND_BAUTEIL_TOOLTIPS[id]}
+                        />
+                        {selNote && <div style={{ fontSize: 10, color: "#9B8E82", paddingLeft: 12, marginTop: -4, marginBottom: 4 }}>{selNote}</div>}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </Card>
@@ -1791,7 +1797,7 @@ export default function App() {
           subtitle="Reihenfolge nach Kosten-Nutzen (€/kWh Primärenergie). ★ = deutlich günstiger als Median; ✕ = deutlich teurer.">
           <div className="mb-10" style={{ overflowX: "auto", WebkitOverflowScrolling: "touch", marginLeft: -4, marginRight: -4 }}>
             <div className="flex items-start justify-between gap-2 relative" style={{ padding: "0 12px", minWidth: 480 }}>
-              <div className="absolute" style={{ left: 60, right: 60, top: 28, height: 2, background: "linear-gradient(to right, #E30613, #F07D00, #7C3AED, #F6D400, #00843D, #2563EB)" }} />
+              <div className="absolute" style={{ left: "calc(50% / 6)", right: "calc(50% / 6)", top: 28, height: 2, background: "linear-gradient(to right, #E30613, #F07D00, #7C3AED, #F6D400, #00843D, #2563EB)" }} />
               <div className="flex flex-col items-center gap-2 relative">
                 <div style={{ width: 52, height: 56, background: EFFIZIENZ_FARBEN[effizienzklasse] || "#6B6259", borderRadius: 3, border: "1.5px solid #1E1A15", display: "flex", alignItems: "center", justifyContent: "center" }}><span className="font-serif text-[18px]" style={{ color: ["C","D","E"].includes(effizienzklasse) ? "#1E1A15" : "#FFF" }}>{effizienzklasse}</span></div>
                 <div className="text-[10.5px] tracking-[0.18em] uppercase text-center" style={{ color: "#6B6259", fontFamily: "'Geist Mono', monospace" }}>Heute</div>
@@ -1980,8 +1986,14 @@ export default function App() {
 
           <div style={{ background: "#FFFFFF", border: "1.25px solid #D3CAB9", borderRadius: 3, padding: "10px 12px", marginTop: 10 }}>
             <div className="text-[10.5px] tracking-[0.18em] uppercase mb-2" style={{ color: "#B5623E", fontFamily: "'Geist Mono', monospace" }}>Paket-Übersicht</div>
-            <div style={{ fontSize: 11, color: "#6B6259", marginBottom: 6 }}>
-              Aktive empfohlene Maßnahmen: <b>{aktiveEmpfohleneMassnahmen.length}</b>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 8 }}>
+              {aktiveMassnahmen.map(id => (
+                <span key={id} style={{
+                  fontSize: 10, padding: "2px 6px", borderRadius: 2, fontFamily: "'Geist Mono', monospace",
+                  background: empfohleneMassnahmen.includes(id) ? "#00843D" : "#E2DBD0",
+                  color: empfohleneMassnahmen.includes(id) ? "#FFF" : "#6B6259",
+                }}>{id}{empfohleneMassnahmen.includes(id) ? " ★" : ""}</span>
+              ))}
             </div>
             {reportSummaryPackages.length === 0 ? (
               <div style={{ fontSize: 12, color: "#6B6259" }}>Noch keine Maßnahmen aktiv.</div>
