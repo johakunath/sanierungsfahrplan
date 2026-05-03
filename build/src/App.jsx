@@ -1909,30 +1909,33 @@ export default function App() {
                 </table>
               </div>
 
-              <div style={{ background: "#F1EDE4", border: "1.25px solid #D3CAB9", borderRadius: 3, padding: "24px 28px" }}>
-                <div className="text-[11px] tracking-[0.22em] uppercase mb-4" style={{ color: "#B5623E", fontFamily: "'Geist Mono', monospace" }}>Förderprogramm BEG 2026</div>
-                <div className="text-[12.5px] leading-relaxed mb-4" style={{ color: "#3A332B" }}>
-                  <b>BEG</b> (Bundesförderung für effiziente Gebäude) ist das Rahmenprogramm. <b>BAFA</b> und <b>KfW</b> sind die durchführenden Stellen:
+              <div style={{ background: "#F1EDE4", border: "1.25px solid #D3CAB9", borderRadius: 3, padding: "20px 24px" }}>
+                <div className="text-[11px] tracking-[0.22em] uppercase mb-3" style={{ color: "#B5623E", fontFamily: "'Geist Mono', monospace" }}>Förderannahmen dieser Demo</div>
+                <div className="text-[12px] leading-relaxed mb-4" style={{ color: "#6B6259" }}>
+                  Diese Vorabschätzung nutzt vereinfachte Förderannahmen je Maßnahmentyp. Die konkrete Förderung wird in der Maßnahmenübersicht und Kostenaufstellung je Paket berücksichtigt.
                 </div>
-                <div className="space-y-3.5 text-[13.5px]">
+                <div className="space-y-2 mb-4">
                   {[
-                    ["BEG EM Grundförderung (BAFA)", "15 %", "#1E1A15"],
-                    ["BEG HZG Heizungstausch (KfW 458)", "bis 50 %", "#1E1A15"],
-                    ["iSFP-Bonus (auf alle EM)", "+5 %", "#00843D"],
-                  ].map((r, i) => (
-                    <div key={i} className="flex items-baseline justify-between gap-3" style={{ paddingBottom: 10, borderBottom: "1px solid #D3CAB9" }}>
-                      <span style={{ color: "#3A332B" }}>{r[0]}</span>
-                      <span style={{ fontFamily: "'Geist Mono', monospace", color: r[2] }}>{r[1]}</span>
+                    ["Gebäudehülle · Fenster · Optimierung", "BEG EM + iSFP-Bonus (Demo-Logik)"],
+                    ["Heizungstausch · Wärmepumpe", "vereinfachte KfW-/BEG-Annahme"],
+                    ["PV · Eigenstrom", "kein Direktzuschuss in dieser Demo"],
+                  ].map(([cat, note], i) => (
+                    <div key={i} style={{ paddingBottom: 8, borderBottom: "1px solid #D3CAB9" }}>
+                      <div style={{ fontSize: 11.5, fontWeight: 500, color: "#1E1A15", marginBottom: 1 }}>{cat}</div>
+                      <div style={{ fontSize: 11, color: "#6B6259", fontFamily: "'Geist Mono', monospace" }}>{note}</div>
                     </div>
                   ))}
-                  <div className="flex items-baseline justify-between gap-3 pt-2">
-                    <span className="font-medium" style={{ color: "#1E1A15" }}>Effektive Förderquote</span>
-                    <span className="font-serif" style={{ fontSize: 22, color: "#00843D", fontVariantNumeric: "tabular-nums" }}>
-                      {k.invest_gesamt > k.instand_gesamt
-                        ? `${Math.round(k.foerderung_gesamt / (k.invest_gesamt - k.instand_gesamt) * 100)} %`
-                        : "—"}
-                    </span>
-                  </div>
+                </div>
+                <div className="flex items-baseline justify-between gap-3 mb-3">
+                  <span style={{ fontSize: 12, fontWeight: 500, color: "#1E1A15" }}>Effektive Förderquote (Demo)</span>
+                  <span style={{ fontSize: 20, fontFamily: "'Fraunces', serif", color: "#00843D", fontVariantNumeric: "tabular-nums" }}>
+                    {k.invest_gesamt > k.instand_gesamt
+                      ? `${Math.round(k.foerderung_gesamt / (k.invest_gesamt - k.instand_gesamt) * 100)} %`
+                      : "—"}
+                  </span>
+                </div>
+                <div style={{ fontSize: 10.5, color: "#9B8E82", lineHeight: 1.5 }}>
+                  Keine Förderzusage. Förderdeckel, Eigentümerstatus, Bonuskombinationen, technische Mindestanforderungen und Antragspflichten müssen im echten Prozess geprüft werden.
                 </div>
               </div>
             </div>
