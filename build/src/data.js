@@ -296,7 +296,7 @@ export const MASSNAHMENPAKETE = [
     zu_beachten: "Hydraulischer Abgleich erfordert Bestandspläne der Heizungsanlage. Terminkoordination mit Heizungsbauer mind. 4 Wochen im Voraus. BEG-Antrag muss vor Beauftragung gestellt werden.",
     komfortsteigerung: "Gleichmäßigere Wärmeverteilung im gesamten Gebäude. Kein Überheizen einzelner Räume. Geringere Geräuschentwicklung durch niedrigere Pumpenleistung.",
     massnahmen: [
-      { id: "M1", rolle: "pflichtschritt", titel: "Hydraulischer Abgleich + Heizungsoptimierung",
+      { id: "M1", kurztitel: "Hydraul. Abgleich", rolle: "pflichtschritt", titel: "Hydraulischer Abgleich + Heizungsoptimierung",
         beschreibung: "Verfahren B nach VdZ, Pumpentausch, Voreinstellung Thermostatventile, Heizkurvenanpassung.",
         investition: 1800, ohnehin_anteil: 300, foerderquote: 0.15,
         co2_reduktion: 3.5, endenergie_delta: -12, primaerenergie_delta: -14,
@@ -311,7 +311,7 @@ export const MASSNAHMENPAKETE = [
     zu_beachten: "Dachdämmung erfordert statische Prüfung bei alter Dachkonstruktion. Baugenehmigung je nach Denkmalzone erforderlich. Schimmelrisiko durch erhöhte Luftdichtheit prüfen.",
     komfortsteigerung: "Deutlich wärmere Decken- und Wandoberflächen im OG — keine Kältestrahlung mehr. Geringerer Temperaturabfall über Nacht.",
     massnahmen: [
-      { id: "M2", rolle: "energetisch", titel: "Dachdämmung Obergeschoss-Decke (22 cm Mineralwolle)",
+      { id: "M2", kurztitel: "Dachdämmung", rolle: "energetisch", titel: "Dachdämmung Obergeschoss-Decke (22 cm Mineralwolle)",
         beschreibung: "Aufsparren- oder Zwischensparrendämmung, neue Dampfbremse, Luftdichtheitsschicht.",
         investition: 22000, ohnehin_anteil: 4500, foerderquote: 0.15,
         co2_reduktion: 4.2, endenergie_delta: -22, primaerenergie_delta: -26,
@@ -326,7 +326,7 @@ export const MASSNAHMENPAKETE = [
     zu_beachten: "Fenstertausch koordiniert mit Dachabdichtung planen, um Wärmebrücken zu minimieren. Baugenehmigung bei Denkmalschutz erforderlich.",
     komfortsteigerung: "Keine Kaltluftabfälle mehr. Spürbare Reduktion von Lärmdurchdringung (Schallschutz Rw ≥ 33 dB). Kein Zugluft-Effekt durch Fensterfugen.",
     massnahmen: [
-      { id: "M3", rolle: "energetisch", titel: "Fenstertausch (3-fach Verglasung, Uw ≤ 0,95)",
+      { id: "M3", kurztitel: "Fenstertausch", rolle: "energetisch", titel: "Fenstertausch (3-fach Verglasung, Uw ≤ 0,95)",
         beschreibung: "Komplettaustausch, RC2-Beschlag, Einbruchhemmung.",
         investition: 19000, ohnehin_anteil: 6500, foerderquote: 0.15,
         co2_reduktion: 3.0, endenergie_delta: -15, primaerenergie_delta: -18,
@@ -341,7 +341,7 @@ export const MASSNAHMENPAKETE = [
     zu_beachten: "Reihenfolge wichtig: 1) Wärmeverteilung umbauen oder Heizkörper auf NT-Tauglichkeit prüfen. 2) WP-Außengerät installieren — Schallschutzgutachten empfohlen. 3) Hydraulischer Abgleich mit neuen Massenströmen. GEG §71 ab 2026 zwingend bei Heizungstausch.",
     komfortsteigerung: "Konstante Vorlauftemperaturen, leiser Betrieb außen. Bei Fußbodenheizung: gleichmäßige Strahlungswärme, im Sommer als Kühlung nutzbar.",
     massnahmen: [
-      { id: "M7", rolle: "enabler", titel: "Erneuerung Wärmeverteilung (Niedertemperatur / Fußbodenheizung)",
+      { id: "M7", kurztitel: "Wärmeverteilung", rolle: "enabler", titel: "Erneuerung Wärmeverteilung (Niedertemperatur / Fußbodenheizung)",
         beschreibung: "Umbau auf Fußbodenheizung (Trocken- oder Nassestrich) oder Heizkreisoptimierung für NT-Betrieb ≤ 40 °C inkl. hydraulischem Abgleich. Voraussetzung für Monovalent-WP-Betrieb (COP ~4–5 statt ~2).",
         investition: 12000, ohnehin_anteil: 500, foerderquote: 0.15,
         co2_reduktion: 1.0,
@@ -351,7 +351,7 @@ export const MASSNAHMENPAKETE = [
           const vNote = ((bs||{}).verteilung) || 2;
           return _imp([[-5,-4,1.0],[-4,-3,0.8],[-3,-3,0.6],[-2,-2,0.4],[-1,-1,0.2],[0,0,0],[0,0,0]], vNote);
         } },
-      { id: "M4", rolle: "systempfad", titel: "Luft-Wasser-Wärmepumpe (12 kW, monovalent)",
+      { id: "M4", kurztitel: "Wärmepumpe", rolle: "systempfad", titel: "Luft-Wasser-Wärmepumpe (12 kW, monovalent)",
         beschreibung: "Monoblock-WP außen, neuer Pufferspeicher 300 L, Heizkörpertausch wo nötig.",
         investition: 32000, ohnehin_anteil: 5000, foerderquote: 0.30,
         co2_reduktion: 22, endenergie_delta: -70, primaerenergie_delta: -55,
@@ -379,7 +379,7 @@ export const MASSNAHMENPAKETE = [
     zu_beachten: "Bei denkmalgeschützten Fassaden Innendämmung als Alternative prüfen. Fensterlaibungen und Sockel mit dämmen, sonst Wärmebrücken. Gerüststandzeit 6–10 Wochen einplanen.",
     komfortsteigerung: "Deutlich wärmere Wandoberflächen — keine Kondensat- und Schimmelgefahr mehr. Schutz vor Sommerhitze (Phasenverschiebung). Wertsteigerung durch modernes Erscheinungsbild.",
     massnahmen: [
-      { id: "M5", rolle: "energetisch", titel: "Fassadendämmung (WDVS 18 cm Mineralwolle)",
+      { id: "M5", kurztitel: "Fassadendämmung", rolle: "energetisch", titel: "Fassadendämmung (WDVS 18 cm Mineralwolle)",
         beschreibung: "Wärmedämmverbundsystem U<0,20, neue Fassadenfarbe, Fensterlaibungen.",
         investition: 38000, ohnehin_anteil: 12000, foerderquote: 0.15,
         co2_reduktion: 6.5, endenergie_delta: -28, primaerenergie_delta: -33,
@@ -394,7 +394,7 @@ export const MASSNAHMENPAKETE = [
     zu_beachten: "Statik des Dachs für PV-Zusatzlast prüfen (ca. 15 kg/m²). Netzanmeldung beim Netzbetreiber mind. 8 Wochen vor Inbetriebnahme. Speicher erfordert separaten Zählerschrank. Marktstammdatenregister-Anmeldung Pflicht.",
     komfortsteigerung: "Weitgehende Unabhängigkeit von Strompreissteigerungen. Wallbox ermöglicht Laden mit Eigenstrom. Monitoring-System gibt Überblick über Energieflüsse in Echtzeit.",
     massnahmen: [
-      { id: "M6", rolle: "synergie", titel: "PV-Anlage (10 kWp, Aufdach) + 8 kWh Speicher",
+      { id: "M6", kurztitel: "PV + Speicher", rolle: "synergie", titel: "PV-Anlage (10 kWp, Aufdach) + 8 kWh Speicher",
         beschreibung: "Süd- oder Ost-West-Ausrichtung, Lithium-Speicher, Wallbox-Vorbereitung.",
         investition: 18000, ohnehin_anteil: 0, foerderquote: 0,
         co2_reduktion: 4.0, endenergie_delta: 0, primaerenergie_delta: -12,
