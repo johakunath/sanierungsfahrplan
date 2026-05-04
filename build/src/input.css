@@ -1,2 +1,42 @@
 @tailwind base;
 @tailwind utilities;
+
+:root {
+  --bg: #F8F5EF;
+  --surface: #FFFFFF;
+  --surface2: #F1EDE4;
+  --txt: #1E1A15;
+  --body: #3A332B;
+  --sec: #6B6259;
+  --bdr: #D3CAB9;
+  --div: #E2DBD0;
+  --acc: #B5623E;
+  --pos: #00843D;
+  --neg: #B83A2E;
+  --gold: #C8820A;
+}
+[data-theme="dark"] {
+  --bg: #0E0D0B;
+  --surface: #161412;
+  --surface2: #1E1B17;
+  --txt: #F0EDE6;
+  --body: #C8BFB4;
+  --sec: #8A7F75;
+  --bdr: #2A2720;
+  --div: #232018;
+  --acc: #CF7A52;
+  --pos: #2DB870;
+  --neg: #D94F42;
+  --gold: #E8A020;
+}
+@media print {
+  :root {
+    --bg: #FFF; --surface: #FFF; --surface2: #F5F2EC;
+    --txt: #000; --body: #222; --sec: #555;
+    --bdr: #CCC; --div: #DDD;
+  }
+}
+body {
+  background: var(--bg);
+  color: var(--txt);
+}
