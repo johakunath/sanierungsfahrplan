@@ -136,7 +136,7 @@ export class ErrorBoundary extends React.Component {
 }
 
 // ═══ MOBILE RESULTS DRAWER ═════════════════════════════════════════════
-const MobileResultsDrawer = ({ effizienzklasse, k, ist, heizkosten, aktiveEmpfohleneMassnahmen, empfohleneMassnahmen, reportSummaryPackages }) => {
+const MobileResultsDrawer = ({ effizienzklasse, k, ist, heizkosten, aktiveEmpfohleneMassnahmen, empfohleneMassnahmen, reportSummaryPackages, nichtEmpfohleneMassnahmen = [], scrollToTab = () => {}, effectiveBauteilState = {}, gebaeude = {}, aktiveMassnahmen = [] }) => {
   const [open, setOpen] = useState(false);
   const peReduction = ist.primaerenergie > 0 ? Math.round((1 - k.primaerenergie / ist.primaerenergie) * 100) : 0;
   const zielColor = EFFIZIENZ_FARBEN[k.effizienzklasse] || "#00843D";
@@ -185,39 +185,39 @@ const MobileResultsDrawer = ({ effizienzklasse, k, ist, heizkosten, aktiveEmpfoh
 
         {/* EEK comparison */}
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-          <div style={{ flex: 1, background: "#FFF", border: "1.25px solid #D3CAB9", borderRadius: 3, padding: "12px 10px", textAlign: "center" }}>
+          <div style={{ flex: 1, background: "#FFF", border: "1.25px solid #D3CAB9", borderRadius: 3, padding: "8px 10px", textAlign: "center" }}>
             <div style={{ fontSize: 9, letterSpacing: "0.2em", color: "#6B6259", fontFamily: "'Geist Mono', monospace", textTransform: "uppercase", marginBottom: 6 }}>Heute</div>
-            <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 44, height: 44, background: istColor, borderRadius: 3, fontSize: 22, fontWeight: 600, fontFamily: "'Fraunces', serif", color: istText }}>{effizienzklasse}</div>
+            <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 36, height: 36, background: istColor, borderRadius: 3, fontSize: 18, fontWeight: 600, fontFamily: "'Fraunces', serif", color: istText }}>{effizienzklasse}</div>
           </div>
           <span style={{ fontSize: 22, color: "#B5623E", flexShrink: 0 }}>→</span>
-          <div style={{ flex: 1, background: zielColor, border: "1.25px solid #1E1A15", borderRadius: 3, padding: "12px 10px", textAlign: "center" }}>
+          <div style={{ flex: 1, background: zielColor, border: "1.25px solid #1E1A15", borderRadius: 3, padding: "8px 10px", textAlign: "center" }}>
             <div style={{ fontSize: 9, letterSpacing: "0.2em", fontFamily: "'Geist Mono', monospace", textTransform: "uppercase", marginBottom: 6, color: zielText === "#FFF" ? "rgba(248,245,239,0.7)" : "rgba(30,26,21,0.6)" }}>Ziel</div>
-            <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 44, height: 44, background: "#F8F5EF", borderRadius: 3, fontSize: 22, fontWeight: 600, fontFamily: "'Fraunces', serif", color: zielColor }}>{k.effizienzklasse}</div>
+            <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 36, height: 36, background: "#F8F5EF", borderRadius: 3, fontSize: 18, fontWeight: 600, fontFamily: "'Fraunces', serif", color: zielColor }}>{k.effizienzklasse}</div>
           </div>
         </div>
 
-        {/* Metrics */}
+        {/* Metrics with mini bar charts */}
         <div style={{ background: "#FFF", border: "1.25px solid #D3CAB9", borderRadius: 3, padding: "8px 12px", marginBottom: 10 }}>
           {[
-            ["Primärenergie", ist.primaerenergie, k.primaerenergie, "kWh/(m²·a)"],
-            ["Endenergie",    ist.endenergie,    k.endenergie,    "kWh/(m²·a)"],
-            ["CO₂-Emissionen",ist.co2,           k.co2,          "kg/(m²·a)"],
-            ["Heizkosten",    heizkosten,         k.heizkosten_gesamt, "€/a"],
-          ].map(([label, v, w, unit], i, arr) => {
-            const pct = v > 0 ? Math.round(Math.abs(w - v) / v * 100) : 0;
-            const down = w < v;
-            const fmtAbs = n => unit === "€/a" ? fmtEur(n) : new Intl.NumberFormat("de-DE").format(Math.round(n));
+            { label: "Primärenergie", istVal: ist.primaerenergie, zielVal: k.primaerenergie, unit: "kWh/(m²·a)" },
+            { label: "Endenergie",    istVal: ist.endenergie,     zielVal: k.endenergie,     unit: "kWh/(m²·a)" },
+            { label: "CO₂",          istVal: ist.co2,            zielVal: k.co2,            unit: "kg/(m²·a)"  },
+            { label: "Heizkosten",   istVal: heizkosten,          zielVal: k.heizkosten_gesamt, unit: "€/a"    },
+          ].map(({ label, istVal, zielVal, unit }, i, arr) => {
+            const pct = istVal > 0 ? Math.round(Math.abs(zielVal - istVal) / istVal * 100) : 0;
+            const down = zielVal < istVal;
+            const fill = istVal > 0 ? Math.round(Math.min(zielVal / istVal, 1) * 100) : 0;
+            const fmtV = n => unit === "€/a" ? fmtEur(n) : new Intl.NumberFormat("de-DE").format(Math.round(n));
             return (
-              <div key={label} style={{ padding: "6px 0", borderBottom: i < arr.length - 1 ? "1px solid #E2DBD0" : "none" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", fontSize: 12 }}>
-                  <span style={{ color: "#6B6259" }}>{label}</span>
-                  <span style={{ fontFamily: "'Geist Mono', monospace", color: down ? "#00843D" : "#B5623E", fontWeight: 600 }}>
-                    {down ? "−" : "+"}{pct} %
-                  </span>
+              <div key={label} style={{ padding: "5px 0", borderBottom: i < arr.length - 1 ? "1px solid #E2DBD0" : "none" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 2 }}>
+                  <span style={{ fontSize: 11, color: "#6B6259" }}>{label}</span>
+                  <span style={{ fontSize: 11, fontFamily: "'Geist Mono', monospace", color: down ? "#00843D" : "#B5623E", fontWeight: 600 }}>{down ? "−" : "+"}{pct} %</span>
                 </div>
-                <div style={{ display: "flex", justifyContent: "flex-end", fontSize: 10.5, color: "#8B7B6E", fontFamily: "'Geist Mono', monospace", marginTop: 1 }}>
-                  {fmtAbs(v)} → {fmtAbs(w)} {unit}
+                <div style={{ height: 6, background: "#E2DBD0", borderRadius: 2, overflow: "hidden", marginBottom: 2 }}>
+                  <div style={{ height: "100%", width: `${fill}%`, background: EFFIZIENZ_FARBEN[k.effizienzklasse] || "#00843D", borderRadius: 2, transition: "width 0.3s" }} />
                 </div>
+                <div style={{ fontSize: 10, color: "#8B7B6E", fontFamily: "'Geist Mono', monospace" }}>{fmtV(istVal)} → {fmtV(zielVal)} {unit}</div>
               </div>
             );
           })}
@@ -230,22 +230,42 @@ const MobileResultsDrawer = ({ effizienzklasse, k, ist, heizkosten, aktiveEmpfoh
             <div style={{ fontSize: 12, color: "#6B6259" }}>Noch keine Maßnahmen aktiv.</div>
           ) : reportSummaryPackages.map((pkg, idx) => (
             <div key={pkg.id} style={{ padding: "8px 0", borderBottom: idx < reportSummaryPackages.length - 1 ? "1px solid #E2DBD0" : "none" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "flex-start" }}>
-                <div>
-                  <div style={{ fontSize: 12.5, color: "#1E1A15", fontWeight: 500, marginBottom: 3 }}>Paket {pkg.nummer} · {pkg.titel}</div>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 3 }}>
-                    {pkg.massnahmen_aktiv.map(id => (
-                      <span key={id} style={{
-                        fontSize: 9.5, padding: "1px 5px", borderRadius: 2, fontFamily: "'Geist Mono', monospace",
-                        background: empfohleneMassnahmen.includes(id) ? "#00843D" : "#E2DBD0",
-                        color: empfohleneMassnahmen.includes(id) ? "#FFF" : "#6B6259",
-                      }}>{id.replace(/^M/, "")}{empfohleneMassnahmen.includes(id) ? " ★" : ""}</span>
-                    ))}
-                  </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <span style={{ width: 10, height: 10, borderRadius: "50%", background: PAKET_FARBEN[pkg.farbe]?.bg || "#6B6259", display: "inline-block", flexShrink: 0 }} />
+                  <span style={{ fontSize: 12.5, color: "#1E1A15", fontWeight: 500 }}>Paket {pkg.nummer} · {pkg.titel}</span>
                 </div>
-                <div style={{ fontSize: 10.5, color: "#3A332B", fontFamily: "'Geist Mono', monospace", textAlign: "right", flexShrink: 0 }}>
-                  {fmtEur(pkg.kosten)}
-                </div>
+                <span style={{ fontSize: 10.5, fontFamily: "'Geist Mono', monospace", flexShrink: 0 }}>{fmtEur(pkg.kosten)}</span>
+              </div>
+              <div style={{ paddingLeft: 16 }}>
+                {pkg.massnahmen_aktiv_obj.map(m => {
+                  const istEmpf = empfohleneMassnahmen.includes(m.id);
+                  const istNichtEmpf = nichtEmpfohleneMassnahmen.includes(m.id) && !istEmpf;
+                  const warum = getWarum(m.id, {
+                    bauteile_state: effectiveBauteilState, gebaeude, aktiveMassnahmen,
+                    empfohlen: istEmpf, nichtEmpfohlen: istNichtEmpf,
+                  });
+                  return (
+                    <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 5, minHeight: 22, marginBottom: 1 }}>
+                      <span
+                        onClick={() => scrollToTab(`paket-${pkg.id}`)}
+                        style={{ fontSize: 11, color: "#3A332B", cursor: "pointer", flex: 1 }}
+                        onMouseEnter={e => e.currentTarget.style.textDecoration = "underline"}
+                        onMouseLeave={e => e.currentTarget.style.textDecoration = "none"}
+                      >{m.kurztitel}</span>
+                      {istEmpf && (
+                        <Tooltip content={<span><b>Warum empfohlen:</b><br />{warum.grund}</span>}>
+                          <span style={{ fontSize: 9, padding: "1px 4px", borderRadius: 2, background: "#F6D400", color: "#1E1A15", fontFamily: "'Geist Mono', monospace", fontWeight: 600, flexShrink: 0 }}>★</span>
+                        </Tooltip>
+                      )}
+                      {istNichtEmpf && (
+                        <Tooltip content={<span><b>Wirtschaftlichkeit gering:</b><br />{warum.jetzt}</span>}>
+                          <span style={{ fontSize: 9, padding: "1px 4px", borderRadius: 2, background: "#E2DBD0", color: "#6B6259", fontFamily: "'Geist Mono', monospace", fontWeight: 600, flexShrink: 0 }}>✕</span>
+                        </Tooltip>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           ))}
@@ -1662,7 +1682,7 @@ export default function App() {
         const quote = m.foerderquote > 0 ? Math.min(m.foerderquote + BEG_BONUS.isfp_bonus + klimaBonus, 0.5) : 0;
         return sum + netto * quote;
       }, 0);
-      return { id: paket.id, nummer: paket.nummer, titel: paket.titel, farbe: paket.farbe, kosten: investition - foerderung, massnahmen_aktiv: aktiveInPaket.map(m => m.id) };
+      return { id: paket.id, nummer: paket.nummer, titel: paket.titel, farbe: paket.farbe, kosten: investition - foerderung, massnahmen_aktiv: aktiveInPaket.map(m => m.id), massnahmen_aktiv_obj: aktiveInPaket.map(m => ({ id: m.id, kurztitel: m.kurztitel || m.id })) };
     }).filter(Boolean);
   }, [dynamicPakete, aktiveMassnahmen, gebaeude]);
 
@@ -2000,81 +2020,101 @@ export default function App() {
           {/* EEK comparison */}
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
             <div style={{ flex: 1, background: "#FFFFFF", border: "1.25px solid #D3CAB9", borderRadius: 3,
-                          padding: "12px 10px", textAlign: "center" }}>
+                          padding: "8px 10px", textAlign: "center" }}>
               <div style={{ fontSize: 9, letterSpacing: "0.2em", color: "#6B6259",
                             fontFamily: "'Geist Mono', monospace", textTransform: "uppercase", marginBottom: 6 }}>Heute</div>
               <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center",
-                            width: 44, height: 44, background: EFFIZIENZ_FARBEN[effizienzklasse] || "#6B6259",
-                            borderRadius: 3, fontSize: 22, fontWeight: 600, fontFamily: "'Fraunces', serif",
+                            width: 36, height: 36, background: EFFIZIENZ_FARBEN[effizienzklasse] || "#6B6259",
+                            borderRadius: 3, fontSize: 18, fontWeight: 600, fontFamily: "'Fraunces', serif",
                             color: ["C","D","E"].includes(effizienzklasse) ? "#1E1A15" : "#FFF" }}>{effizienzklasse}</div>
             </div>
             <span style={{ fontSize: 22, color: "#B5623E", flexShrink: 0 }}>→</span>
             <div style={{ flex: 1, background: EFFIZIENZ_FARBEN[k.effizienzklasse] || "#00843D",
-                          border: "1.25px solid #1E1A15", borderRadius: 3, padding: "12px 10px", textAlign: "center" }}>
+                          border: "1.25px solid #1E1A15", borderRadius: 3, padding: "8px 10px", textAlign: "center" }}>
               <div style={{ fontSize: 9, letterSpacing: "0.2em", fontFamily: "'Geist Mono', monospace",
                             textTransform: "uppercase", marginBottom: 6,
                             color: ["B","C","D"].includes(k.effizienzklasse) ? "rgba(30,26,21,0.6)" : "rgba(248,245,239,0.7)" }}>Ziel</div>
               <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center",
-                            width: 44, height: 44, background: "#F8F5EF",
-                            borderRadius: 3, fontSize: 22, fontWeight: 600, fontFamily: "'Fraunces', serif",
+                            width: 36, height: 36, background: "#F8F5EF",
+                            borderRadius: 3, fontSize: 18, fontWeight: 600, fontFamily: "'Fraunces', serif",
                             color: EFFIZIENZ_FARBEN[k.effizienzklasse] || "#00843D" }}>{k.effizienzklasse}</div>
             </div>
           </div>
 
-          <div style={{ background: "#FFFFFF", border: "1.25px solid #D3CAB9", borderRadius: 3, padding: "10px 12px", marginTop: 10 }}>
+          {/* Metrics with mini bar charts */}
+          <div style={{ background: "#FFFFFF", border: "1.25px solid #D3CAB9", borderRadius: 3,
+                        padding: "8px 12px", marginBottom: 10 }}>
+            {[
+              { label: "Primärenergie", istVal: ist.primaerenergie, zielVal: k.primaerenergie, unit: "kWh/(m²·a)" },
+              { label: "Endenergie",    istVal: ist.endenergie,     zielVal: k.endenergie,     unit: "kWh/(m²·a)" },
+              { label: "CO₂",          istVal: ist.co2,            zielVal: k.co2,            unit: "kg/(m²·a)"  },
+              { label: "Heizkosten",   istVal: heizkosten,          zielVal: k.heizkosten_gesamt, unit: "€/a"    },
+            ].map(({ label, istVal, zielVal, unit }, i, arr) => {
+              const pct = istVal > 0 ? Math.round(Math.abs(zielVal - istVal) / istVal * 100) : 0;
+              const down = zielVal < istVal;
+              const fill = istVal > 0 ? Math.round(Math.min(zielVal / istVal, 1) * 100) : 0;
+              const fmtV = n => unit === "€/a" ? fmtEur(n) : new Intl.NumberFormat("de-DE").format(Math.round(n));
+              return (
+                <div key={label} style={{ padding: "5px 0", borderBottom: i < arr.length - 1 ? "1px solid #E2DBD0" : "none" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 2 }}>
+                    <span style={{ fontSize: 11, color: "#6B6259" }}>{label}</span>
+                    <span style={{ fontSize: 11, fontFamily: "'Geist Mono', monospace", color: down ? "#00843D" : "#B5623E", fontWeight: 600 }}>{down ? "−" : "+"}{pct} %</span>
+                  </div>
+                  <div style={{ height: 6, background: "#E2DBD0", borderRadius: 2, overflow: "hidden", marginBottom: 2 }}>
+                    <div style={{ height: "100%", width: `${fill}%`, background: EFFIZIENZ_FARBEN[k.effizienzklasse] || "#00843D", borderRadius: 2, transition: "width 0.3s" }} />
+                  </div>
+                  <div style={{ fontSize: 10, color: "#8B7B6E", fontFamily: "'Geist Mono', monospace" }}>{fmtV(istVal)} → {fmtV(zielVal)} {unit}</div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Paket-Übersicht */}
+          <div style={{ background: "#FFFFFF", border: "1.25px solid #D3CAB9", borderRadius: 3, padding: "10px 12px", marginBottom: 10 }}>
             <div className="text-[10.5px] tracking-[0.18em] uppercase mb-2" style={{ color: "#B5623E", fontFamily: "'Geist Mono', monospace" }}>Paket-Übersicht</div>
             {reportSummaryPackages.length === 0 ? (
               <div style={{ fontSize: 12, color: "#6B6259" }}>Noch keine Maßnahmen aktiv.</div>
             ) : reportSummaryPackages.map((pkg, idx) => (
               <div key={pkg.id} style={{ padding: "8px 0", borderBottom: idx < reportSummaryPackages.length - 1 ? "1px solid #E2DBD0" : "none" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "flex-start" }}>
-                  <div>
-                    <div style={{ fontSize: 12.5, color: "#1E1A15", fontWeight: 500, marginBottom: 3 }}>Paket {pkg.nummer} · {pkg.titel}</div>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 3 }}>
-                      {pkg.massnahmen_aktiv.map(id => (
-                        <span key={id} style={{
-                          fontSize: 9.5, padding: "1px 5px", borderRadius: 2, fontFamily: "'Geist Mono', monospace",
-                          background: empfohleneMassnahmen.includes(id) ? "#00843D" : "#E2DBD0",
-                          color: empfohleneMassnahmen.includes(id) ? "#FFF" : "#6B6259",
-                        }}>{id.replace(/^M/, "")}{empfohleneMassnahmen.includes(id) ? " ★" : ""}</span>
-                      ))}
-                    </div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <span style={{ width: 10, height: 10, borderRadius: "50%", background: PAKET_FARBEN[pkg.farbe]?.bg || "#6B6259", display: "inline-block", flexShrink: 0 }} />
+                    <span style={{ fontSize: 12.5, color: "#1E1A15", fontWeight: 500 }}>Paket {pkg.nummer} · {pkg.titel}</span>
                   </div>
-                  <div style={{ fontSize: 10.5, color: "#3A332B", fontFamily: "'Geist Mono', monospace", textAlign: "right", flexShrink: 0 }}>
-                    {fmtEur(pkg.kosten)}
-                  </div>
+                  <span style={{ fontSize: 10.5, fontFamily: "'Geist Mono', monospace", flexShrink: 0 }}>{fmtEur(pkg.kosten)}</span>
+                </div>
+                <div style={{ paddingLeft: 16 }}>
+                  {pkg.massnahmen_aktiv_obj.map(m => {
+                    const istEmpf = empfohleneMassnahmen.includes(m.id);
+                    const istNichtEmpf = nichtEmpfohleneMassnahmen.includes(m.id) && !istEmpf;
+                    const warum = getWarum(m.id, {
+                      bauteile_state: effectiveBauteilState, gebaeude, aktiveMassnahmen,
+                      empfohlen: istEmpf, nichtEmpfohlen: istNichtEmpf,
+                    });
+                    return (
+                      <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 5, minHeight: 22, marginBottom: 1 }}>
+                        <span
+                          onClick={() => scrollToTab(`paket-${pkg.id}`)}
+                          style={{ fontSize: 11, color: "#3A332B", cursor: "pointer", flex: 1 }}
+                          onMouseEnter={e => e.currentTarget.style.textDecoration = "underline"}
+                          onMouseLeave={e => e.currentTarget.style.textDecoration = "none"}
+                        >{m.kurztitel}</span>
+                        {istEmpf && (
+                          <Tooltip content={<span><b>Warum empfohlen:</b><br />{warum.grund}</span>}>
+                            <span style={{ fontSize: 9, padding: "1px 4px", borderRadius: 2, background: "#F6D400", color: "#1E1A15", fontFamily: "'Geist Mono', monospace", fontWeight: 600, flexShrink: 0 }}>★</span>
+                          </Tooltip>
+                        )}
+                        {istNichtEmpf && (
+                          <Tooltip content={<span><b>Wirtschaftlichkeit gering:</b><br />{warum.jetzt}</span>}>
+                            <span style={{ fontSize: 9, padding: "1px 4px", borderRadius: 2, background: "#E2DBD0", color: "#6B6259", fontFamily: "'Geist Mono', monospace", fontWeight: 600, flexShrink: 0 }}>✕</span>
+                          </Tooltip>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             ))}
-          </div>
-
-          {/* Metrics table with % and absolute values */}
-          <div style={{ background: "#FFFFFF", border: "1.25px solid #D3CAB9", borderRadius: 3,
-                        padding: "8px 12px", marginBottom: 10 }}>
-            {[
-              ["Primärenergie", ist.primaerenergie, k.primaerenergie, "kWh/(m²·a)"],
-              ["Endenergie",    ist.endenergie,    k.endenergie,    "kWh/(m²·a)"],
-              ["CO₂-Emissionen",ist.co2,           k.co2,          "kg/(m²·a)"],
-              ["Heizkosten",    heizkosten,         k.heizkosten_gesamt, "€/a"],
-            ].map(([label, v, w, unit], i, arr) => {
-              const pct = v > 0 ? Math.round(Math.abs(w - v) / v * 100) : 0;
-              const down = w < v;
-              const fmtAbs = n => unit === "€/a" ? fmtEur(n) : new Intl.NumberFormat("de-DE").format(Math.round(n));
-              return (
-                <div key={label} style={{ padding: "6px 0", borderBottom: i < arr.length - 1 ? "1px solid #E2DBD0" : "none" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", fontSize: 12 }}>
-                    <span style={{ color: "#6B6259" }}>{label}</span>
-                    <span style={{ fontFamily: "'Geist Mono', monospace", color: down ? "#00843D" : "#B5623E", fontWeight: 600 }}>
-                      {down ? "−" : "+"}{pct} %
-                    </span>
-                  </div>
-                  <div style={{ display: "flex", justifyContent: "flex-end", fontSize: 10.5,
-                                color: "#8B7B6E", fontFamily: "'Geist Mono', monospace", marginTop: 1 }}>
-                    {fmtAbs(v)} → {fmtAbs(w)} {unit}
-                  </div>
-                </div>
-              );
-            })}
           </div>
 
           {/* Investment summary */}
@@ -2108,7 +2148,12 @@ export default function App() {
         heizkosten={heizkosten}
         aktiveEmpfohleneMassnahmen={aktiveEmpfohleneMassnahmen}
         empfohleneMassnahmen={empfohleneMassnahmen}
+        nichtEmpfohleneMassnahmen={nichtEmpfohleneMassnahmen}
         reportSummaryPackages={reportSummaryPackages}
+        scrollToTab={scrollToTab}
+        effectiveBauteilState={effectiveBauteilState}
+        gebaeude={gebaeude}
+        aktiveMassnahmen={aktiveMassnahmen}
       />
 
       <footer className="print-hide px-5 md:px-10" style={{ borderTop: "1px solid #D3CAB9", paddingTop: 32, paddingBottom: 32, marginTop: 40 }}>
