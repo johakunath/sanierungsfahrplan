@@ -136,7 +136,7 @@ export class ErrorBoundary extends React.Component {
 }
 
 // ═══ MOBILE RESULTS DRAWER ═════════════════════════════════════════════
-const MobileResultsDrawer = ({ effizienzklasse, k, ist, heizkosten, aktiveEmpfohleneMassnahmen, reportSummaryPackages }) => {
+const MobileResultsDrawer = ({ effizienzklasse, k, ist, heizkosten, aktiveEmpfohleneMassnahmen, empfohleneMassnahmen, reportSummaryPackages }) => {
   const [open, setOpen] = useState(false);
   const peReduction = ist.primaerenergie > 0 ? Math.round((1 - k.primaerenergie / ist.primaerenergie) * 100) : 0;
   const zielColor = EFFIZIENZ_FARBEN[k.effizienzklasse] || "#00843D";
@@ -226,16 +226,24 @@ const MobileResultsDrawer = ({ effizienzklasse, k, ist, heizkosten, aktiveEmpfoh
         {/* Paket-Übersicht */}
         <div style={{ background: "#FFF", border: "1.25px solid #D3CAB9", borderRadius: 3, padding: "10px 12px", marginBottom: 10 }}>
           <div className="text-[10.5px] tracking-[0.18em] uppercase mb-2" style={{ color: "#B5623E", fontFamily: "'Geist Mono', monospace" }}>Paket-Übersicht</div>
-          <div style={{ fontSize: 11, color: "#6B6259", marginBottom: 6 }}>
-            Aktive empfohlene Maßnahmen: <b>{aktiveEmpfohleneMassnahmen.length}</b>
-          </div>
           {reportSummaryPackages.length === 0 ? (
             <div style={{ fontSize: 12, color: "#6B6259" }}>Noch keine Maßnahmen aktiv.</div>
           ) : reportSummaryPackages.map((pkg, idx) => (
             <div key={pkg.id} style={{ padding: "8px 0", borderBottom: idx < reportSummaryPackages.length - 1 ? "1px solid #E2DBD0" : "none" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "baseline" }}>
-                <div style={{ fontSize: 12.5, color: "#1E1A15", fontWeight: 500 }}>Paket {pkg.nummer} · {pkg.titel}</div>
-                <div style={{ fontSize: 10.5, color: "#3A332B", fontFamily: "'Geist Mono', monospace", textAlign: "right" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "flex-start" }}>
+                <div>
+                  <div style={{ fontSize: 12.5, color: "#1E1A15", fontWeight: 500, marginBottom: 3 }}>Paket {pkg.nummer} · {pkg.titel}</div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 3 }}>
+                    {pkg.massnahmen_aktiv.map(id => (
+                      <span key={id} style={{
+                        fontSize: 9.5, padding: "1px 5px", borderRadius: 2, fontFamily: "'Geist Mono', monospace",
+                        background: empfohleneMassnahmen.includes(id) ? "#00843D" : "#E2DBD0",
+                        color: empfohleneMassnahmen.includes(id) ? "#FFF" : "#6B6259",
+                      }}>{id.replace(/^M/, "")}{empfohleneMassnahmen.includes(id) ? " ★" : ""}</span>
+                    ))}
+                  </div>
+                </div>
+                <div style={{ fontSize: 10.5, color: "#3A332B", fontFamily: "'Geist Mono', monospace", textAlign: "right", flexShrink: 0 }}>
                   {fmtEur(pkg.kosten)}
                 </div>
               </div>
@@ -1629,7 +1637,7 @@ export default function App() {
         const quote = m.foerderquote > 0 ? Math.min(m.foerderquote + BEG_BONUS.isfp_bonus, 0.5) : 0;
         return sum + netto * quote;
       }, 0);
-      return { id: paket.id, nummer: paket.nummer, titel: paket.titel, farbe: paket.farbe, kosten: investition - foerderung };
+      return { id: paket.id, nummer: paket.nummer, titel: paket.titel, farbe: paket.farbe, kosten: investition - foerderung, massnahmen_aktiv: aktiveInPaket.map(m => m.id) };
     }).filter(Boolean);
   }, [dynamicPakete, aktiveMassnahmen]);
 
@@ -1798,33 +1806,37 @@ export default function App() {
         {/* Fahrplan */}
         <Section id="fahrplan" eyebrow="Schritt 2 · Fahrplan" title="Empfohlene Maßnahmenpakete"
           subtitle="Reihenfolge nach Kosten-Nutzen (€/kWh Primärenergie). ★ = deutlich günstiger als Median; ✕ = deutlich teurer.">
-          <div className="mb-10" style={{ overflowX: "auto", WebkitOverflowScrolling: "touch", marginLeft: -4, marginRight: -4 }}>
-            <div className="flex items-start justify-between gap-2 relative" style={{ padding: "0 12px", minWidth: 480 }}>
-              <div className="absolute" style={{ left: "calc(50% / 6)", right: "calc(50% / 6)", top: 28, height: 2, background: "linear-gradient(to right, #E30613, #F07D00, #7C3AED, #F6D400, #00843D, #2563EB)" }} />
-              <div className="flex flex-col items-center gap-2 relative">
-                <div style={{ width: 52, height: 56, background: EFFIZIENZ_FARBEN[effizienzklasse] || "#6B6259", borderRadius: 3, border: "1.5px solid #1E1A15", display: "flex", alignItems: "center", justifyContent: "center" }}><span className="font-serif text-[18px]" style={{ color: ["C","D","E"].includes(effizienzklasse) ? "#1E1A15" : "#FFF" }}>{effizienzklasse}</span></div>
-                <div className="text-[10.5px] tracking-[0.18em] uppercase text-center" style={{ color: "#6B6259", fontFamily: "'Geist Mono', monospace" }}>Heute</div>
-                <div className="text-[11.5px]" style={{ color: "#3A332B" }}>Klasse {effizienzklasse}</div>
-              </div>
-              {dynamicPakete.map(p => (
-                <div key={p.id} className="flex flex-col items-center gap-2 relative" style={{ opacity: aktivePakete.includes(p.id) ? 1 : 0.3 }}>
-                  <button className="print-hide" style={{ background: "none", border: "none", padding: 0, cursor: "pointer", display: "block" }}
-                    onClick={() => document.getElementById(`paket-${p.id}`)?.scrollIntoView({ behavior: "smooth", block: "start" })}
-                    title={`Zu Paket ${p.nummer}: ${p.titel} springen`}>
-                    <PaketHaus farbe={p.farbe} aktiv={aktivePakete.includes(p.id)} nummer={p.nummer} size={56} />
-                  </button>
-                  <div className="text-[11.5px] text-center max-w-[110px] leading-tight" style={{ color: "#3A332B" }}>{p.titel}</div>
+          {(() => {
+            const totalCols = dynamicPakete.length + 2;
+            const lineOffset = `${50 / totalCols}%`;
+            return (
+              <div className="mb-10" style={{ position: "relative", display: "grid", gridTemplateColumns: `repeat(${totalCols}, 1fr)`, gap: 0 }}>
+                <div className="absolute" style={{ left: lineOffset, right: lineOffset, top: 24, height: 2, background: "linear-gradient(to right, #E30613, #F07D00, #7C3AED, #F6D400, #00843D, #2563EB)", pointerEvents: "none" }} />
+                <div className="flex flex-col items-center gap-1.5 relative">
+                  <div style={{ width: 46, height: 50, background: EFFIZIENZ_FARBEN[effizienzklasse] || "#6B6259", borderRadius: 3, border: "1.5px solid #1E1A15", display: "flex", alignItems: "center", justifyContent: "center" }}><span className="font-serif text-[16px]" style={{ color: ["C","D","E"].includes(effizienzklasse) ? "#1E1A15" : "#FFF" }}>{effizienzklasse}</span></div>
+                  <div className="text-[9px] tracking-[0.18em] uppercase text-center" style={{ color: "#6B6259", fontFamily: "'Geist Mono', monospace" }}>Heute</div>
+                  <div className="text-[10px]" style={{ color: "#3A332B" }}>Kl. {effizienzklasse}</div>
                 </div>
-              ))}
-              <div className="flex flex-col items-center gap-2 relative">
-                <div style={{ width: 52, height: 56, background: EFFIZIENZ_FARBEN[k.effizienzklasse] || "#00843D", borderRadius: 3, border: "1.5px solid #1E1A15", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <span className="font-serif text-[18px]" style={{ color: ["B","C","D"].includes(k.effizienzklasse) ? "#1E1A15" : "#FFF" }}>{k.effizienzklasse}</span>
+                {dynamicPakete.map(p => (
+                  <div key={p.id} className="flex flex-col items-center gap-1.5 relative" style={{ opacity: aktivePakete.includes(p.id) ? 1 : 0.3 }}>
+                    <button className="print-hide" style={{ background: "none", border: "none", padding: 0, cursor: "pointer", display: "block" }}
+                      onClick={() => document.getElementById(`paket-${p.id}`)?.scrollIntoView({ behavior: "smooth", block: "start" })}
+                      title={`Zu Paket ${p.nummer}: ${p.titel} springen`}>
+                      <PaketHaus farbe={p.farbe} aktiv={aktivePakete.includes(p.id)} nummer={p.nummer} size={48} />
+                    </button>
+                    <div className="text-[10px] text-center leading-tight px-0.5" style={{ color: "#3A332B", maxWidth: "100%" }}>{p.titel}</div>
+                  </div>
+                ))}
+                <div className="flex flex-col items-center gap-1.5 relative">
+                  <div style={{ width: 46, height: 50, background: EFFIZIENZ_FARBEN[k.effizienzklasse] || "#00843D", borderRadius: 3, border: "1.5px solid #1E1A15", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <span className="font-serif text-[16px]" style={{ color: ["B","C","D"].includes(k.effizienzklasse) ? "#1E1A15" : "#FFF" }}>{k.effizienzklasse}</span>
+                  </div>
+                  <div className="text-[9px] tracking-[0.18em] uppercase text-center" style={{ color: "#6B6259", fontFamily: "'Geist Mono', monospace" }}>Ziel</div>
+                  <div className="text-[10px]" style={{ color: "#3A332B" }}>Kl. {k.effizienzklasse}</div>
                 </div>
-                <div className="text-[10.5px] tracking-[0.18em] uppercase text-center" style={{ color: "#6B6259", fontFamily: "'Geist Mono', monospace" }}>Ziel</div>
-                <div className="text-[11.5px]" style={{ color: "#3A332B" }}>Klasse {k.effizienzklasse}</div>
               </div>
-            </div>
-          </div>
+            );
+          })()}
 
           <div className="space-y-5">
             {dynamicPakete.map(p => (
@@ -1985,26 +1997,27 @@ export default function App() {
 
           <div style={{ background: "#FFFFFF", border: "1.25px solid #D3CAB9", borderRadius: 3, padding: "10px 12px", marginTop: 10 }}>
             <div className="text-[10.5px] tracking-[0.18em] uppercase mb-2" style={{ color: "#B5623E", fontFamily: "'Geist Mono', monospace" }}>Paket-Übersicht</div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 8 }}>
-              {aktiveMassnahmen.map(id => (
-                <span key={id} style={{
-                  fontSize: 10, padding: "2px 6px", borderRadius: 2, fontFamily: "'Geist Mono', monospace",
-                  background: empfohleneMassnahmen.includes(id) ? "#00843D" : "#E2DBD0",
-                  color: empfohleneMassnahmen.includes(id) ? "#FFF" : "#6B6259",
-                }}>{id}{empfohleneMassnahmen.includes(id) ? " ★" : ""}</span>
-              ))}
-            </div>
             {reportSummaryPackages.length === 0 ? (
               <div style={{ fontSize: 12, color: "#6B6259" }}>Noch keine Maßnahmen aktiv.</div>
             ) : reportSummaryPackages.map((pkg, idx) => (
               <div key={pkg.id} style={{ padding: "8px 0", borderBottom: idx < reportSummaryPackages.length - 1 ? "1px solid #E2DBD0" : "none" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "baseline" }}>
-                  <div style={{ fontSize: 12.5, color: "#1E1A15", fontWeight: 500 }}>Paket {pkg.nummer} · {pkg.titel}</div>
-                  <div style={{ fontSize: 10.5, color: "#3A332B", fontFamily: "'Geist Mono', monospace", textAlign: "right" }}>
-                    Kosten inkl. Förderung: {fmtEur(pkg.kosten)}
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "flex-start" }}>
+                  <div>
+                    <div style={{ fontSize: 12.5, color: "#1E1A15", fontWeight: 500, marginBottom: 3 }}>Paket {pkg.nummer} · {pkg.titel}</div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 3 }}>
+                      {pkg.massnahmen_aktiv.map(id => (
+                        <span key={id} style={{
+                          fontSize: 9.5, padding: "1px 5px", borderRadius: 2, fontFamily: "'Geist Mono', monospace",
+                          background: empfohleneMassnahmen.includes(id) ? "#00843D" : "#E2DBD0",
+                          color: empfohleneMassnahmen.includes(id) ? "#FFF" : "#6B6259",
+                        }}>{id.replace(/^M/, "")}{empfohleneMassnahmen.includes(id) ? " ★" : ""}</span>
+                      ))}
+                    </div>
+                  </div>
+                  <div style={{ fontSize: 10.5, color: "#3A332B", fontFamily: "'Geist Mono', monospace", textAlign: "right", flexShrink: 0 }}>
+                    {fmtEur(pkg.kosten)}
                   </div>
                 </div>
-                
               </div>
             ))}
           </div>
@@ -2068,6 +2081,7 @@ export default function App() {
         ist={ist}
         heizkosten={heizkosten}
         aktiveEmpfohleneMassnahmen={aktiveEmpfohleneMassnahmen}
+        empfohleneMassnahmen={empfohleneMassnahmen}
         reportSummaryPackages={reportSummaryPackages}
       />
 
