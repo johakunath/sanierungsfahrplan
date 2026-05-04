@@ -657,9 +657,11 @@ function getWarum(measureId, ctx) {
     case "M3": {
       const note = bs.fenster || 2;
       const grund = note <= 2
-        ? "Ihre Fenster sind alt und undicht — Zugluft und hohe Wärmeverluste."
+        ? "Ihre Fenster sind alt und undicht — Zugluft und hohe Wärmeverluste. Sehr hohes Einsparpotenzial."
+        : note <= 3
+        ? "Ihre Fenster haben ältere Zweifachverglasung. Mit 3-fach-Verglasung sind noch spürbare Primärenergieeinsparungen möglich."
         : note <= 4
-        ? "Ihre Fenster haben moderne 2-fach-Verglasung. 3-fach bringt nur noch geringe Einsparung."
+        ? "Ihre Fenster sind auf mittlerem Standard. 3-fach-Verglasung bringt noch mäßige Einsparung."
         : "Fenster bereits auf hohem Standard — Tausch lohnt energetisch kaum.";
       const jetzt = nichtEmpfohlen
         ? "Hoher Investitionsbetrag bei kleiner PE-Wirkung — Dachdämmung oder WP zuerst priorisieren."
@@ -806,9 +808,11 @@ const PaketBlock = ({ paket, aktiv, onToggle, onToggleMassnahme = () => {}, akti
                   </span>
                 )}
                 {empfohleneMassnahmen.includes(massnahme.id) && (
-                  <span className="print-hide" title="Score unter 10,5 €/kWh Primärenergie — wirtschaftlich besonders empfehlenswert für diese Gebäudesituation." style={{ background: "#F6D400", color: "#1E1A15", padding: "1px 8px", borderRadius: 100, fontSize: 10, fontFamily: "'Geist Mono', monospace", fontWeight: 600, letterSpacing: "0.06em", flexShrink: 0, cursor: "help" }}>
-                    ★ Empfohlen
-                  </span>
+                  <Tooltip content={<span><b>Warum empfohlen:</b><br />{warum.grund}</span>}>
+                    <span className="print-hide" style={{ background: "#F6D400", color: "#1E1A15", padding: "1px 8px", borderRadius: 100, fontSize: 10, fontFamily: "'Geist Mono', monospace", fontWeight: 600, letterSpacing: "0.06em", flexShrink: 0, cursor: "help" }}>
+                      ★ Empfohlen
+                    </span>
+                  </Tooltip>
                 )}
                 {empfohleneMassnahmen.includes(massnahme.id) && !massnahmeAktiv && (
                   <span className="print-hide" title="Empfohlene Maßnahme wurde deaktiviert" style={{ background: "#FEF2E8", color: "#B5623E", border: "1px solid #F5C09A", padding: "1px 8px", borderRadius: 100, fontSize: 10, fontFamily: "'Geist Mono', monospace", fontWeight: 600, letterSpacing: "0.06em", flexShrink: 0 }}>
@@ -816,9 +820,11 @@ const PaketBlock = ({ paket, aktiv, onToggle, onToggleMassnahme = () => {}, akti
                   </span>
                 )}
                 {nichtEmpfohleneMassnahmen.includes(massnahme.id) && !empfohleneMassnahmen.includes(massnahme.id) && (
-                  <span className="print-hide" title="Score über 20 €/kWh Primärenergie oder kein messbarer PE-Effekt — andere Maßnahmen deutlich effizienter." style={{ background: "#E2DBD0", color: "#6B6259", padding: "1px 8px", borderRadius: 100, fontSize: 10, fontFamily: "'Geist Mono', monospace", fontWeight: 600, letterSpacing: "0.06em", flexShrink: 0, cursor: "help" }}>
-                    ✕ Nicht empfohlen
-                  </span>
+                  <Tooltip content={<span><b>Wirtschaftlichkeit gering:</b><br />{warum.jetzt}</span>}>
+                    <span className="print-hide" style={{ background: "#E2DBD0", color: "#6B6259", padding: "1px 8px", borderRadius: 100, fontSize: 10, fontFamily: "'Geist Mono', monospace", fontWeight: 600, letterSpacing: "0.06em", flexShrink: 0, cursor: "help" }}>
+                      ✕ Nicht empfohlen
+                    </span>
+                  </Tooltip>
                 )}
                 {massnahme.rolle === "synergie" && aktiveMassnahmen.includes("M4") && (
                   <span className="print-hide" title="PV kombiniert sich mit Wärmepumpe: Eigenstrom deckt WP-Betrieb, senkt Betriebskosten und verbessert CO₂-Bilanz." style={{ background: "#DBEAFE", color: "#1D4ED8", padding: "1px 8px", borderRadius: 100, fontSize: 10, fontFamily: "'Geist Mono', monospace", fontWeight: 600, letterSpacing: "0.06em", flexShrink: 0, cursor: "help" }}>
