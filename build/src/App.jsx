@@ -231,12 +231,12 @@ const MobileResultsDrawer = ({ effizienzklasse, k, ist, heizkosten, aktiveEmpfoh
           </div>
           {reportSummaryPackages.length === 0 ? (
             <div style={{ fontSize: 12, color: "#6B6259" }}>Noch keine Maßnahmen aktiv.</div>
-          ) : reportSummaryPackages.map((p, idx) => (
-            <div key={p.id} style={{ padding: "8px 0", borderBottom: idx < reportSummaryPackages.length - 1 ? "1px solid #E2DBD0" : "none" }}>
+          ) : reportSummaryPackages.map((pkg, idx) => (
+            <div key={pkg.id} style={{ padding: "8px 0", borderBottom: idx < reportSummaryPackages.length - 1 ? "1px solid #E2DBD0" : "none" }}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "baseline" }}>
-                <div style={{ fontSize: 12.5, color: "#1E1A15", fontWeight: 500 }}>Paket {p.nummer} · {p.titel}</div>
+                <div style={{ fontSize: 12.5, color: "#1E1A15", fontWeight: 500 }}>Paket {pkg.nummer} · {pkg.titel}</div>
                 <div style={{ fontSize: 10.5, color: "#3A332B", fontFamily: "'Geist Mono', monospace", textAlign: "right" }}>
-                  {fmtEur(p.kosten)}
+                  {fmtEur(pkg.kosten)}
                 </div>
               </div>
             </div>
@@ -440,10 +440,10 @@ const KPI = ({ label, value, unit, big = false, style, tooltip }) => (
 // ═══ PRESET PICKER ═════════════════════════════════════════════════════
 const PresetPicker = ({ activeId, onPick, onUploadClick, uploadLoading }) => (
   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-    {Object.values(PRESETS).map(p => {
-      const active = activeId === p.id;
+    {Object.values(PRESETS).map(preset => {
+      const active = activeId === preset.id;
       return (
-        <button key={p.id} onClick={() => onPick(p.id)}
+        <button key={preset.id} onClick={() => onPick(preset.id)}
           className="print-hide"
           style={{
             padding: "16px 20px", textAlign: "left",
@@ -460,10 +460,10 @@ const PresetPicker = ({ activeId, onPick, onUploadClick, uploadLoading }) => (
             Preset
           </div>
           <div className="font-serif text-[17px] leading-tight mb-1" style={{ fontWeight: 500 }}>
-            {p.label}
+            {preset.label}
           </div>
           <div className="text-[12px]" style={{ color: active ? "rgba(248,245,239,0.75)" : "#6B6259" }}>
-            {p.beschreibung}
+            {preset.beschreibung}
           </div>
         </button>
       );
@@ -674,13 +674,13 @@ function getWarum(measureId, ctx) {
 // ═══ PAKET-BLOCK mit Kostenherleitung-Tooltip ═══════════════════════════
 const PaketBlock = ({ paket, aktiv, onToggle, onToggleMassnahme = () => {}, aktiveMassnahmen, empfohleneMassnahmen = [], nichtEmpfohleneMassnahmen = [], gebaeude = {}, bauteile_state = {}, wpVariante = "auto", resolvedWpVariante = "monovalent", onWpVarianteChange = () => {} }) => {
   const f = PAKET_FARBEN[paket.farbe];
-  const aktiveMassnahmenInPaket = paket.massnahmen.filter(m => aktiveMassnahmen.includes(m.id));
-  const summe_invest  = aktiveMassnahmenInPaket.reduce((s, m) => s + m.investition, 0);
-  const summe_instand = aktiveMassnahmenInPaket.reduce((s, m) => s + (m.ohnehin_anteil ?? 0), 0);
-  const summe_foerder = aktiveMassnahmenInPaket.reduce((s, m) => {
-    const netto = m.investition - (m.ohnehin_anteil ?? 0);
+  const aktiveMassnahmenInPaket = paket.massnahmen.filter(massnahme => aktiveMassnahmen.includes(massnahme.id));
+  const summe_invest  = aktiveMassnahmenInPaket.reduce((s, massnahme) => s + massnahme.investition, 0);
+  const summe_instand = aktiveMassnahmenInPaket.reduce((s, massnahme) => s + (massnahme.ohnehin_anteil ?? 0), 0);
+  const summe_foerder = aktiveMassnahmenInPaket.reduce((s, massnahme) => {
+    const netto = massnahme.investition - (massnahme.ohnehin_anteil ?? 0);
     const bonus = BEG_BONUS.isfp_bonus;
-    const quote = m.foerderquote > 0 ? Math.min(m.foerderquote + bonus, 0.5) : 0;
+    const quote = massnahme.foerderquote > 0 ? Math.min(massnahme.foerderquote + bonus, 0.5) : 0;
     return s + netto * quote;
   }, 0);
   const eigenanteil   = summe_invest - summe_foerder;
@@ -731,44 +731,44 @@ const PaketBlock = ({ paket, aktiv, onToggle, onToggleMassnahme = () => {}, akti
       </div>
 
       <div>
-        {paket.massnahmen.map((m, i) => {
-          const massnahmeAktiv = aktiveMassnahmen.includes(m.id);
-          const warum = getWarum(m.id, {
+        {paket.massnahmen.map((massnahme, i) => {
+          const massnahmeAktiv = aktiveMassnahmen.includes(massnahme.id);
+          const warum = getWarum(massnahme.id, {
             bauteile_state, gebaeude, aktiveMassnahmen,
-            empfohlen: empfohleneMassnahmen.includes(m.id),
-            nichtEmpfohlen: nichtEmpfohleneMassnahmen.includes(m.id),
+            empfohlen: empfohleneMassnahmen.includes(massnahme.id),
+            nichtEmpfohlen: nichtEmpfohleneMassnahmen.includes(massnahme.id),
           });
           return (
-          <div key={m.id} className="p-5" style={{ borderBottom: i < paket.massnahmen.length - 1 ? "1px solid #E2DBD0" : "none", opacity: massnahmeAktiv ? 1 : 0.45, transition: "opacity 0.15s" }}>
+          <div key={massnahme.id} className="p-5" style={{ borderBottom: i < paket.massnahmen.length - 1 ? "1px solid #E2DBD0" : "none", opacity: massnahmeAktiv ? 1 : 0.45, transition: "opacity 0.15s" }}>
             <div className="mb-4">
               <div className="mb-1.5" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 14 }}>
                 <div className="text-[14.5px] font-medium flex items-center gap-2 flex-wrap" style={{ color: "#1E1A15", flex: 1 }}>
                 <label className="print-hide" style={{ display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer", fontSize: 11, color: "#6B6259", fontFamily: "'Geist Mono', monospace", letterSpacing: "0.05em" }}>
-                  <input type="checkbox" checked={massnahmeAktiv} onChange={() => onToggleMassnahme(m.id)}
+                  <input type="checkbox" checked={massnahmeAktiv} onChange={() => onToggleMassnahme(massnahme.id)}
                     style={{ accentColor: "#2A8B7A", width: 14, height: 14, cursor: "pointer" }} />
                 </label>
-                <span style={{ textDecoration: aktiv && !massnahmeAktiv ? "line-through" : "none" }}>{m.titel}</span>
-                {m._isMovedAbgleich && (
+                <span style={{ textDecoration: aktiv && !massnahmeAktiv ? "line-through" : "none" }}>{massnahme.titel}</span>
+                {massnahme._isMovedAbgleich && (
                   <span style={{ background: "#EBF5F3", color: "#1B4840", border: "1px solid #8CBDB5", padding: "1px 8px", borderRadius: 100, fontSize: 10, fontFamily: "'Geist Mono', monospace", flexShrink: 0 }}>
                     Pflicht nach BEG
                   </span>
                 )}
-                {empfohleneMassnahmen.includes(m.id) && (
+                {empfohleneMassnahmen.includes(massnahme.id) && (
                   <span className="print-hide" title="Kosten-Nutzen deutlich besser als Durchschnitt (< 75 % des Medianwerts in €/kWh Primärenergie)" style={{ background: "#F6D400", color: "#1E1A15", padding: "1px 8px", borderRadius: 100, fontSize: 10, fontFamily: "'Geist Mono', monospace", fontWeight: 600, letterSpacing: "0.06em", flexShrink: 0, cursor: "help" }}>
                     ★ Empfohlen
                   </span>
                 )}
-                {empfohleneMassnahmen.includes(m.id) && !massnahmeAktiv && (
+                {empfohleneMassnahmen.includes(massnahme.id) && !massnahmeAktiv && (
                   <span className="print-hide" title="Empfohlene Maßnahme wurde deaktiviert" style={{ background: "#FEF2E8", color: "#B5623E", border: "1px solid #F5C09A", padding: "1px 8px", borderRadius: 100, fontSize: 10, fontFamily: "'Geist Mono', monospace", fontWeight: 600, letterSpacing: "0.06em", flexShrink: 0 }}>
                     ⚠ Abgewählt
                   </span>
                 )}
-                {nichtEmpfohleneMassnahmen.includes(m.id) && !empfohleneMassnahmen.includes(m.id) && (
+                {nichtEmpfohleneMassnahmen.includes(massnahme.id) && !empfohleneMassnahmen.includes(massnahme.id) && (
                   <span className="print-hide" title="Kosten-Nutzen deutlich schlechter als Durchschnitt (> 2× Medianwert in €/kWh Primärenergie)" style={{ background: "#E2DBD0", color: "#6B6259", padding: "1px 8px", borderRadius: 100, fontSize: 10, fontFamily: "'Geist Mono', monospace", fontWeight: 600, letterSpacing: "0.06em", flexShrink: 0, cursor: "help" }}>
                     ✕ Nicht empfohlen
                   </span>
                 )}
-                {m.rolle === "synergie" && aktiveMassnahmen.includes("M4") && (
+                {massnahme.rolle === "synergie" && aktiveMassnahmen.includes("M4") && (
                   <span className="print-hide" title="PV kombiniert sich mit Wärmepumpe: Eigenstrom deckt WP-Betrieb, senkt Betriebskosten und verbessert CO₂-Bilanz." style={{ background: "#DBEAFE", color: "#1D4ED8", padding: "1px 8px", borderRadius: 100, fontSize: 10, fontFamily: "'Geist Mono', monospace", fontWeight: 600, letterSpacing: "0.06em", flexShrink: 0, cursor: "help" }}>
                     ⚡ Synergie mit WP
                   </span>
@@ -776,11 +776,11 @@ const PaketBlock = ({ paket, aktiv, onToggle, onToggleMassnahme = () => {}, akti
                 <Tooltip content={
                   <div>
                     <div style={{ fontWeight: 600, marginBottom: 6 }}>Kosten-Herleitung</div>
-                    <div style={{ fontSize: 11.5, marginBottom: 8 }}>{m.kostenherleitung}</div>
+                    <div style={{ fontSize: 11.5, marginBottom: 8 }}>{massnahme.kostenherleitung}</div>
                     <div style={{ fontWeight: 600, marginBottom: 4, marginTop: 8 }}>Förderung</div>
                     <div style={{ fontSize: 11.5 }}>
-                      {m.foerderung_rechtsgrundlage} · durchgeführt durch {m.foerderung_stelle}
-                      {m.foerderquote > 0 && <><br/>Grundquote: {Math.round(m.foerderquote * 100)} % · mit iSFP-Bonus: {Math.round((m.foerderquote + BEG_BONUS.isfp_bonus) * 100)} %</>}
+                      {massnahme.foerderung_rechtsgrundlage} · durchgeführt durch {massnahme.foerderung_stelle}
+                      {massnahme.foerderquote > 0 && <><br/>Grundquote: {Math.round(massnahme.foerderquote * 100)} % · mit iSFP-Bonus: {Math.round((massnahme.foerderquote + BEG_BONUS.isfp_bonus) * 100)} %</>}
                     </div>
                   </div>
                 }>
@@ -788,22 +788,22 @@ const PaketBlock = ({ paket, aktiv, onToggle, onToggleMassnahme = () => {}, akti
                 </Tooltip>
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4, minWidth: 140 }}>
-                  {m.co2_reduktion > 0 && (
+                  {massnahme.co2_reduktion > 0 && (
                     <div style={{ fontFamily: "'Geist Mono', monospace", fontSize: 11.5, color: "#6B6259", textAlign: "right" }}>
-                      CO₂ −{m.co2_reduktion} kg/(m²·a)
+                      CO₂ −{massnahme.co2_reduktion} kg/(m²·a)
                     </div>
                   )}
-                  <button className="print-hide" onClick={() => toggleWarum(m.id)}
+                  <button className="print-hide" onClick={() => toggleWarum(massnahme.id)}
                     style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12.5,
                              color: "#B5623E", background: "none", border: "none", padding: 0,
                              cursor: "pointer", fontFamily: "'Geist Mono', monospace" }}>
-                    Warum {warumOffen.has(m.id) ? "▾" : "▸"}
+                    Warum {warumOffen.has(massnahme.id) ? "▾" : "▸"}
                   </button>
                 </div>
               </div>
-              <div className="text-[13px] leading-relaxed" style={{ color: "#3A332B" }}>{m.beschreibung}</div>
+              <div className="text-[13px] leading-relaxed" style={{ color: "#3A332B" }}>{massnahme.beschreibung}</div>
             </div>
-            {m.id === "M4" && (() => {
+            {massnahme.id === "M4" && (() => {
               const m7Geplant = (bauteile_state.verteilung || 2) >= 6;
               const vt = m7Geplant ? 35 : vorlauftemperaturFuer(gebaeude.waermeverteilung);
               const envAvg = ((bauteile_state.waende||2) + (bauteile_state.dach||2)) / 2;
@@ -877,7 +877,7 @@ const PaketBlock = ({ paket, aktiv, onToggle, onToggleMassnahme = () => {}, akti
                 </div>
               );
             })()}
-            {warumOffen.has(m.id) && (
+            {warumOffen.has(massnahme.id) && (
               <div style={{ marginTop: 8, background: "#EBF4F2", border: "1px solid #A8D5CD",
                             borderRadius: 3, padding: "12px 14px", fontSize: 12, lineHeight: 1.6, color: "#1E3A35" }}>
                 {warum.grund && (
@@ -1841,10 +1841,6 @@ export default function App() {
             ))}
           </div>
 
-          <div className="print-hide" style={{ marginTop: 16, borderLeft: "3px solid #D3CAB9", padding: "8px 14px", fontSize: 11.5, color: "#6B6259", fontStyle: "italic" }}>
-            Förderwerte sind vereinfachte Demo-Annahmen. Keine Förderzusage. Förderdeckel, Bonuskombinationen, Eigentümerstatus und Antragspflichten müssen im echten Prozess geprüft werden.
-          </div>
-
           <EnergieVerlaufChart ist={ist} kumuliert={kumuliert} />
         </Section>
 
@@ -2000,12 +1996,12 @@ export default function App() {
             </div>
             {reportSummaryPackages.length === 0 ? (
               <div style={{ fontSize: 12, color: "#6B6259" }}>Noch keine Maßnahmen aktiv.</div>
-            ) : reportSummaryPackages.map((p, idx) => (
-              <div key={p.id} style={{ padding: "8px 0", borderBottom: idx < reportSummaryPackages.length - 1 ? "1px solid #E2DBD0" : "none" }}>
+            ) : reportSummaryPackages.map((pkg, idx) => (
+              <div key={pkg.id} style={{ padding: "8px 0", borderBottom: idx < reportSummaryPackages.length - 1 ? "1px solid #E2DBD0" : "none" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "baseline" }}>
-                  <div style={{ fontSize: 12.5, color: "#1E1A15", fontWeight: 500 }}>Paket {p.nummer} · {p.titel}</div>
+                  <div style={{ fontSize: 12.5, color: "#1E1A15", fontWeight: 500 }}>Paket {pkg.nummer} · {pkg.titel}</div>
                   <div style={{ fontSize: 10.5, color: "#3A332B", fontFamily: "'Geist Mono', monospace", textAlign: "right" }}>
-                    Kosten inkl. Förderung: {fmtEur(p.kosten)}
+                    Kosten inkl. Förderung: {fmtEur(pkg.kosten)}
                   </div>
                 </div>
                 

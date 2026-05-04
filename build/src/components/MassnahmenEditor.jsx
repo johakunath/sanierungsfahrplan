@@ -4,7 +4,7 @@ import { MASSNAHMENPAKETE, PAKET_FARBEN } from "../data.js";
 
 const MassnahmenEditor = ({ overrides, onUpdate, onReset }) => {
   const [open, setOpen] = useState(false);
-  const allM = MASSNAHMENPAKETE.flatMap(p => p.massnahmen.map(m => ({ ...m, paketFarbe: p.farbe })));
+  const allM = MASSNAHMENPAKETE.flatMap(paket => paket.massnahmen.map(massnahme => ({ ...massnahme, paketFarbe: paket.farbe })));
   return (
     <div style={{ marginTop: 32, border: "1.25px solid #D3CAB9", borderRadius: 3, background: "#FFF" }}>
       <button onClick={() => setOpen(o => !o)} className="print-hide"
@@ -26,23 +26,23 @@ const MassnahmenEditor = ({ overrides, onUpdate, onReset }) => {
               </tr>
             </thead>
             <tbody>
-              {allM.map(m => {
-                const ov = overrides[m.id] || {};
-                const invest = ov.investition !== undefined ? ov.investition : m.investition;
-                const quote = ov.foerderquote !== undefined ? ov.foerderquote : m.foerderquote;
+              {allM.map(massnahme => {
+                const ov = overrides[massnahme.id] || {};
+                const invest = ov.investition !== undefined ? ov.investition : massnahme.investition;
+                const quote = ov.foerderquote !== undefined ? ov.foerderquote : massnahme.foerderquote;
                 const changed = ov.investition !== undefined || ov.foerderquote !== undefined;
                 return (
-                  <tr key={m.id} style={{ borderBottom: "1px solid #E2DBD0" }}>
+                  <tr key={massnahme.id} style={{ borderBottom: "1px solid #E2DBD0" }}>
                     <td className="py-3 px-5">
                       <div className="flex items-center gap-2">
-                        <span style={{ width: 8, height: 8, borderRadius: 100, background: PAKET_FARBEN[m.paketFarbe].bg, flexShrink: 0, display: "inline-block" }} />
-                        <span style={{ color: "#1E1A15", lineHeight: 1.3 }}>{m.titel}</span>
+                        <span style={{ width: 8, height: 8, borderRadius: 100, background: PAKET_FARBEN[massnahme.paketFarbe].bg, flexShrink: 0, display: "inline-block" }} />
+                        <span style={{ color: "#1E1A15", lineHeight: 1.3 }}>{massnahme.titel}</span>
                       </div>
                     </td>
                     <td className="py-3 px-3">
                       <div className="flex items-baseline justify-end gap-1.5">
                         <input type="number" min={0} step={500} value={invest}
-                          onChange={e => onUpdate(m.id, "investition", Math.max(0, parseInt(e.target.value, 10) || 0))}
+                          onChange={e => onUpdate(massnahme.id, "investition", Math.max(0, parseInt(e.target.value, 10) || 0))}
                           style={{ width: 90, fontFamily: "'Geist Mono', monospace", fontSize: 12.5, textAlign: "right",
                             background: ov.investition !== undefined ? "#FFFBE6" : "transparent",
                             border: "1px solid #D3CAB9", borderRadius: 2, padding: "3px 6px", outline: "none" }} />
@@ -51,10 +51,10 @@ const MassnahmenEditor = ({ overrides, onUpdate, onReset }) => {
                     </td>
                     <td className="py-3 px-3">
                       <div className="flex items-baseline justify-end gap-1.5">
-                        {m.foerderquote > 0 ? (
+                        {massnahme.foerderquote > 0 ? (
                           <>
                             <input type="number" min={0} max={50} step={1} value={Math.round(quote * 100)}
-                              onChange={e => onUpdate(m.id, "foerderquote", Math.max(0, Math.min(50, parseInt(e.target.value, 10) || 0)) / 100)}
+                              onChange={e => onUpdate(massnahme.id, "foerderquote", Math.max(0, Math.min(50, parseInt(e.target.value, 10) || 0)) / 100)}
                               style={{ width: 50, fontFamily: "'Geist Mono', monospace", fontSize: 12.5, textAlign: "right",
                                 background: ov.foerderquote !== undefined ? "#FFFBE6" : "transparent",
                                 border: "1px solid #D3CAB9", borderRadius: 2, padding: "3px 6px", outline: "none" }} />
@@ -67,7 +67,7 @@ const MassnahmenEditor = ({ overrides, onUpdate, onReset }) => {
                     </td>
                     <td className="py-3 px-4 text-center" style={{ width: 48 }}>
                       {changed && (
-                        <button onClick={() => onReset(m.id)} title="Standardwert wiederherstellen"
+                        <button onClick={() => onReset(massnahme.id)} title="Standardwert wiederherstellen"
                           style={{ fontSize: 14, color: "#B5623E", background: "transparent", border: "1px solid #D3CAB9", borderRadius: 2, padding: "1px 7px", cursor: "pointer" }}>
                           ↺
                         </button>
