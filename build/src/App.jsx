@@ -119,9 +119,9 @@ export class ErrorBoundary extends React.Component {
   render() {
     if (this.state.error) {
       return (
-        <div style={{ padding: 32, fontFamily: "'Geist Mono', monospace", color: "#B5623E", background: "#F8F5EF", minHeight: "100vh" }}>
+        <div style={{ padding: 32, fontFamily: "'Geist Mono', monospace", color: "var(--acc)", background: "var(--bg)", minHeight: "100vh" }}>
           <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>App-Fehler — bitte Seite neu laden</div>
-          <pre style={{ fontSize: 12, whiteSpace: "pre-wrap", color: "#3A332B", marginBottom: 16 }}>
+          <pre style={{ fontSize: 12, whiteSpace: "pre-wrap", color: "var(--body)", marginBottom: 16 }}>
             {this.state.error.message}
           </pre>
           <button onClick={() => window.location.reload()}
@@ -161,43 +161,43 @@ const MobileResultsDrawer = ({ effizienzklasse, k, ist, heizkosten, aktiveEmpfoh
         width: "100%", padding: "6px 16px 10px", background: "transparent", border: "none",
         cursor: "pointer", flexShrink: 0, textAlign: "left",
       }}>
-        <div style={{ width: 36, height: 4, background: "#D3CAB9", borderRadius: 2, margin: "0 auto 8px" }} />
+        <div style={{ width: 36, height: 4, background: "var(--bdr)", borderRadius: 2, margin: "0 auto 8px" }} />
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           {/* EEK IST → ZIEL */}
           <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
             <div style={{ width: 30, height: 30, background: istColor, borderRadius: 3, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: 700, fontFamily: "'Fraunces', serif", color: istText }}>{effizienzklasse}</div>
-            <span style={{ fontSize: 13, color: "#B5623E" }}>→</span>
+            <span style={{ fontSize: 13, color: "var(--acc)" }}>→</span>
             <div style={{ width: 30, height: 30, background: zielColor, borderRadius: 3, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: 700, fontFamily: "'Fraunces', serif", color: zielText }}>{k.effizienzklasse}</div>
           </div>
           {/* Key numbers */}
-          <div style={{ flex: 1, display: "flex", gap: 14, fontSize: 11, fontFamily: "'Geist Mono', monospace", color: "#3A332B", flexWrap: "wrap" }}>
-            <span style={{ color: "#00843D", fontWeight: 600 }}>PE −{peReduction} %</span>
+          <div style={{ flex: 1, display: "flex", gap: 14, fontSize: 11, fontFamily: "'Geist Mono', monospace", color: "var(--body)", flexWrap: "wrap" }}>
+            <span style={{ color: "var(--pos)", fontWeight: 600 }}>PE −{peReduction} %</span>
             <span>Eigenanteil {fmtEur(k.eigenanteil)}</span>
           </div>
-          <span style={{ fontSize: 10, color: "#6B6259", transform: open ? "rotate(180deg)" : "none", transition: "transform 0.28s", flexShrink: 0 }}>▼</span>
+          <span style={{ fontSize: 10, color: "var(--sec)", transform: open ? "rotate(180deg)" : "none", transition: "transform 0.28s", flexShrink: 0 }}>▼</span>
         </div>
       </button>
 
       {/* Expanded scrollable content */}
       <div style={{ overflowY: "auto", padding: "4px 16px 32px", flex: 1, scrollbarWidth: "thin" }}>
         <div className="text-[9.5px] tracking-[0.18em] uppercase mb-3"
-             style={{ color: "#B5623E", fontFamily: "'Geist Mono', monospace" }}>Ergebnis · Live</div>
+             style={{ color: "var(--acc)", fontFamily: "'Geist Mono', monospace" }}>Ergebnis · Live</div>
 
         {/* EEK comparison */}
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-          <div style={{ flex: 1, background: "#FFF", border: "1.25px solid #D3CAB9", borderRadius: 3, padding: "8px 10px", textAlign: "center" }}>
-            <div style={{ fontSize: 9, letterSpacing: "0.2em", color: "#6B6259", fontFamily: "'Geist Mono', monospace", textTransform: "uppercase", marginBottom: 6 }}>Heute</div>
+          <div style={{ flex: 1, background: "var(--surface)", border: "1.25px solid var(--bdr)", borderRadius: 3, padding: "8px 10px", textAlign: "center" }}>
+            <div style={{ fontSize: 9, letterSpacing: "0.2em", color: "var(--sec)", fontFamily: "'Geist Mono', monospace", textTransform: "uppercase", marginBottom: 6 }}>Heute</div>
             <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 36, height: 36, background: istColor, borderRadius: 3, fontSize: 18, fontWeight: 600, fontFamily: "'Fraunces', serif", color: istText }}>{effizienzklasse}</div>
           </div>
-          <span style={{ fontSize: 22, color: "#B5623E", flexShrink: 0 }}>→</span>
+          <span style={{ fontSize: 22, color: "var(--acc)", flexShrink: 0 }}>→</span>
           <div style={{ flex: 1, background: zielColor, border: "1.25px solid #1E1A15", borderRadius: 3, padding: "8px 10px", textAlign: "center" }}>
             <div style={{ fontSize: 9, letterSpacing: "0.2em", fontFamily: "'Geist Mono', monospace", textTransform: "uppercase", marginBottom: 6, color: zielText === "#FFF" ? "rgba(248,245,239,0.7)" : "rgba(30,26,21,0.6)" }}>Ziel</div>
-            <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 36, height: 36, background: "#F8F5EF", borderRadius: 3, fontSize: 18, fontWeight: 600, fontFamily: "'Fraunces', serif", color: zielColor }}>{k.effizienzklasse}</div>
+            <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 36, height: 36, background: "var(--bg)", borderRadius: 3, fontSize: 18, fontWeight: 600, fontFamily: "'Fraunces', serif", color: zielColor }}>{k.effizienzklasse}</div>
           </div>
         </div>
 
         {/* Metrics with mini bar charts */}
-        <div style={{ background: "#FFF", border: "1.25px solid #D3CAB9", borderRadius: 3, padding: "8px 12px", marginBottom: 10 }}>
+        <div style={{ background: "var(--surface)", border: "1.25px solid var(--bdr)", borderRadius: 3, padding: "8px 12px", marginBottom: 10 }}>
           {[
             { label: "Primärenergie", istVal: ist.primaerenergie, zielVal: k.primaerenergie, unit: "kWh/(m²·a)" },
             { label: "Endenergie",    istVal: ist.endenergie,     zielVal: k.endenergie,     unit: "kWh/(m²·a)" },
@@ -211,29 +211,29 @@ const MobileResultsDrawer = ({ effizienzklasse, k, ist, heizkosten, aktiveEmpfoh
             return (
               <div key={label} style={{ padding: "5px 0", borderBottom: i < arr.length - 1 ? "1px solid #E2DBD0" : "none" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 2 }}>
-                  <span style={{ fontSize: 11, color: "#6B6259" }}>{label}</span>
+                  <span style={{ fontSize: 11, color: "var(--sec)" }}>{label}</span>
                   <span style={{ fontSize: 11, fontFamily: "'Geist Mono', monospace", color: down ? "#00843D" : "#B5623E", fontWeight: 600 }}>{down ? "−" : "+"}{pct} %</span>
                 </div>
-                <div style={{ height: 6, background: "#E2DBD0", borderRadius: 2, overflow: "hidden", marginBottom: 2 }}>
+                <div style={{ height: 6, background: "var(--div)", borderRadius: 2, overflow: "hidden", marginBottom: 2 }}>
                   <div style={{ height: "100%", width: `${fill}%`, background: EFFIZIENZ_FARBEN[k.effizienzklasse] || "#00843D", borderRadius: 2, transition: "width 0.3s" }} />
                 </div>
-                <div style={{ fontSize: 10, color: "#8B7B6E", fontFamily: "'Geist Mono', monospace" }}>{fmtV(istVal)} → {fmtV(zielVal)} {unit}</div>
+                <div style={{ fontSize: 10, color: "var(--sec)", fontFamily: "'Geist Mono', monospace" }}>{fmtV(istVal)} → {fmtV(zielVal)} {unit}</div>
               </div>
             );
           })}
         </div>
 
         {/* Paket-Übersicht */}
-        <div style={{ background: "#FFF", border: "1.25px solid #D3CAB9", borderRadius: 3, padding: "10px 12px", marginBottom: 10 }}>
-          <div className="text-[10.5px] tracking-[0.18em] uppercase mb-2" style={{ color: "#B5623E", fontFamily: "'Geist Mono', monospace" }}>Paket-Übersicht</div>
+        <div style={{ background: "var(--surface)", border: "1.25px solid var(--bdr)", borderRadius: 3, padding: "10px 12px", marginBottom: 10 }}>
+          <div className="text-[10.5px] tracking-[0.18em] uppercase mb-2" style={{ color: "var(--acc)", fontFamily: "'Geist Mono', monospace" }}>Paket-Übersicht</div>
           {reportSummaryPackages.length === 0 ? (
-            <div style={{ fontSize: 12, color: "#6B6259" }}>Noch keine Maßnahmen aktiv.</div>
+            <div style={{ fontSize: 12, color: "var(--sec)" }}>Noch keine Maßnahmen aktiv.</div>
           ) : reportSummaryPackages.map((pkg, idx) => (
             <div key={pkg.id} style={{ padding: "8px 0", borderBottom: idx < reportSummaryPackages.length - 1 ? "1px solid #E2DBD0" : "none" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 4 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                   <span style={{ width: 10, height: 10, borderRadius: "50%", background: PAKET_FARBEN[pkg.farbe]?.bg || "#6B6259", display: "inline-block", flexShrink: 0 }} />
-                  <span style={{ fontSize: 12.5, color: "#1E1A15", fontWeight: 500 }}>Paket {pkg.nummer} · {pkg.titel}</span>
+                  <span style={{ fontSize: 12.5, color: "var(--txt)", fontWeight: 500 }}>Paket {pkg.nummer} · {pkg.titel}</span>
                 </div>
                 <span style={{ fontSize: 10.5, fontFamily: "'Geist Mono', monospace", flexShrink: 0 }}>{fmtEur(pkg.kosten)}</span>
               </div>
@@ -249,18 +249,18 @@ const MobileResultsDrawer = ({ effizienzklasse, k, ist, heizkosten, aktiveEmpfoh
                     <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 5, minHeight: 22, marginBottom: 1 }}>
                       <span
                         onClick={() => scrollToTab(`paket-${pkg.id}`)}
-                        style={{ fontSize: 11, color: "#3A332B", cursor: "pointer", flex: 1 }}
+                        style={{ fontSize: 11, color: "var(--body)", cursor: "pointer", flex: 1 }}
                         onMouseEnter={e => e.currentTarget.style.textDecoration = "underline"}
                         onMouseLeave={e => e.currentTarget.style.textDecoration = "none"}
                       >{m.kurztitel}</span>
                       {istEmpf && (
                         <Tooltip content={<span><b>Warum empfohlen:</b><br />{warum.grund}</span>}>
-                          <span style={{ fontSize: 9, padding: "1px 4px", borderRadius: 2, background: "#F6D400", color: "#1E1A15", fontFamily: "'Geist Mono', monospace", fontWeight: 600, flexShrink: 0 }}>★</span>
+                          <span style={{ fontSize: 9, padding: "1px 4px", borderRadius: 2, background: "#F6D400", color: "var(--txt)", fontFamily: "'Geist Mono', monospace", fontWeight: 600, flexShrink: 0 }}>★</span>
                         </Tooltip>
                       )}
                       {istNichtEmpf && (
                         <Tooltip content={<span><b>Wirtschaftlichkeit gering:</b><br />{warum.jetzt}</span>}>
-                          <span style={{ fontSize: 9, padding: "1px 4px", borderRadius: 2, background: "#E2DBD0", color: "#6B6259", fontFamily: "'Geist Mono', monospace", fontWeight: 600, flexShrink: 0 }}>✕</span>
+                          <span style={{ fontSize: 9, padding: "1px 4px", borderRadius: 2, background: "var(--div)", color: "var(--sec)", fontFamily: "'Geist Mono', monospace", fontWeight: 600, flexShrink: 0 }}>✕</span>
                         </Tooltip>
                       )}
                     </div>
@@ -272,16 +272,16 @@ const MobileResultsDrawer = ({ effizienzklasse, k, ist, heizkosten, aktiveEmpfoh
         </div>
 
         {/* Investment summary */}
-        <div style={{ background: "#F8F5EF", border: "1px solid #D3CAB9", borderRadius: 3, padding: "10px 12px", fontSize: 12 }}>
-          <div className="flex justify-between mb-1.5" style={{ color: "#3A332B" }}>
+        <div style={{ background: "var(--bg)", border: "1px solid var(--bdr)", borderRadius: 3, padding: "10px 12px", fontSize: 12 }}>
+          <div className="flex justify-between mb-1.5" style={{ color: "var(--body)" }}>
             <span>Investition</span>
             <span style={{ fontFamily: "'Geist Mono', monospace" }}>{fmtEur(k.invest_gesamt)}</span>
           </div>
-          <div className="flex justify-between mb-1.5" style={{ color: "#00843D" }}>
+          <div className="flex justify-between mb-1.5" style={{ color: "var(--pos)" }}>
             <span>Förderung</span>
             <span style={{ fontFamily: "'Geist Mono', monospace" }}>−{fmtEur(k.foerderung_gesamt)}</span>
           </div>
-          <div className="flex justify-between font-medium" style={{ color: "#1E1A15", marginTop: 4, paddingTop: 6, borderTop: "1px solid #D3CAB9" }}>
+          <div className="flex justify-between font-medium" style={{ color: "var(--txt)", marginTop: 4, paddingTop: 6, borderTop: "1px solid var(--bdr)" }}>
             <span>Eigenanteil</span>
             <span style={{ fontFamily: "'Geist Mono', monospace" }}>{fmtEur(k.eigenanteil)}</span>
           </div>
@@ -344,15 +344,15 @@ const Tooltip = ({ content, children, align = "center" }) => {
 };
 
 // ═══ EDITABLE INPUTS ═══════════════════════════════════════════════════
-const labelStyle = { color: "#3A332B", fontSize: 13 };
+const labelStyle = { color: "var(--body)", fontSize: 13 };
 const valueStyle = {
   fontFamily: "'Geist Mono', ui-monospace, monospace",
-  fontVariantNumeric: "tabular-nums", color: "#1E1A15", fontSize: 14,
+  fontVariantNumeric: "tabular-nums", color: "var(--txt)", fontSize: 14,
 };
 
 const RowShell = ({ children }) => (
   <div className="flex items-baseline justify-between gap-3"
-       style={{ padding: "9px 0", borderBottom: "1px solid #E2DBD0", minHeight: 38 }}>
+       style={{ padding: "9px 0", borderBottom: "1px solid var(--div)", minHeight: 38 }}>
     {children}
   </div>
 );
@@ -373,7 +373,7 @@ const NumberInput = ({ label, value, onChange, unit, min, max, step = 1, tooltip
     <RowShell>
       <span style={labelStyle} className="flex items-center gap-1.5">
         {label}
-        {tooltip && <Tooltip align="right" content={tooltip}><span style={{ color: "#B5623E" }}><InfoIcon /></span></Tooltip>}
+        {tooltip && <Tooltip align="right" content={tooltip}><span style={{ color: "var(--acc)" }}><InfoIcon /></span></Tooltip>}
       </span>
       <span className="flex items-baseline gap-1.5">
         <input type="text" inputMode="decimal" value={local}
@@ -382,7 +382,7 @@ const NumberInput = ({ label, value, onChange, unit, min, max, step = 1, tooltip
           style={{ ...valueStyle, background: "transparent", border: "none",
                    borderBottom: "1px dotted #D3CAB9", outline: "none",
                    textAlign: "right", width: 92, padding: "2px 2px", fontSize: 14 }} />
-        {unit && <span style={{ fontSize: 12, color: "#6B6259" }}>{unit}</span>}
+        {unit && <span style={{ fontSize: 12, color: "var(--sec)" }}>{unit}</span>}
       </span>
     </RowShell>
   );
@@ -403,11 +403,11 @@ const SelectInput = ({ label, value, onChange, options, tooltip }) => (
   <RowShell>
     <span style={{ ...labelStyle, flexShrink: 0 }} className="flex items-center gap-1.5">
       {label}
-      {tooltip && <Tooltip content={tooltip}><span style={{ color: "#B5623E" }}><InfoIcon /></span></Tooltip>}
+      {tooltip && <Tooltip content={tooltip}><span style={{ color: "var(--acc)" }}><InfoIcon /></span></Tooltip>}
     </span>
     <select value={value ?? ""} onChange={(e) => onChange(e.target.value)}
       style={{ ...valueStyle, background: "transparent",
-               border: "1px solid #D3CAB9", borderRadius: 2,
+               border: "1px solid var(--bdr)", borderRadius: 2,
                padding: "4px 26px 4px 8px", appearance: "none",
                backgroundImage: "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%236B6259' fill='none' stroke-width='1.2'/></svg>\")",
                backgroundRepeat: "no-repeat", backgroundPosition: "right 8px center",
@@ -423,14 +423,14 @@ const SelectInput = ({ label, value, onChange, options, tooltip }) => (
 
 const ComputedRow = ({ label, value, unit, tooltip }) => (
   <div className="flex items-baseline justify-between gap-3"
-       style={{ padding: "9px 0", borderBottom: "1px solid #E2DBD0", minHeight: 38 }}>
+       style={{ padding: "9px 0", borderBottom: "1px solid var(--div)", minHeight: 38 }}>
     <span className="flex items-center gap-1.5" style={labelStyle}>
       {label}
-      <span style={{ color: "#B5623E" }} title="Automatisch berechnet"><SparkleIcon size={11} /></span>
-      {tooltip && <Tooltip content={tooltip}><span style={{ color: "#B5623E" }}><InfoIcon /></span></Tooltip>}
+      <span style={{ color: "var(--acc)" }} title="Automatisch berechnet"><SparkleIcon size={11} /></span>
+      {tooltip && <Tooltip content={tooltip}><span style={{ color: "var(--acc)" }}><InfoIcon /></span></Tooltip>}
     </span>
     <span className="text-right" style={valueStyle}>
-      {value}{unit && <span style={{ fontSize: 12, color: "#6B6259", marginLeft: 4 }}>{unit}</span>}
+      {value}{unit && <span style={{ fontSize: 12, color: "var(--sec)", marginLeft: 4 }}>{unit}</span>}
     </span>
   </div>
 );
@@ -439,17 +439,17 @@ const ComputedRow = ({ label, value, unit, tooltip }) => (
 const Section = ({ id, eyebrow, title, subtitle, children }) => (
   <section id={id} className="mb-16" style={{ scrollMarginTop: 92 }}>
     {eyebrow && (
-      <div className="text-[11px] tracking-[0.22em] uppercase mb-3" style={{ color: "#B5623E", fontFamily: "'Geist Mono', monospace" }}>
+      <div className="text-[11px] tracking-[0.22em] uppercase mb-3" style={{ color: "var(--acc)", fontFamily: "'Geist Mono', monospace" }}>
         {eyebrow}
       </div>
     )}
     {title && (
-      <h2 className="font-serif leading-[1.05] mb-3" style={{ fontSize: 32, fontWeight: 400, color: "#1E1A15", letterSpacing: "-0.01em" }}>
+      <h2 className="font-serif leading-[1.05] mb-3" style={{ fontSize: 32, fontWeight: 400, color: "var(--txt)", letterSpacing: "-0.01em" }}>
         {title}
       </h2>
     )}
     {subtitle && (
-      <p className="max-w-2xl text-[15px] leading-relaxed mb-8" style={{ color: "#3A332B" }}>
+      <p className="max-w-2xl text-[15px] leading-relaxed mb-8" style={{ color: "var(--body)" }}>
         {subtitle}
       </p>
     )}
@@ -458,14 +458,14 @@ const Section = ({ id, eyebrow, title, subtitle, children }) => (
 );
 
 const Card = ({ children, style }) => (
-  <div style={{ background: "#FFFFFF", border: "1.25px solid #D3CAB9", borderRadius: 3, padding: 24, ...style }}>
+  <div style={{ background: "var(--surface)", border: "1.25px solid var(--bdr)", borderRadius: 3, padding: 24, ...style }}>
     {children}
   </div>
 );
 
 const CardEyebrow = ({ children }) => (
   <div className="text-[11px] tracking-[0.22em] uppercase mb-4"
-       style={{ color: "#B5623E", fontFamily: "'Geist Mono', monospace" }}>
+       style={{ color: "var(--acc)", fontFamily: "'Geist Mono', monospace" }}>
     {children}
   </div>
 );
@@ -473,17 +473,17 @@ const CardEyebrow = ({ children }) => (
 const KPI = ({ label, value, unit, big = false, style, tooltip }) => (
   <div style={style}>
     <div className="text-[11px] tracking-[0.2em] uppercase mb-2 flex items-center gap-1.5"
-         style={{ color: "#6B6259", fontFamily: "'Geist Mono', monospace" }}>
+         style={{ color: "var(--sec)", fontFamily: "'Geist Mono', monospace" }}>
       {label}
-      {tooltip && <Tooltip content={tooltip}><span style={{ color: "#B5623E" }}><InfoIcon size={11} /></span></Tooltip>}
+      {tooltip && <Tooltip content={tooltip}><span style={{ color: "var(--acc)" }}><InfoIcon size={11} /></span></Tooltip>}
     </div>
     <div className="flex items-baseline gap-1.5">
       <span className="font-serif leading-none"
-        style={{ fontSize: big ? 48 : 30, fontWeight: 400, color: "#1E1A15",
+        style={{ fontSize: big ? 48 : 30, fontWeight: 400, color: "var(--txt)",
                  fontVariantNumeric: "tabular-nums" }}>
         {value}
       </span>
-      {unit && <span className="text-[13px]" style={{ color: "#6B6259", fontFamily: "'Geist Mono', monospace" }}>{unit}</span>}
+      {unit && <span className="text-[13px]" style={{ color: "var(--sec)", fontFamily: "'Geist Mono', monospace" }}>{unit}</span>}
     </div>
   </div>
 );
@@ -498,22 +498,22 @@ const PresetPicker = ({ activeId, onPick, onUploadClick, uploadLoading }) => (
           className="print-hide"
           style={{
             padding: "16px 20px", textAlign: "left",
-            background: active ? "#1E1A15" : "#FFFFFF",
-            color: active ? "#F8F5EF" : "#1E1A15",
-            border: active ? "1.5px solid #1E1A15" : "1.25px solid #D3CAB9",
+            background: active ? "var(--txt)" : "var(--surface)",
+            color: active ? "var(--bg)" : "var(--txt)",
+            border: active ? "1.5px solid var(--txt)" : "1.25px solid var(--bdr)",
             borderRadius: 3, cursor: "pointer", transition: "all 0.12s",
           }}
-          onMouseEnter={(e) => { if (!active) e.currentTarget.style.borderColor = "#B5623E"; }}
-          onMouseLeave={(e) => { if (!active) e.currentTarget.style.borderColor = "#D3CAB9"; }}
+          onMouseEnter={(e) => { if (!active) e.currentTarget.style.borderColor = "var(--acc)"; }}
+          onMouseLeave={(e) => { if (!active) e.currentTarget.style.borderColor = "var(--bdr)"; }}
         >
           <div className="text-[10.5px] tracking-[0.2em] uppercase mb-1.5"
-               style={{ color: active ? "#F6A400" : "#B5623E", fontFamily: "'Geist Mono', monospace" }}>
+               style={{ color: active ? "#F6A400" : "var(--acc)", fontFamily: "'Geist Mono', monospace" }}>
             Preset
           </div>
           <div className="font-serif text-[17px] leading-tight mb-1" style={{ fontWeight: 500 }}>
             {preset.label}
           </div>
-          <div className="text-[12px]" style={{ color: active ? "rgba(248,245,239,0.75)" : "#6B6259" }}>
+          <div className="text-[12px]" style={{ color: active ? "rgba(240,237,230,0.7)" : "var(--sec)" }}>
             {preset.beschreibung}
           </div>
         </button>
@@ -522,7 +522,7 @@ const PresetPicker = ({ activeId, onPick, onUploadClick, uploadLoading }) => (
     <button className="print-hide" onClick={onUploadClick}
       style={{
         padding: "16px 20px", textAlign: "left",
-        background: "#FFFFFF", color: "#1E1A15",
+        background: "var(--surface)", color: "var(--txt)",
         border: "1.5px dashed #D3CAB9",
         borderRadius: 3, cursor: "pointer", transition: "all 0.12s",
         outline: "none",
@@ -532,15 +532,15 @@ const PresetPicker = ({ activeId, onPick, onUploadClick, uploadLoading }) => (
     >
       <div className="flex items-center gap-2 mb-1.5">
         <span className="text-[10.5px] tracking-[0.2em] uppercase"
-          style={{ color: "#B5623E", fontFamily: "'Geist Mono', monospace" }}>Energieausweis</span>
+          style={{ color: "var(--acc)", fontFamily: "'Geist Mono', monospace" }}>Energieausweis</span>
         <span className="text-[9.5px] tracking-[0.1em] uppercase px-1.5 py-0.5"
-          style={{ color: "#6B6259", border: "1px solid #D3CAB9", borderRadius: 100,
+          style={{ color: "var(--sec)", border: "1px solid var(--bdr)", borderRadius: 100,
                    fontFamily: "'Geist Mono', monospace" }}>Demo</span>
       </div>
       <div className="font-serif text-[17px] leading-tight mb-1" style={{ fontWeight: 500 }}>
         {uploadLoading ? "Wird ausgelesen …" : "PDF hochladen"}
       </div>
-      <div className="text-[12px]" style={{ color: "#6B6259" }}>
+      <div className="text-[12px]" style={{ color: "var(--sec)" }}>
         Energieausweis einlesen — experimentell, manuelle Nachbearbeitung empfohlen
       </div>
     </button>
@@ -568,31 +568,31 @@ const ExtractionResult = ({ result, onDismiss }) => {
             ) : (
               <span style={{ color: "#F07D00", fontSize: 18, fontWeight: 700 }}>!</span>
             )}
-            <span className="text-[14.5px] font-medium" style={{ color: "#1E1A15" }}>
+            <span className="text-[14.5px] font-medium" style={{ color: "var(--txt)" }}>
               {matchedCount > 0
                 ? `${matchedCount} Felder aus ${result.fileName} übernommen`
                 : `Aus ${result.fileName} konnten keine Standardfelder erkannt werden`}
             </span>
           </div>
           {matchedCount > 0 && (
-            <div className="text-[12.5px] leading-relaxed" style={{ color: "#3A332B" }}>
+            <div className="text-[12.5px] leading-relaxed" style={{ color: "var(--body)" }}>
               {result.matched.map((m, i) => (
                 <span key={i}>
-                  <span style={{ color: "#6B6259" }}>{m.label}:</span>{" "}
-                  <span style={{ fontFamily: "'Geist Mono', monospace", color: "#1E1A15" }}>{String(m.value)}</span>
-                  {i < (result.matched?.length ?? 0) - 1 && <span style={{ color: "#D3CAB9" }}>  ·  </span>}
+                  <span style={{ color: "var(--sec)" }}>{m.label}:</span>{" "}
+                  <span style={{ fontFamily: "'Geist Mono', monospace", color: "var(--txt)" }}>{String(m.value)}</span>
+                  {i < (result.matched?.length ?? 0) - 1 && <span style={{ color: "var(--bdr)" }}>  ·  </span>}
                 </span>
               ))}
             </div>
           )}
           {(result.missed?.length ?? 0) > 0 && (
-            <div className="text-[11.5px] mt-2 italic" style={{ color: "#6B6259" }}>
+            <div className="text-[11.5px] mt-2 italic" style={{ color: "var(--sec)" }}>
               Nicht automatisch erkannt: {result.missed.join(", ")} — bitte manuell prüfen.
             </div>
           )}
         </div>
         <button onClick={onDismiss} style={{ background: "transparent", border: "none",
-          color: "#6B6259", fontSize: 18, cursor: "pointer", padding: 4 }} aria-label="Schließen">✕</button>
+          color: "var(--sec)", fontSize: 18, cursor: "pointer", padding: 4 }} aria-label="Schließen">✕</button>
       </div>
     </div>
   );
@@ -604,10 +604,10 @@ const BauteilKachel = ({ bauteil, onNoteChange }) => {
   const stufenLabels = BAUTEIL_STUFEN[bauteil.id] || {};
   const currentLabel = stufenLabels[bauteil.note] || bauteil.info;
   return (
-    <div style={{ background: "#FFFFFF", border: "1.25px solid #D3CAB9", borderRadius: 3, padding: 16,
+    <div style={{ background: "var(--surface)", border: "1.25px solid var(--bdr)", borderRadius: 3, padding: 16,
                   display: "flex", flexDirection: "column", gap: 10 }}>
       <div className="flex items-start justify-between gap-2">
-        <span className="text-[13.5px] font-medium" style={{ color: "#1E1A15" }}>{bauteil.label}</span>
+        <span className="text-[13.5px] font-medium" style={{ color: "var(--txt)" }}>{bauteil.label}</span>
         <span className="inline-flex items-center justify-center text-[11px] font-medium"
           style={{ width: 24, height: 24, borderRadius: 100, background: farbe, color: "#FFFFFF",
                    fontFamily: "'Geist Mono', monospace" }}>{bauteil.note}</span>
@@ -620,11 +620,11 @@ const BauteilKachel = ({ bauteil, onNoteChange }) => {
         onChange={(e) => onNoteChange(bauteil.id, parseInt(e.target.value, 10))}
         className="print-hide"
         style={{ width: "100%", height: 4, margin: 0, background: "transparent", accentColor: "#B5623E", cursor: "pointer" }} />
-      <div className="text-[11.5px] leading-snug font-medium" style={{ color: "#1E1A15" }}>
+      <div className="text-[11.5px] leading-snug font-medium" style={{ color: "var(--txt)" }}>
         {currentLabel}
       </div>
       {bauteil.info && stufenLabels[bauteil.note] && stufenLabels[bauteil.note] !== bauteil.info && (
-        <div className="text-[10.5px]" style={{ color: "#6B6259", fontStyle: "italic" }}>{bauteil.info}</div>
+        <div className="text-[10.5px]" style={{ color: "var(--sec)", fontStyle: "italic" }}>{bauteil.info}</div>
       )}
     </div>
   );
@@ -745,37 +745,37 @@ const PaketBlock = ({ paket, aktiv, onToggle, onToggleMassnahme = () => {}, akti
 
   return (
     <div id={`paket-${paket.id}`} className="transition-all" style={{
-      background: "#FFFFFF",
+      background: "var(--surface)",
       border: aktiv ? "1.75px solid #1E1A15" : "1.25px solid #D3CAB9",
       borderRadius: 3, overflow: "hidden", opacity: aktiv ? 1 : 0.55,
     }}>
       <div className="flex items-stretch">
-        <div className="flex items-center justify-center shrink-0" style={{ width: 88, background: "#F8F5EF", borderRight: "1.25px solid #D3CAB9" }}>
+        <div className="flex items-center justify-center shrink-0" style={{ width: 88, background: "var(--bg)", borderRight: "1.25px solid #D3CAB9" }}>
           <PaketHaus farbe={paket.farbe} aktiv={aktiv} nummer={paket.nummer} size={62} />
         </div>
         <div className="flex-1 p-5 flex items-center justify-between gap-4 flex-wrap">
           <div>
             <div className="flex items-center gap-3 mb-1.5">
-              <span className="text-[11px] tracking-[0.2em] uppercase" style={{ color: "#6B6259", fontFamily: "'Geist Mono', monospace" }}>
+              <span className="text-[11px] tracking-[0.2em] uppercase" style={{ color: "var(--sec)", fontFamily: "'Geist Mono', monospace" }}>
                 Paket {paket.nummer}
               </span>
             </div>
-            <h3 className="font-serif" style={{ fontSize: 22, fontWeight: 500, color: "#1E1A15" }}>{paket.titel}</h3>
+            <h3 className="font-serif" style={{ fontSize: 22, fontWeight: 500, color: "var(--txt)" }}>{paket.titel}</h3>
           </div>
           <button onClick={onToggle} className="flex items-center gap-2.5 transition print-hide"
             style={{ padding: "8px 16px",
-                     border: `1.25px solid ${aktiv ? "#1E1A15" : "#D3CAB9"}`, borderRadius: 3,
-                     background: aktiv ? "#1E1A15" : "transparent",
-                     color: aktiv ? "#F8F5EF" : "#3A332B",
+                     border: `1.25px solid ${aktiv ? "var(--txt)" : "var(--bdr)"}`, borderRadius: 3,
+                     background: aktiv ? "var(--txt)" : "transparent",
+                     color: aktiv ? "var(--bg)" : "var(--body)",
                      fontSize: 12.5, fontWeight: 500, cursor: "pointer" }}>
             <span className="inline-block relative" style={{
               width: 14, height: 14, borderRadius: 2,
-              background: aktiv ? "#F8F5EF" : "transparent",
-              border: aktiv ? "none" : "1.25px solid #6B6259",
+              background: aktiv ? "var(--bg)" : "transparent",
+              border: aktiv ? "none" : "1.25px solid var(--sec)",
             }}>
               {aktiv && (
                 <svg viewBox="0 0 14 14" width="14" height="14" style={{ position: "absolute", top: 0, left: 0 }}>
-                  <path d="M3 7.5 L6 10.5 L11 4.5" stroke="#1E1A15" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M3 7.5 L6 10.5 L11 4.5" stroke="var(--txt)" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               )}
             </span>
@@ -796,8 +796,8 @@ const PaketBlock = ({ paket, aktiv, onToggle, onToggleMassnahme = () => {}, akti
           <div key={massnahme.id} className="p-5" style={{ borderBottom: i < paket.massnahmen.length - 1 ? "1px solid #E2DBD0" : "none", opacity: massnahmeAktiv ? 1 : 0.45, transition: "opacity 0.15s" }}>
             <div className="mb-4">
               <div className="mb-1.5" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 14 }}>
-                <div className="text-[14.5px] font-medium flex items-center gap-2 flex-wrap" style={{ color: "#1E1A15", flex: 1 }}>
-                <label className="print-hide" style={{ display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer", fontSize: 11, color: "#6B6259", fontFamily: "'Geist Mono', monospace", letterSpacing: "0.05em" }}>
+                <div className="text-[14.5px] font-medium flex items-center gap-2 flex-wrap" style={{ color: "var(--txt)", flex: 1 }}>
+                <label className="print-hide" style={{ display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer", fontSize: 11, color: "var(--sec)", fontFamily: "'Geist Mono', monospace", letterSpacing: "0.05em" }}>
                   <input type="checkbox" checked={massnahmeAktiv} onChange={() => onToggleMassnahme(massnahme.id)}
                     style={{ accentColor: "#2A8B7A", width: 14, height: 14, cursor: "pointer" }} />
                 </label>
@@ -809,19 +809,19 @@ const PaketBlock = ({ paket, aktiv, onToggle, onToggleMassnahme = () => {}, akti
                 )}
                 {empfohleneMassnahmen.includes(massnahme.id) && (
                   <Tooltip content={<span><b>Warum empfohlen:</b><br />{warum.grund}</span>}>
-                    <span className="print-hide" style={{ background: "#F6D400", color: "#1E1A15", padding: "1px 8px", borderRadius: 100, fontSize: 10, fontFamily: "'Geist Mono', monospace", fontWeight: 600, letterSpacing: "0.06em", flexShrink: 0, cursor: "help" }}>
+                    <span className="print-hide" style={{ background: "#F6D400", color: "var(--txt)", padding: "1px 8px", borderRadius: 100, fontSize: 10, fontFamily: "'Geist Mono', monospace", fontWeight: 600, letterSpacing: "0.06em", flexShrink: 0, cursor: "help" }}>
                       ★ Empfohlen
                     </span>
                   </Tooltip>
                 )}
                 {empfohleneMassnahmen.includes(massnahme.id) && !massnahmeAktiv && (
-                  <span className="print-hide" title="Empfohlene Maßnahme wurde deaktiviert" style={{ background: "#FEF2E8", color: "#B5623E", border: "1px solid #F5C09A", padding: "1px 8px", borderRadius: 100, fontSize: 10, fontFamily: "'Geist Mono', monospace", fontWeight: 600, letterSpacing: "0.06em", flexShrink: 0 }}>
+                  <span className="print-hide" title="Empfohlene Maßnahme wurde deaktiviert" style={{ background: "#FEF2E8", color: "var(--acc)", border: "1px solid #F5C09A", padding: "1px 8px", borderRadius: 100, fontSize: 10, fontFamily: "'Geist Mono', monospace", fontWeight: 600, letterSpacing: "0.06em", flexShrink: 0 }}>
                     ⚠ Abgewählt
                   </span>
                 )}
                 {nichtEmpfohleneMassnahmen.includes(massnahme.id) && !empfohleneMassnahmen.includes(massnahme.id) && (
                   <Tooltip content={<span><b>Wirtschaftlichkeit gering:</b><br />{warum.jetzt}</span>}>
-                    <span className="print-hide" style={{ background: "#E2DBD0", color: "#6B6259", padding: "1px 8px", borderRadius: 100, fontSize: 10, fontFamily: "'Geist Mono', monospace", fontWeight: 600, letterSpacing: "0.06em", flexShrink: 0, cursor: "help" }}>
+                    <span className="print-hide" style={{ background: "var(--div)", color: "var(--sec)", padding: "1px 8px", borderRadius: 100, fontSize: 10, fontFamily: "'Geist Mono', monospace", fontWeight: 600, letterSpacing: "0.06em", flexShrink: 0, cursor: "help" }}>
                       ✕ Nicht empfohlen
                     </span>
                   </Tooltip>
@@ -842,24 +842,24 @@ const PaketBlock = ({ paket, aktiv, onToggle, onToggleMassnahme = () => {}, akti
                     </div>
                   </div>
                 }>
-                  <span style={{ color: "#B5623E" }}><InfoIcon /></span>
+                  <span style={{ color: "var(--acc)" }}><InfoIcon /></span>
                 </Tooltip>
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4, minWidth: 140 }}>
                   {massnahme.co2_reduktion > 0 && (
-                    <div style={{ fontFamily: "'Geist Mono', monospace", fontSize: 11.5, color: "#6B6259", textAlign: "right" }}>
+                    <div style={{ fontFamily: "'Geist Mono', monospace", fontSize: 11.5, color: "var(--sec)", textAlign: "right" }}>
                       CO₂ −{massnahme.co2_reduktion} kg/(m²·a)
                     </div>
                   )}
                   <button className="print-hide" onClick={() => toggleWarum(massnahme.id)}
                     style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12.5,
-                             color: "#B5623E", background: "none", border: "none", padding: 0,
+                             color: "var(--acc)", background: "none", border: "none", padding: 0,
                              cursor: "pointer", fontFamily: "'Geist Mono', monospace" }}>
                     Warum {warumOffen.has(massnahme.id) ? "▾" : "▸"}
                   </button>
                 </div>
               </div>
-              <div className="text-[13px] leading-relaxed" style={{ color: "#3A332B" }}>{massnahme.beschreibung}</div>
+              <div className="text-[13px] leading-relaxed" style={{ color: "var(--body)" }}>{massnahme.beschreibung}</div>
             </div>
             {massnahme.id === "M4" && (() => {
               const m7Geplant = (bauteile_state.verteilung || 2) >= 6;
@@ -875,8 +875,8 @@ const PaketBlock = ({ paket, aktiv, onToggle, onToggleMassnahme = () => {}, akti
               const hybridOhneGas = resolvedWpVariante === "hybrid" && !hatGas;
               const hybridMitOel  = resolvedWpVariante === "hybrid" && istOel;
               return (
-                <div style={{ marginBottom: 12, background: "#F8F5EF", border: "1px solid #D3CAB9", borderRadius: 3, padding: "10px 12px", fontSize: 12 }}>
-                  <div style={{ fontWeight: 600, color: "#1E1A15", marginBottom: 8 }}>WP-Variante</div>
+                <div style={{ marginBottom: 12, background: "var(--bg)", border: "1px solid var(--bdr)", borderRadius: 3, padding: "10px 12px", fontSize: 12 }}>
+                  <div style={{ fontWeight: 600, color: "var(--txt)", marginBottom: 8 }}>WP-Variante</div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 3, marginBottom: 8 }}>
                     {Object.entries(WP_VARIANTEN).map(([key, v]) => {
                       const isSelected = key === resolvedWpVariante;
@@ -884,7 +884,7 @@ const PaketBlock = ({ paket, aktiv, onToggle, onToggleMassnahme = () => {}, akti
                       return (
                         <label key={key} style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", padding: "4px 8px", borderRadius: 3, background: isSelected ? "#E8F4F2" : "transparent", border: isSelected ? "1px solid #8CBDB5" : "1px solid transparent" }}>
                           <input type="radio" name={`wp-${paket.id}`} value={key} checked={isSelected} onChange={() => onWpVarianteChange(key)} style={{ accentColor: "#2A8B7A" }} />
-                          <span style={{ color: "#1E1A15", fontWeight: isSelected ? 600 : 400 }}>{v.label}</span>
+                          <span style={{ color: "var(--txt)", fontWeight: isSelected ? 600 : 400 }}>{v.label}</span>
                           {isAuto && <span style={{ fontSize: 10, color: "#2A8B7A", fontFamily: "'Geist Mono', monospace" }}>empfohlen</span>}
                         </label>
                       );
@@ -896,40 +896,40 @@ const PaketBlock = ({ paket, aktiv, onToggle, onToggleMassnahme = () => {}, akti
                       💡 Maßnahme „Erneuerung Wärmeverteilung" (M7) aktivieren — senkt Vorlauftemperatur und ermöglicht Monovalent-Betrieb.
                     </div>
                   )}
-                  <div style={{ color: "#6B6259", fontSize: 11.5 }}>Vorlauftemperatur: {vt} °C · {m7Geplant ? "Fußbodenheizung" : (gebaeude.waermeverteilung || "–")}</div>
-                  <div style={{ color: "#3A332B", marginTop: 4, fontStyle: "italic" }}>→ {currentV.beschreibung}</div>
+                  <div style={{ color: "var(--sec)", fontSize: 11.5 }}>Vorlauftemperatur: {vt} °C · {m7Geplant ? "Fußbodenheizung" : (gebaeude.waermeverteilung || "–")}</div>
+                  <div style={{ color: "var(--body)", marginTop: 4, fontStyle: "italic" }}>→ {currentV.beschreibung}</div>
                   {hybridMitOel && (
-                    <div style={{ color: "#B5623E", fontSize: 11.5, marginTop: 8, padding: "6px 8px", background: "#FEF2E8", borderRadius: 3, border: "1px solid #F5C09A" }}>
+                    <div style={{ color: "var(--acc)", fontSize: 11.5, marginTop: 8, padding: "6px 8px", background: "#FEF2E8", borderRadius: 3, border: "1px solid #F5C09A" }}>
                       ⚠ Bei Ölheizung schafft Hybrid-Gas neue fossile Infrastruktur. Monovalent oder Monoenergetisch bevorzugen.
                     </div>
                   )}
                   {isOverriding && !hybridMitOel && (
-                    <div style={{ color: "#B5623E", fontSize: 11, marginTop: 6 }}>
+                    <div style={{ color: "var(--acc)", fontSize: 11, marginTop: 6 }}>
                       ⚠ Abweichung von Empfehlung ({WP_VARIANTEN[autoKey]?.label})
-                      <button onClick={() => onWpVarianteChange("auto")} style={{ marginLeft: 8, fontSize: 10, color: "#6B6259", background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" }}>zurücksetzen</button>
+                      <button onClick={() => onWpVarianteChange("auto")} style={{ marginLeft: 8, fontSize: 10, color: "var(--sec)", background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" }}>zurücksetzen</button>
                     </div>
                   )}
                   {resolvedWpVariante === "monoenergetisch" && (
-                    <div style={{ fontSize: 11, color: "#6B6259", marginTop: 6, fontStyle: "italic" }}>
+                    <div style={{ fontSize: 11, color: "var(--sec)", marginTop: 6, fontStyle: "italic" }}>
                       ℹ️ Heizstab deckt ~5 % der Jahresheizlast (Spitzenlast, COP = 1). Geschätzte Mehrkosten: ~200–400 €/Jahr gegenüber monovalentem Betrieb.
                     </div>
                   )}
                   {(istOel || hybridOhneGas) && (
-                    <div style={{ marginTop: 10, borderTop: "1px solid #D3CAB9", paddingTop: 8 }}>
-                      <div style={{ fontWeight: 600, fontSize: 10.5, color: "#6B6259", marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.1em", fontFamily: "'Geist Mono', monospace" }}>Begleitkosten</div>
+                    <div style={{ marginTop: 10, borderTop: "1px solid var(--bdr)", paddingTop: 8 }}>
+                      <div style={{ fontWeight: 600, fontSize: 10.5, color: "var(--sec)", marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.1em", fontFamily: "'Geist Mono', monospace" }}>Begleitkosten</div>
                       {istOel && (
-                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11.5, color: "#3A332B", marginBottom: 3 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11.5, color: "var(--body)", marginBottom: 3 }}>
                           <span>Öltank-Stilllegung & Entsorgung</span>
                           <span style={{ fontFamily: "'Geist Mono', monospace" }}>~2.500 €</span>
                         </div>
                       )}
                       {hybridOhneGas && (
-                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11.5, color: "#3A332B" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11.5, color: "var(--body)" }}>
                           <span>Gasanschluss-Herstellung</span>
                           <span style={{ fontFamily: "'Geist Mono', monospace" }}>~3.000–5.000 €</span>
                         </div>
                       )}
-                      <div style={{ fontSize: 10.5, color: "#6B6259", marginTop: 5, fontStyle: "italic" }}>Nicht förderfähig — erhöhen den Eigenanteil.</div>
+                      <div style={{ fontSize: 10.5, color: "var(--sec)", marginTop: 5, fontStyle: "italic" }}>Nicht förderfähig — erhöhen den Eigenanteil.</div>
                     </div>
                   )}
                 </div>
@@ -940,12 +940,12 @@ const PaketBlock = ({ paket, aktiv, onToggle, onToggleMassnahme = () => {}, akti
                             borderRadius: 3, padding: "12px 14px", fontSize: 12, lineHeight: 1.6, color: "#1E3A35" }}>
                 {warum.grund && (
                   <div style={{ marginBottom: 10 }}>
-                    <span style={{ fontWeight: 600, color: "#B5623E" }}>Warum diese Maßnahme: </span>{warum.grund}
+                    <span style={{ fontWeight: 600, color: "var(--acc)" }}>Warum diese Maßnahme: </span>{warum.grund}
                   </div>
                 )}
                 {warum.jetzt && (
                   <div>
-                    <span style={{ fontWeight: 600, color: "#B5623E" }}>Warum jetzt: </span>{warum.jetzt}
+                    <span style={{ fontWeight: 600, color: "var(--acc)" }}>Warum jetzt: </span>{warum.jetzt}
                   </div>
                 )}
               </div>
@@ -955,25 +955,25 @@ const PaketBlock = ({ paket, aktiv, onToggle, onToggleMassnahme = () => {}, akti
         })}
       </div>
 
-      <div className="px-5 py-4 grid grid-cols-3 gap-4" style={{ background: "#F8F5EF", borderTop: "1.25px solid #D3CAB9" }}>
+      <div className="px-5 py-4 grid grid-cols-3 gap-4" style={{ background: "var(--bg)", borderTop: "1.25px solid #D3CAB9" }}>
         <div>
-          <div className="text-[10.5px] tracking-[0.18em] uppercase mb-1" style={{ color: "#6B6259", fontFamily: "'Geist Mono', monospace" }}>Investition</div>
-          <div className="text-[15px]" style={{ fontFamily: "'Geist Mono', monospace", color: "#1E1A15", fontVariantNumeric: "tabular-nums" }}>{fmtEur(summe_invest)}</div>
+          <div className="text-[10.5px] tracking-[0.18em] uppercase mb-1" style={{ color: "var(--sec)", fontFamily: "'Geist Mono', monospace" }}>Investition</div>
+          <div className="text-[15px]" style={{ fontFamily: "'Geist Mono', monospace", color: "var(--txt)", fontVariantNumeric: "tabular-nums" }}>{fmtEur(summe_invest)}</div>
         </div>
         <div>
-          <div className="text-[10.5px] tracking-[0.18em] uppercase mb-1" style={{ color: "#00843D", fontFamily: "'Geist Mono', monospace" }}>Förderung</div>
-          <div className="text-[15px]" style={{ fontFamily: "'Geist Mono', monospace", color: "#00843D", fontVariantNumeric: "tabular-nums" }}>
+          <div className="text-[10.5px] tracking-[0.18em] uppercase mb-1" style={{ color: "var(--pos)", fontFamily: "'Geist Mono', monospace" }}>Förderung</div>
+          <div className="text-[15px]" style={{ fontFamily: "'Geist Mono', monospace", color: "var(--pos)", fontVariantNumeric: "tabular-nums" }}>
             {summe_foerder > 0 ? `− ${fmtEur(summe_foerder)}` : "—"}
           </div>
           {firstM && foerderPct > 0 && (
-            <div className="text-[10.5px] mt-0.5" style={{ color: "#00843D", fontFamily: "'Geist Mono', monospace" }}>
+            <div className="text-[10.5px] mt-0.5" style={{ color: "var(--pos)", fontFamily: "'Geist Mono', monospace" }}>
               {foerderPct} % · {firstM.foerderung_rechtsgrundlage}
             </div>
           )}
         </div>
         <div>
-          <div className="text-[10.5px] tracking-[0.18em] uppercase mb-1" style={{ color: "#1E1A15", fontFamily: "'Geist Mono', monospace" }}>Eigenanteil</div>
-          <div className="text-[15px]" style={{ fontFamily: "'Geist Mono', monospace", color: "#1E1A15", fontVariantNumeric: "tabular-nums", fontWeight: 500 }}>{fmtEur(eigenanteil)}</div>
+          <div className="text-[10.5px] tracking-[0.18em] uppercase mb-1" style={{ color: "var(--txt)", fontFamily: "'Geist Mono', monospace" }}>Eigenanteil</div>
+          <div className="text-[15px]" style={{ fontFamily: "'Geist Mono', monospace", color: "var(--txt)", fontVariantNumeric: "tabular-nums", fontWeight: 500 }}>{fmtEur(eigenanteil)}</div>
         </div>
       </div>
     </div>
@@ -996,17 +996,17 @@ const StickyTabs = ({ activeId, onClick }) => (
         <button key={t.id} onClick={() => onClick(t.id)}
           style={{
             padding: "10px 16px", whiteSpace: "nowrap",
-            border: "none", borderBottom: active ? "2.5px solid #B5623E" : "2.5px solid transparent",
+            border: "none", borderBottom: active ? "2.5px solid var(--acc)" : "2.5px solid transparent",
             background: "transparent",
-            color: active ? "#1E1A15" : "#6B6259",
+            color: active ? "var(--txt)" : "var(--sec)",
             fontSize: 13.5, fontWeight: active ? 600 : 400,
             letterSpacing: "0.01em", cursor: "pointer",
             transition: "color 0.12s, border-color 0.12s",
           }}
-          onMouseEnter={(e) => { if (!active) e.currentTarget.style.color = "#1E1A15"; }}
-          onMouseLeave={(e) => { if (!active) e.currentTarget.style.color = "#6B6259"; }}
+          onMouseEnter={(e) => { if (!active) e.currentTarget.style.color = "var(--txt)"; }}
+          onMouseLeave={(e) => { if (!active) e.currentTarget.style.color = "var(--sec)"; }}
         >
-          <span className="text-[10px] tracking-[0.18em]" style={{ color: active ? "#B5623E" : "#6B6259", fontFamily: "'Geist Mono', monospace", marginRight: 8 }}>
+          <span className="text-[10px] tracking-[0.18em]" style={{ color: active ? "var(--acc)" : "var(--sec)", fontFamily: "'Geist Mono', monospace", marginRight: 8 }}>
             {String(i + 1).padStart(2, "0")}
           </span>
           {t.label}
@@ -1052,16 +1052,16 @@ const VorherNachher = ({ ist, k, heizkostenIst, gebaeude }) => {
       {fmtN(k.endenergie)} kWh/m² × {gebaeude.wohnflaeche} m²<br />
       × {fmtP(k.heizkosten_tarif)} €/kWh ({k.heizkosten_traeger})<br />
       = <b>{fmtN(k.heizkosten_gesamt)} €/Jahr</b>
-      {higher && <><br /><span style={{ color: "#B5623E" }}>Höher als IST: WP-Stromtarif ({fmtP(k.heizkosten_tarif)} €/kWh) ist teurer als {istTraeger} ({fmtP(istTarif)} €/kWh), aber Endenergie sinkt stark — Hüllsanierung würde dies korrigieren.</span></>}
+      {higher && <><br /><span style={{ color: "var(--acc)" }}>Höher als IST: WP-Stromtarif ({fmtP(k.heizkosten_tarif)} €/kWh) ist teurer als {istTraeger} ({fmtP(istTarif)} €/kWh), aber Endenergie sinkt stark — Hüllsanierung würde dies korrigieren.</span></>}
     </span>
   );
 
   const stdRows = (rows, border) => rows.map((r, i) => (
     <div key={i} className="flex items-baseline justify-between gap-3"
          style={{ padding: "9px 0", borderBottom: i < rows.length - 1 ? border : "none", fontSize: 13 }}>
-      <span style={{ color: "#3A332B" }}>{r[0]}</span>
+      <span style={{ color: "var(--body)" }}>{r[0]}</span>
       <span style={valueStyle}>
-        {r[1]}<span style={{ fontSize: 12, color: "#6B6259", marginLeft: 4 }}>{r[2]}</span>
+        {r[1]}<span style={{ fontSize: 12, color: "var(--sec)", marginLeft: 4 }}>{r[2]}</span>
       </span>
     </div>
   ));
@@ -1071,9 +1071,9 @@ const VorherNachher = ({ ist, k, heizkostenIst, gebaeude }) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-[1fr,auto,1fr] gap-6 items-center">
       {/* IST */}
-      <div style={{ background: "#FFFFFF", border: "1.25px solid #D3CAB9", borderRadius: 3, padding: "28px 26px" }}>
+      <div style={{ background: "var(--surface)", border: "1.25px solid var(--bdr)", borderRadius: 3, padding: "28px 26px" }}>
         <div className="flex items-center justify-between mb-5">
-          <div className="text-[11px] tracking-[0.22em] uppercase" style={{ color: "#6B6259", fontFamily: "'Geist Mono', monospace" }}>Heute</div>
+          <div className="text-[11px] tracking-[0.22em] uppercase" style={{ color: "var(--sec)", fontFamily: "'Geist Mono', monospace" }}>Heute</div>
           <EffizienzBadge klasse={berechneEffizienzklasse(ist.primaerenergie)} size="md" />
         </div>
         <div className="space-y-3">
@@ -1083,12 +1083,12 @@ const VorherNachher = ({ ist, k, heizkostenIst, gebaeude }) => {
             ["CO₂-Emissionen",ist.co2,            "kg/(m²·a)"],
           ], "1px solid #E2DBD0")}
           <div className="flex items-baseline justify-between gap-3" style={{ padding: "9px 0", fontSize: 13 }}>
-            <span style={{ color: "#3A332B" }}>Heizkosten gesamt</span>
+            <span style={{ color: "var(--body)" }}>Heizkosten gesamt</span>
             <span style={valueStyle}>
               {fmt(heizkostenIst)}
-              <span style={{ fontSize: 12, color: "#6B6259", marginLeft: 4 }}>€/a</span>
+              <span style={{ fontSize: 12, color: "var(--sec)", marginLeft: 4 }}>€/a</span>
               <Tooltip content={istTooltip}>
-                <span style={{ marginLeft: 5, verticalAlign: "middle", color: "#B5623E", cursor: "help" }}><InfoIcon size={11} /></span>
+                <span style={{ marginLeft: 5, verticalAlign: "middle", color: "var(--acc)", cursor: "help" }}><InfoIcon size={11} /></span>
               </Tooltip>
             </span>
           </div>
@@ -1096,8 +1096,8 @@ const VorherNachher = ({ ist, k, heizkostenIst, gebaeude }) => {
       </div>
 
       <div className="flex flex-col items-center justify-center gap-2 py-4">
-        <span className="font-serif text-[28px]" style={{ color: "#B5623E" }}>→</span>
-        <span className="text-[10.5px] tracking-[0.22em] uppercase" style={{ color: "#B5623E", fontFamily: "'Geist Mono', monospace" }}>Sanierungsfahrplan</span>
+        <span className="font-serif text-[28px]" style={{ color: "var(--acc)" }}>→</span>
+        <span className="text-[10.5px] tracking-[0.22em] uppercase" style={{ color: "var(--acc)", fontFamily: "'Geist Mono', monospace" }}>Sanierungsfahrplan</span>
       </div>
 
       {/* ZIEL */}
@@ -1105,7 +1105,7 @@ const VorherNachher = ({ ist, k, heizkostenIst, gebaeude }) => {
         <div className="flex items-center justify-between mb-5">
           <div className="text-[11px] tracking-[0.22em] uppercase" style={{ color: dark ? "rgba(30,26,21,0.65)" : "rgba(248,245,239,0.75)", fontFamily: "'Geist Mono', monospace" }}>Ihr Haus in der Zukunft</div>
           <div className="inline-flex items-center justify-center font-serif"
-               style={{ width: 60, height: 60, background: "#F8F5EF", color: EFFIZIENZ_FARBEN[k.effizienzklasse], borderRadius: 3, fontSize: 28, fontWeight: 500 }}>{k.effizienzklasse}</div>
+               style={{ width: 60, height: 60, background: "var(--bg)", color: EFFIZIENZ_FARBEN[k.effizienzklasse], borderRadius: 3, fontSize: 28, fontWeight: 500 }}>{k.effizienzklasse}</div>
         </div>
         <div className="space-y-3">
           {[
@@ -1141,13 +1141,13 @@ const DeltaKPI = ({ label, vorher, nachher, unit }) => {
   const delta = nachher - vorher;
   const pct = vorher > 0 ? Math.round(Math.abs(delta) / vorher * 100) : 0;
   return (
-    <div style={{ background: "#FFFFFF", border: "1.25px solid #D3CAB9", borderRadius: 3, padding: "22px 24px" }}>
-      <div className="text-[11px] tracking-[0.22em] uppercase mb-3" style={{ color: "#6B6259", fontFamily: "'Geist Mono', monospace" }}>{label}</div>
+    <div style={{ background: "var(--surface)", border: "1.25px solid var(--bdr)", borderRadius: 3, padding: "22px 24px" }}>
+      <div className="text-[11px] tracking-[0.22em] uppercase mb-3" style={{ color: "var(--sec)", fontFamily: "'Geist Mono', monospace" }}>{label}</div>
       <div className="flex items-baseline gap-3 flex-wrap">
-        <span className="font-serif" style={{ fontSize: 34, fontWeight: 500, color: "#1E1A15", fontVariantNumeric: "tabular-nums", lineHeight: 1 }}>
+        <span className="font-serif" style={{ fontSize: 34, fontWeight: 500, color: "var(--txt)", fontVariantNumeric: "tabular-nums", lineHeight: 1 }}>
           −{pct}%
         </span>
-        <span className="text-[12px]" style={{ color: "#6B6259", fontFamily: "'Geist Mono', monospace" }}>
+        <span className="text-[12px]" style={{ color: "var(--sec)", fontFamily: "'Geist Mono', monospace" }}>
           {fmt(vorher)}{unit && ` ${unit}`} → {fmt(nachher)}{unit && ` ${unit}`}
         </span>
       </div>
@@ -1155,11 +1155,222 @@ const DeltaKPI = ({ label, vorher, nachher, unit }) => {
   );
 };
 
+// ═══ EEK ARROW SCALE ═══════════════════════════════════════════════════
+const EEK_ARROW_FARBEN = {
+  "H":  { bg: "#8B1A14", txt: "#fff" },
+  "G":  { bg: "#B83A2E", txt: "#fff" },
+  "F":  { bg: "#B83A2E", txt: "#fff" },
+  "E":  { bg: "#C8820A", txt: "#fff" },
+  "D":  { bg: "#C8820A", txt: "#1E1A15" },
+  "C":  { bg: "#6B9E1F", txt: "#fff" },
+  "B":  { bg: "#1B6B3A", txt: "#fff" },
+  "A":  { bg: "#1B6B3A", txt: "#fff" },
+  "A+": { bg: "#1B6B3A", txt: "#fff" },
+};
+const EEK_CLASSES = ["H","G","F","E","D","C","B","A","A+"];
+
+const EekArrowScale = ({ istKlasse, zielKlasse, istPe, zielPe }) => (
+  <div style={{ marginBottom: 28 }}>
+    <div style={{ fontSize: 9, letterSpacing: "0.18em", textTransform: "uppercase",
+                  fontFamily: "'Geist Mono', monospace", color: "var(--acc)", marginBottom: 10 }}>
+      Energieeffizienzklasse · Heute → Ziel
+    </div>
+    <div style={{ display: "flex", gap: 3, alignItems: "flex-end" }}>
+      {EEK_CLASSES.map(cls => {
+        const isIst  = cls === istKlasse;
+        const isZiel = cls === zielKlasse;
+        const active = isIst || isZiel;
+        const { bg, txt } = EEK_ARROW_FARBEN[cls] || { bg: "#6B6259", txt: "#fff" };
+        return (
+          <div key={cls} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <div style={{
+              width: "100%", height: active ? 38 : 24,
+              background: bg,
+              opacity: active ? 1 : 0.3,
+              clipPath: "polygon(0 0, calc(100% - 7px) 0, 100% 50%, calc(100% - 7px) 100%, 0 100%)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: active ? 13 : 10, fontWeight: 600,
+              fontFamily: "'Fraunces', Georgia, serif", color: txt,
+              outline: isIst ? "2.5px solid var(--txt)" : isZiel ? "2.5px solid var(--pos)" : "none",
+              outlineOffset: 1,
+              transition: "height 0.2s, opacity 0.2s",
+            }}>{cls}</div>
+            {(isIst || isZiel) && (
+              <div style={{ fontSize: 8, fontFamily: "'Geist Mono', monospace", letterSpacing: "0.06em",
+                            textTransform: "uppercase", textAlign: "center", lineHeight: 1.4,
+                            marginTop: 4, color: isZiel ? "var(--pos)" : "var(--sec)",
+                            whiteSpace: "pre-line" }}>
+                {isIst ? `Heute\n${istPe}` : `Ziel\n${zielPe}`}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  </div>
+);
+
+// ═══ MERGED TABLE (Energie + Kosten pro Schritt) ════════════════════════
+const MergedTable = ({ kumuliert, ist }) => {
+  const maxEE = ist.endenergie || 1;
+  const maxPE = ist.primaerenergie || 1;
+  const maxCO2 = ist.co2 || 1;
+
+  const totalInvest = kumuliert.length ? kumuliert[kumuliert.length - 1].nachher.invest_gesamt : 0;
+  const totalFoerd  = kumuliert.length ? kumuliert[kumuliert.length - 1].nachher.foerderung_gesamt : 0;
+
+  return (
+    <div style={{ background: "var(--surface)", border: "1.25px solid var(--bdr)", borderRadius: 3, padding: "24px 28px" }}>
+      <div className="text-[11px] tracking-[0.22em] uppercase mb-4 flex items-center gap-2"
+           style={{ color: "var(--acc)", fontFamily: "'Geist Mono', monospace" }}>
+        Kumulierte Wirkung pro Paket
+        <Tooltip content="BAFA-Logik: jedes Paket wird auf dem Ergebnis des vorigen aufbauend berechnet. Zeigt den Fortschritt Schritt für Schritt.">
+          <span><InfoIcon size={11} /></span>
+        </Tooltip>
+      </div>
+      <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+      <table className="w-full text-[13px]" style={{ fontVariantNumeric: "tabular-nums", minWidth: 640 }}>
+        <thead>
+          <tr style={{ borderBottom: "1.25px solid var(--txt)" }}>
+            <th className="text-left py-2.5 font-medium">Schritt</th>
+            <th className="text-right py-2.5 font-medium">
+              <Tooltip content="Tatsächlich gelieferter Energieträger in kWh pro m² Wohnfläche und Jahr.">
+                <span style={{ color: "var(--acc)", display: "inline-flex", verticalAlign: "middle" }}><InfoIcon size={11} /></span><span style={{ marginLeft: 5 }}>Endenergie</span>
+              </Tooltip>
+            </th>
+            <th className="text-right py-2.5 font-medium">
+              <Tooltip content="Gesamtenergieeinsatz inkl. Vorkette. Basis für die Energieeffizienzklasse.">
+                <span style={{ color: "var(--acc)", display: "inline-flex", verticalAlign: "middle" }}><InfoIcon size={11} /></span><span style={{ marginLeft: 5 }}>Primärenergie</span>
+              </Tooltip>
+            </th>
+            <th className="text-right py-2.5 font-medium">
+              <Tooltip content="CO₂-Emissionen in kg pro m² und Jahr.">
+                <span style={{ color: "var(--acc)", display: "inline-flex", verticalAlign: "middle" }}><InfoIcon size={11} /></span><span style={{ marginLeft: 5 }}>CO₂</span>
+              </Tooltip>
+            </th>
+            <th className="text-right py-2.5 font-medium">Klasse</th>
+            <th className="text-right py-2.5 font-medium">
+              <Tooltip content="Investitionskosten für diesen Sanierungsschritt.">
+                <span style={{ color: "var(--acc)", display: "inline-flex", verticalAlign: "middle" }}><InfoIcon size={11} /></span><span style={{ marginLeft: 5 }}>Invest</span>
+              </Tooltip>
+            </th>
+            <th className="text-right py-2.5 font-medium">Förderung</th>
+            <th className="text-right py-2.5 font-medium">Eigenanteil</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style={{ borderBottom: "1px solid var(--div)", background: "var(--surface2)" }}>
+            <td className="py-3">
+              <span className="text-[11px] tracking-[0.18em] uppercase mr-2" style={{ color: "var(--sec)", fontFamily: "'Geist Mono', monospace" }}>0</span>
+              Ausgangszustand
+            </td>
+            <td className="text-right py-3">
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2 }}>
+                <span style={{ fontFamily: "'Geist Mono', monospace" }}>{ist.endenergie}</span>
+                <div style={{ width: 52, height: 4, background: "var(--div)", borderRadius: 2 }}>
+                  <div style={{ height: "100%", width: "100%", background: EFFIZIENZ_FARBEN[berechneEffizienzklasse(ist.primaerenergie)] || "var(--sec)", borderRadius: 2 }} />
+                </div>
+              </div>
+            </td>
+            <td className="text-right py-3">
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2 }}>
+                <span style={{ fontFamily: "'Geist Mono', monospace" }}>{ist.primaerenergie}</span>
+                <div style={{ width: 52, height: 4, background: "var(--div)", borderRadius: 2 }}>
+                  <div style={{ height: "100%", width: "100%", background: EFFIZIENZ_FARBEN[berechneEffizienzklasse(ist.primaerenergie)] || "var(--sec)", borderRadius: 2 }} />
+                </div>
+              </div>
+            </td>
+            <td className="text-right py-3">
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2 }}>
+                <span style={{ fontFamily: "'Geist Mono', monospace" }}>{ist.co2}</span>
+                <div style={{ width: 52, height: 4, background: "var(--div)", borderRadius: 2 }}>
+                  <div style={{ height: "100%", width: "100%", background: EFFIZIENZ_FARBEN[berechneEffizienzklasse(ist.primaerenergie)] || "var(--sec)", borderRadius: 2 }} />
+                </div>
+              </div>
+            </td>
+            <td className="text-right py-3">
+              <EffizienzBadge klasse={berechneEffizienzklasse(ist.primaerenergie)} size="sm" />
+            </td>
+            <td className="text-right py-3" style={{ color: "var(--sec)", fontFamily: "'Geist Mono', monospace" }}>—</td>
+            <td className="text-right py-3" style={{ color: "var(--sec)", fontFamily: "'Geist Mono', monospace" }}>—</td>
+            <td className="text-right py-3" style={{ color: "var(--sec)", fontFamily: "'Geist Mono', monospace" }}>—</td>
+          </tr>
+          {kumuliert.map((r, i) => {
+            const prevInvest = i === 0 ? 0 : kumuliert[i-1].nachher.invest_gesamt;
+            const prevFoerd  = i === 0 ? 0 : kumuliert[i-1].nachher.foerderung_gesamt;
+            const stepInvest = r.nachher.invest_gesamt - prevInvest;
+            const stepFoerd  = r.nachher.foerderung_gesamt - prevFoerd;
+            const stepEigen  = stepInvest - stepFoerd;
+            const barColor = EFFIZIENZ_FARBEN[r.nachher.effizienzklasse] || "var(--sec)";
+            const eeW = Math.round(Math.min(r.nachher.endenergie / maxEE, 1) * 100);
+            const peW = Math.round(Math.min(r.nachher.primaerenergie / maxPE, 1) * 100);
+            const coW = Math.round(Math.min(r.nachher.co2 / maxCO2, 1) * 100);
+            return (
+              <tr key={r.paket.id} style={{ borderBottom: i < kumuliert.length - 1 ? "1px solid var(--div)" : "none" }}>
+                <td className="py-3">
+                  <div className="flex items-center gap-2">
+                    <span style={{ width: 10, height: 10, borderRadius: 100, background: PAKET_FARBEN[r.paket.farbe]?.bg, display: "inline-block", flexShrink: 0 }} />
+                    <span className="text-[11px] tracking-[0.18em] uppercase" style={{ color: "var(--sec)", fontFamily: "'Geist Mono', monospace" }}>P{r.paket.nummer}</span>
+                    <span style={{ color: "var(--txt)" }}>{r.paket.titel}</span>
+                  </div>
+                </td>
+                <td className="text-right py-3">
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2 }}>
+                    <span style={{ fontFamily: "'Geist Mono', monospace" }}>{r.nachher.endenergie}</span>
+                    <div style={{ width: 52, height: 4, background: "var(--div)", borderRadius: 2 }}>
+                      <div style={{ height: "100%", width: `${eeW}%`, background: barColor, borderRadius: 2 }} />
+                    </div>
+                  </div>
+                </td>
+                <td className="text-right py-3">
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2 }}>
+                    <span style={{ fontFamily: "'Geist Mono', monospace" }}>{r.nachher.primaerenergie}</span>
+                    <div style={{ width: 52, height: 4, background: "var(--div)", borderRadius: 2 }}>
+                      <div style={{ height: "100%", width: `${peW}%`, background: barColor, borderRadius: 2 }} />
+                    </div>
+                  </div>
+                </td>
+                <td className="text-right py-3">
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2 }}>
+                    <span style={{ fontFamily: "'Geist Mono', monospace" }}>{r.nachher.co2}</span>
+                    <div style={{ width: 52, height: 4, background: "var(--div)", borderRadius: 2 }}>
+                      <div style={{ height: "100%", width: `${coW}%`, background: barColor, borderRadius: 2 }} />
+                    </div>
+                  </div>
+                </td>
+                <td className="text-right py-3">
+                  <EffizienzBadge klasse={r.nachher.effizienzklasse} size="sm" />
+                </td>
+                <td className="text-right py-3" style={{ fontFamily: "'Geist Mono', monospace" }}>{stepInvest > 0 ? fmtEur(stepInvest) : "—"}</td>
+                <td className="text-right py-3" style={{ fontFamily: "'Geist Mono', monospace", color: stepFoerd > 0 ? "var(--pos)" : "var(--sec)" }}>
+                  {stepFoerd > 0 ? `−${fmtEur(stepFoerd)}` : "—"}
+                </td>
+                <td className="text-right py-3" style={{ fontFamily: "'Geist Mono', monospace" }}>{stepEigen > 0 ? fmtEur(stepEigen) : "—"}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+        <tfoot>
+          <tr style={{ borderTop: "1.5px solid var(--txt)", background: "var(--surface2)" }}>
+            <td className="py-3 font-medium" colSpan={5}>Gesamt</td>
+            <td className="text-right py-3 font-medium" style={{ fontFamily: "'Geist Mono', monospace" }}>{fmtEur(totalInvest)}</td>
+            <td className="text-right py-3 font-medium" style={{ fontFamily: "'Geist Mono', monospace", color: totalFoerd > 0 ? "var(--pos)" : "var(--sec)" }}>
+              {totalFoerd > 0 ? `−${fmtEur(totalFoerd)}` : "—"}
+            </td>
+            <td className="text-right py-3 font-medium" style={{ fontFamily: "'Geist Mono', monospace" }}>{fmtEur(totalInvest - totalFoerd)}</td>
+          </tr>
+        </tfoot>
+      </table>
+      </div>
+    </div>
+  );
+};
+
 // ═══ KUMULIERT-TABELLE (BAFA-Logik) ═══════════════════════════════════
 const KumuliertTabelle = ({ kumuliert, ist, heizkostenIst }) => (
-  <div style={{ background: "#FFFFFF", border: "1.25px solid #D3CAB9", borderRadius: 3, padding: "24px 28px" }}>
+  <div style={{ background: "var(--surface)", border: "1.25px solid var(--bdr)", borderRadius: 3, padding: "24px 28px" }}>
     <div className="text-[11px] tracking-[0.22em] uppercase mb-4 flex items-center gap-2"
-         style={{ color: "#B5623E", fontFamily: "'Geist Mono', monospace" }}>
+         style={{ color: "var(--acc)", fontFamily: "'Geist Mono', monospace" }}>
       Kumulierte Wirkung pro Paket
       <Tooltip content="BAFA-Logik: jedes Paket wird auf dem Ergebnis des vorigen aufbauend berechnet. Zeigt den Fortschritt Schritt für Schritt.">
         <span><InfoIcon size={11} /></span>
@@ -1172,26 +1383,26 @@ const KumuliertTabelle = ({ kumuliert, ist, heizkostenIst }) => (
           <th className="text-left py-2.5 font-medium">Schritt</th>
           <th className="text-right py-2.5 font-medium">
             <Tooltip content="Tatsächlich gelieferter Energieträger (Gas, Strom, Öl) in kWh pro m² Wohnfläche und Jahr. Entspricht dem Energieausweis-Verbrauchswert.">
-              <span style={{ color: "#B5623E", display: "inline-flex", verticalAlign: "middle" }}><InfoIcon size={11} /></span><span style={{ marginLeft: 6 }}>Endenergie</span>
+              <span style={{ color: "var(--acc)", display: "inline-flex", verticalAlign: "middle" }}><InfoIcon size={11} /></span><span style={{ marginLeft: 6 }}>Endenergie</span>
             </Tooltip>
           </th>
           <th className="text-right py-2.5 font-medium">
             <Tooltip content="Gesamtenergieeinsatz inkl. Gewinnung und Transport des Energieträgers (Primärenergiefaktor). Basis für die Energieeffizienzklasse nach GEG §86.">
-              <span style={{ color: "#B5623E", display: "inline-flex", verticalAlign: "middle" }}><InfoIcon size={11} /></span><span style={{ marginLeft: 6 }}>Primärenergie</span>
+              <span style={{ color: "var(--acc)", display: "inline-flex", verticalAlign: "middle" }}><InfoIcon size={11} /></span><span style={{ marginLeft: 6 }}>Primärenergie</span>
             </Tooltip>
           </th>
           <th className="text-right py-2.5 font-medium">
             <Tooltip content="CO₂-Emissionen aus dem Heizenergieverbrauch in kg pro m² Wohnfläche und Jahr. Inkl. Vorkette des Energieträgers.">
-              <span style={{ color: "#B5623E", display: "inline-flex", verticalAlign: "middle" }}><InfoIcon size={11} /></span><span style={{ marginLeft: 6 }}>CO₂</span>
+              <span style={{ color: "var(--acc)", display: "inline-flex", verticalAlign: "middle" }}><InfoIcon size={11} /></span><span style={{ marginLeft: 6 }}>CO₂</span>
             </Tooltip>
           </th>
           <th className="text-right py-2.5 font-medium">Klasse</th>
         </tr>
       </thead>
       <tbody>
-        <tr style={{ borderBottom: "1px solid #E2DBD0", background: "#F8F5EF" }}>
+        <tr style={{ borderBottom: "1px solid var(--div)", background: "var(--bg)" }}>
           <td className="py-3">
-            <span className="text-[11px] tracking-[0.18em] uppercase mr-2" style={{ color: "#6B6259", fontFamily: "'Geist Mono', monospace" }}>0</span>
+            <span className="text-[11px] tracking-[0.18em] uppercase mr-2" style={{ color: "var(--sec)", fontFamily: "'Geist Mono', monospace" }}>0</span>
             Ausgangszustand
           </td>
           <td className="text-right py-3" style={{ fontFamily: "'Geist Mono', monospace" }}>{ist.endenergie}</td>
@@ -1206,7 +1417,7 @@ const KumuliertTabelle = ({ kumuliert, ist, heizkostenIst }) => (
             <td className="py-3">
               <div className="flex items-center gap-2">
                 <span style={{ width: 10, height: 10, borderRadius: 100, background: PAKET_FARBEN[r.paket.farbe].bg, display: "inline-block" }} />
-                <span className="text-[11px] tracking-[0.18em] uppercase" style={{ color: "#6B6259", fontFamily: "'Geist Mono', monospace" }}>P{r.paket.nummer}</span>
+                <span className="text-[11px] tracking-[0.18em] uppercase" style={{ color: "var(--sec)", fontFamily: "'Geist Mono', monospace" }}>P{r.paket.nummer}</span>
                 <span>{r.paket.titel}</span>
               </div>
             </td>
@@ -1267,12 +1478,12 @@ const EnergieVerlaufChart = ({ ist, kumuliert }) => {
   const areaD = pathD + ` V ${toY(0)} H ${toX(0)} Z`;
 
   return (
-    <div style={{ background: "#FFFFFF", border: "1.25px solid #D3CAB9", borderRadius: 3, padding: "24px 28px", marginTop: 32 }}>
+    <div style={{ background: "var(--surface)", border: "1.25px solid var(--bdr)", borderRadius: 3, padding: "24px 28px", marginTop: 32 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 14 }}>
-        <div style={{ fontSize: 11, letterSpacing: "0.22em", textTransform: "uppercase", color: "#B5623E", fontFamily: "'Geist Mono', monospace" }}>
+        <div style={{ fontSize: 11, letterSpacing: "0.22em", textTransform: "uppercase", color: "var(--acc)", fontFamily: "'Geist Mono', monospace" }}>
           Primärenergie-Verlauf
         </div>
-        <div style={{ fontSize: 10, color: "#9B8E82", fontFamily: "'Geist Mono', monospace" }}>kWh/(m²·a)</div>
+        <div style={{ fontSize: 10, color: "var(--sec)", fontFamily: "'Geist Mono', monospace" }}>kWh/(m²·a)</div>
       </div>
       <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", display: "block", aspectRatio: "620/320", minHeight: 180 }}>
         <defs>
@@ -1290,7 +1501,7 @@ const EnergieVerlaufChart = ({ ist, kumuliert }) => {
         {gridLines.map(v => (
           <line key={v}
             x1={PAD.left} y1={toY(v)} x2={PAD.left + pw} y2={toY(v)}
-            stroke="#D3CAB9" strokeWidth={0.75} strokeDasharray="4 3"
+            stroke="var(--bdr)" strokeWidth={0.75} strokeDasharray="4 3"
           />
         ))}
         {[0, ...gridLines].map(v => (
@@ -1308,10 +1519,10 @@ const EnergieVerlaufChart = ({ ist, kumuliert }) => {
             >{z.klasse}</text>
           );
         })}
-        <line x1={PAD.left} y1={PAD.top} x2={PAD.left} y2={PAD.top + ph} stroke="#D3CAB9" strokeWidth={1} />
-        <line x1={PAD.left} y1={PAD.top + ph} x2={PAD.left + pw} y2={PAD.top + ph} stroke="#D3CAB9" strokeWidth={1} />
-        <path d={areaD} fill="#1E1A15" opacity={0.04} clipPath="url(#evc-clip)" />
-        <path d={pathD} fill="none" stroke="#1E1A15" strokeWidth={2}
+        <line x1={PAD.left} y1={PAD.top} x2={PAD.left} y2={PAD.top + ph} stroke="var(--bdr)" strokeWidth={1} />
+        <line x1={PAD.left} y1={PAD.top + ph} x2={PAD.left + pw} y2={PAD.top + ph} stroke="var(--bdr)" strokeWidth={1} />
+        <path d={areaD} fill="var(--txt)" opacity={0.06} clipPath="url(#evc-clip)" />
+        <path d={pathD} fill="none" stroke="var(--txt)" strokeWidth={2}
           strokeLinejoin="round" strokeLinecap="round" clipPath="url(#evc-clip)" />
         {punkte.map((pt, i) => {
           const x = toX(i), y = toY(pt.pe);
@@ -1338,19 +1549,19 @@ const WieFunktioniertSection = () => {
   const [open, setOpen] = useState(false);
   const Sub = ({ title, children }) => (
     <div style={{ marginBottom: 22 }}>
-      <div className="text-[10px] tracking-[0.2em] uppercase mb-2" style={{ color: "#B5623E", fontFamily: "'Geist Mono', monospace" }}>{title}</div>
-      <div style={{ fontSize: 13.5, color: "#3A332B", lineHeight: 1.65 }}>{children}</div>
+      <div className="text-[10px] tracking-[0.2em] uppercase mb-2" style={{ color: "var(--acc)", fontFamily: "'Geist Mono', monospace" }}>{title}</div>
+      <div style={{ fontSize: 13.5, color: "var(--body)", lineHeight: 1.65 }}>{children}</div>
     </div>
   );
   return (
-    <div className="print-hide" style={{ marginTop: 32, border: "1.25px solid #D3CAB9", borderRadius: 3, background: "#FFF" }}>
+    <div className="print-hide" style={{ marginTop: 32, border: "1.25px solid var(--bdr)", borderRadius: 3, background: "var(--surface)" }}>
       <button onClick={() => setOpen(o => !o)}
         className="w-full flex items-center justify-between"
         style={{ padding: "16px 24px", background: "transparent", border: "none", cursor: "pointer", textAlign: "left" }}>
-        <span className="text-[11px] tracking-[0.2em] uppercase" style={{ color: "#6B6259", fontFamily: "'Geist Mono', monospace" }}>
+        <span className="text-[11px] tracking-[0.2em] uppercase" style={{ color: "var(--sec)", fontFamily: "'Geist Mono', monospace" }}>
           Wie funktioniert dieser Rechner?
         </span>
-        <span style={{ color: "#B5623E", fontSize: 13 }}>{open ? "▲ Schließen" : "▼ Anzeigen"}</span>
+        <span style={{ color: "var(--acc)", fontSize: 13 }}>{open ? "▲ Schließen" : "▼ Anzeigen"}</span>
       </button>
       {open && (
         <div style={{ borderTop: "1.25px solid #D3CAB9", padding: "24px 24px 32px" }}>
@@ -1367,7 +1578,7 @@ const WieFunktioniertSection = () => {
             <b>BEG EM (BAFA)</b>: 15 % Grundförderung auf den energetisch bedingten Mehraufwand (Investition minus Sowieso-Kosten). <b>Wärmepumpe (KfW 458)</b>: bis zu 50 % (30 % Grundförderung + 20 % Klimageschwindigkeits-Bonus möglich). <b>iSFP-Bonus</b>: +5 % auf alle Maßnahmen, die im Fahrplan hinterlegt sind — das ist der Kern des iSFP-Verfahrens.
           </Sub>
           <Sub title="Beispielrechnung — EFH Nachkriegszeit 1965">
-            <pre style={{ fontFamily: "'Geist Mono', monospace", fontSize: 11.5, lineHeight: 1.7, whiteSpace: "pre-wrap", color: "#3A332B", margin: 0 }}>{`Haus: EFH 1965 · 145 m² · Heizöl · Klasse G  (PE 236 kWh/(m²·a))
+            <pre style={{ fontFamily: "'Geist Mono', monospace", fontSize: 11.5, lineHeight: 1.7, whiteSpace: "pre-wrap", color: "var(--body)", margin: 0 }}>{`Haus: EFH 1965 · 145 m² · Heizöl · Klasse G  (PE 236 kWh/(m²·a))
 IST-Heizkosten:  215 kWh/m² × 145 m² × 0,11 €/kWh (Heizöl) = 3.429 €/Jahr
 
 Fahrplan Schritt 1 — Hydraulischer Abgleich (Heute):
@@ -1383,7 +1594,7 @@ Gesamtfahrplan — alle 6 Maßnahmen:
   CO₂:  63 → 20 kg/(m²·a)  (−68 %)
   Investition 130.800 €  ·  Förderung ca. 21.000 €`}</pre>
           </Sub>
-          <div style={{ marginTop: 8, fontSize: 11.5, color: "#6B6259", fontStyle: "italic", lineHeight: 1.6 }}>
+          <div style={{ marginTop: 8, fontSize: 11.5, color: "var(--sec)", fontStyle: "italic", lineHeight: 1.6 }}>
             Alle Werte sind Richtwerte auf Basis realistischer Marktpreise und BEG-Konditionen Stand April 2026. Dieser Rechner ist ein Demonstrator und ersetzt keine zertifizierte iSFP-Beratung nach BAFA-Anforderungen.
           </div>
         </div>
@@ -1431,6 +1642,11 @@ export default function App() {
     ))
   );
   const [activeTab, setActiveTab] = useState("gebaeude");
+  const [darkMode, setDarkMode] = useState(false);
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", darkMode ? "dark" : "light");
+  }, [darkMode]);
 
   // Scroll observer für sticky tabs
   useEffect(() => {
@@ -1697,32 +1913,42 @@ export default function App() {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: "#F8F5EF", color: "#1E1A15" }}>
+    <div style={{ minHeight: "100vh", background: "var(--bg)", color: "var(--txt)" }}>
       {/* Header mit Sticky-Tabs */}
       <header className="print-hide" style={{
-        borderBottom: "1px solid #D3CAB9",
-        background: "rgba(248,245,239,0.96)",
+        borderBottom: "1px solid var(--bdr)",
+        background: darkMode ? "rgba(14,13,11,0.96)" : "rgba(248,245,239,0.96)",
         position: "sticky", top: 0, zIndex: 30,
         backdropFilter: "blur(8px)",
       }}>
         <div className="mx-auto max-w-[1400px] px-5 md:px-10" style={{ paddingTop: 14 }}>
           <div className="flex items-center justify-between gap-6 flex-wrap mb-3">
             <div className="flex items-center gap-3">
-              <div style={{ color: "#B5623E" }}><HouseIcon size={26} /></div>
+              <div style={{ color: "var(--acc)" }}><HouseIcon size={26} /></div>
               <div>
-                <div className="font-serif" style={{ fontSize: 18, fontWeight: 500, color: "#1E1A15", lineHeight: 1.1 }}>
+                <div className="font-serif" style={{ fontSize: 18, fontWeight: 500, color: "var(--txt)", lineHeight: 1.1 }}>
                   iSFP-Schnellcheck
                 </div>
               </div>
             </div>
-            <button onClick={handleExport}
-              style={{ padding: "9px 18px", background: "#1E1A15", color: "#F8F5EF",
-                       borderRadius: 3, fontSize: 13, fontWeight: 500, border: "none",
-                       cursor: "pointer", transition: "background 0.12s" }}
-              onMouseEnter={(e) => e.currentTarget.style.background = "#B5623E"}
-              onMouseLeave={(e) => e.currentTarget.style.background = "#1E1A15"}>
-              Als PDF exportieren →
-            </button>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <button
+                onClick={() => setDarkMode(d => !d)}
+                title={darkMode ? "Zum hellen Modus" : "Zum dunklen Modus"}
+                style={{ width: 34, height: 34, border: "1px solid var(--bdr)", borderRadius: 3,
+                         background: "var(--surface)", color: "var(--sec)",
+                         cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                {darkMode ? "☀" : "☾"}
+              </button>
+              <button onClick={handleExport}
+                style={{ padding: "9px 18px", background: "var(--txt)", color: "var(--bg)",
+                         borderRadius: 3, fontSize: 13, fontWeight: 500, border: "none",
+                         cursor: "pointer", transition: "background 0.12s" }}
+                onMouseEnter={(e) => e.currentTarget.style.background = "var(--acc)"}
+                onMouseLeave={(e) => e.currentTarget.style.background = "var(--txt)"}>
+                Als PDF exportieren →
+              </button>
+            </div>
           </div>
           <StickyTabs activeId={activeTab} onClick={scrollToTab} />
         </div>
@@ -1742,7 +1968,7 @@ export default function App() {
         <Section id="presets" eyebrow="Schnellstart">
           <Card style={{ padding: 20 }}>
             <div className="flex items-center justify-between gap-4 mb-5 print-hide">
-              <h2 className="font-serif leading-[1.05]" style={{ fontSize: 22, fontWeight: 500, color: "#1E1A15" }}>
+              <h2 className="font-serif leading-[1.05]" style={{ fontSize: 22, fontWeight: 500, color: "var(--txt)" }}>
                 Startpunkt wählen
               </h2>
             </div>
@@ -1796,7 +2022,7 @@ export default function App() {
               <SelectInput label="Wärmeverteilung"   value={gebaeude.waermeverteilung || OPTIONS_WAERMEVERTEILUNG[0]} onChange={v => updateGebaeude("waermeverteilung", v)} options={OPTIONS_WAERMEVERTEILUNG}
                 tooltip="Bestimmt Vorlauftemperatur und empfohlene WP-Betriebsart (Monovalent / Monoenergetic / Bivalent)." />
               <div style={{ marginTop: 14 }}>
-                <div style={{ fontSize: 11, color: "#6B6259", marginBottom: 6, fontFamily: "'Geist Mono', monospace", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+                <div style={{ fontSize: 11, color: "var(--sec)", marginBottom: 6, fontFamily: "'Geist Mono', monospace", textTransform: "uppercase", letterSpacing: "0.1em" }}>
                   Sanierungsstand Hülle
                   
                 </div>
@@ -1813,7 +2039,7 @@ export default function App() {
                           options={SANIERUNGSSTAND_OPTIONS}
                           tooltip={SANIERUNGSSTAND_BAUTEIL_TOOLTIPS[id]}
                         />
-                        {selNote && <div style={{ fontSize: 10, color: "#9B8E82", paddingLeft: 12, marginTop: 3, marginBottom: 6 }}>{selNote}</div>}
+                        {selNote && <div style={{ fontSize: 10, color: "var(--sec)", paddingLeft: 12, marginTop: 3, marginBottom: 6 }}>{selNote}</div>}
                       </div>
                     );
                   })}
@@ -1828,11 +2054,11 @@ export default function App() {
               <NumberInput label="Primärenergie"    value={ist.primaerenergie} onChange={v => updateIst("primaerenergie", v)} unit="kWh/(m²·a)" min={0} max={700}
                 tooltip="Berücksichtigt die 'Vorkette' (Energieträger-Gewinnung, Transport). Basis für die Effizienzklasse nach GEG §86." />
               <NumberInput label="CO₂-Emissionen"   value={ist.co2}            onChange={v => updateIst("co2", v)} unit="kg/(m²·a)" min={0} max={200} step={0.1} />
-              <div className="flex items-center justify-between gap-3" style={{ padding: "9px 0", borderBottom: "1px solid #E2DBD0", minHeight: 38 }}>
+              <div className="flex items-center justify-between gap-3" style={{ padding: "9px 0", borderBottom: "1px solid var(--div)", minHeight: 38 }}>
                 <span className="flex items-center gap-1.5" style={labelStyle}>
                   Effizienzklasse
-                  <span style={{ color: "#B5623E" }} title="Automatisch berechnet"><SparkleIcon size={11} /></span>
-                  <Tooltip content="Nach iSFP-Bewertungsschema aus Primärenergie (nicht Endenergie!)."><span style={{ color: "#B5623E" }}><InfoIcon /></span></Tooltip>
+                  <span style={{ color: "var(--acc)" }} title="Automatisch berechnet"><SparkleIcon size={11} /></span>
+                  <Tooltip content="Nach iSFP-Bewertungsschema aus Primärenergie (nicht Endenergie!)."><span style={{ color: "var(--acc)" }}><InfoIcon /></span></Tooltip>
                 </span>
                 <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", background: EFFIZIENZ_FARBEN[effizienzklasse] || "#6B6259", color: ["C","D","E"].includes(effizienzklasse) ? "#1E1A15" : "#FFF", borderRadius: 3, fontSize: 15, fontWeight: 600, width: 34, height: 28, fontFamily: "'Fraunces', serif" }}>{effizienzklasse}</span>
               </div>
@@ -1846,9 +2072,9 @@ export default function App() {
         <Section id="bauteile" eyebrow="Energetischer Zustand" title="Bauteilbewertung"
           subtitle="Noten 1 (rot, sehr schlecht) bis 7 (grün, sehr gut) — pro Bauteil mit benannten Stufen. Defaults werden aus Baujahr und Anlagentechnik abgeleitet, sind aber manuell anpassbar.">
           <div className="flex items-center gap-3 mb-6">
-            <span className="text-[11px]" style={{ color: "#6B6259", fontFamily: "'Geist Mono', monospace", letterSpacing: "0.15em", textTransform: "uppercase" }}>sehr schlecht</span>
+            <span className="text-[11px]" style={{ color: "var(--sec)", fontFamily: "'Geist Mono', monospace", letterSpacing: "0.15em", textTransform: "uppercase" }}>sehr schlecht</span>
             <div style={{ flex: 1, height: 6, borderRadius: 100, background: "linear-gradient(to right, #E30613, #E3501C, #F07D00, #F6A400, #C5D62E, #34A030, #00843D)" }} />
-            <span className="text-[11px]" style={{ color: "#6B6259", fontFamily: "'Geist Mono', monospace", letterSpacing: "0.15em", textTransform: "uppercase" }}>sehr gut</span>
+            <span className="text-[11px]" style={{ color: "var(--sec)", fontFamily: "'Geist Mono', monospace", letterSpacing: "0.15em", textTransform: "uppercase" }}>sehr gut</span>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {bauteile.map(b => <BauteilKachel key={b.id} bauteil={b} onNoteChange={updateBauteilNote} />)}
@@ -1866,8 +2092,8 @@ export default function App() {
                 <div className="absolute" style={{ left: lineOffset, right: lineOffset, top: 24, height: 2, background: "linear-gradient(to right, #E30613, #F07D00, #7C3AED, #F6D400, #00843D, #2563EB)", pointerEvents: "none" }} />
                 <div className="flex flex-col items-center gap-1.5 relative">
                   <div style={{ width: 46, height: 50, background: EFFIZIENZ_FARBEN[effizienzklasse] || "#6B6259", borderRadius: 3, border: "1.5px solid #1E1A15", display: "flex", alignItems: "center", justifyContent: "center" }}><span className="font-serif text-[16px]" style={{ color: ["C","D","E"].includes(effizienzklasse) ? "#1E1A15" : "#FFF" }}>{effizienzklasse}</span></div>
-                  <div className="text-[9px] tracking-[0.18em] uppercase text-center" style={{ color: "#6B6259", fontFamily: "'Geist Mono', monospace" }}>Heute</div>
-                  <div className="text-[10px]" style={{ color: "#3A332B" }}>Kl. {effizienzklasse}</div>
+                  <div className="text-[9px] tracking-[0.18em] uppercase text-center" style={{ color: "var(--sec)", fontFamily: "'Geist Mono', monospace" }}>Heute</div>
+                  <div className="text-[10px]" style={{ color: "var(--body)" }}>Kl. {effizienzklasse}</div>
                 </div>
                 {dynamicPakete.map(p => (
                   <div key={p.id} className="flex flex-col items-center gap-1.5 relative" style={{ opacity: aktivePakete.includes(p.id) ? 1 : 0.3 }}>
@@ -1876,15 +2102,15 @@ export default function App() {
                       title={`Zu Paket ${p.nummer}: ${p.titel} springen`}>
                       <PaketHaus farbe={p.farbe} aktiv={aktivePakete.includes(p.id)} nummer={p.nummer} size={48} />
                     </button>
-                    <div className="text-[10px] text-center leading-tight px-0.5" style={{ color: "#3A332B", maxWidth: "100%" }}>{p.titel}</div>
+                    <div className="text-[10px] text-center leading-tight px-0.5" style={{ color: "var(--body)", maxWidth: "100%" }}>{p.titel}</div>
                   </div>
                 ))}
                 <div className="flex flex-col items-center gap-1.5 relative">
                   <div style={{ width: 46, height: 50, background: EFFIZIENZ_FARBEN[k.effizienzklasse] || "#00843D", borderRadius: 3, border: "1.5px solid #1E1A15", display: "flex", alignItems: "center", justifyContent: "center" }}>
                     <span className="font-serif text-[16px]" style={{ color: ["B","C","D"].includes(k.effizienzklasse) ? "#1E1A15" : "#FFF" }}>{k.effizienzklasse}</span>
                   </div>
-                  <div className="text-[9px] tracking-[0.18em] uppercase text-center" style={{ color: "#6B6259", fontFamily: "'Geist Mono', monospace" }}>Ziel</div>
-                  <div className="text-[10px]" style={{ color: "#3A332B" }}>Kl. {k.effizienzklasse}</div>
+                  <div className="text-[9px] tracking-[0.18em] uppercase text-center" style={{ color: "var(--sec)", fontFamily: "'Geist Mono', monospace" }}>Ziel</div>
+                  <div className="text-[10px]" style={{ color: "var(--body)" }}>Kl. {k.effizienzklasse}</div>
                 </div>
               </div>
             );
@@ -1904,8 +2130,6 @@ export default function App() {
                 onWpVarianteChange={setWpVariante} />
             ))}
           </div>
-
-          <EnergieVerlaufChart ist={ist} kumuliert={kumuliert} />
         </Section>
 
         {/* Ergebnis section — inside left column so sidebar stays visible throughout */}
@@ -1915,7 +2139,7 @@ export default function App() {
           <div className="hidden print:block">
             <VorherNachher ist={ist} k={k} heizkostenIst={heizkosten} gebaeude={gebaeude} />
             <div className="mt-10">
-              <h3 className="font-serif mb-4" style={{ fontSize: 22, fontWeight: 500, color: "#1E1A15" }}>Einsparungen im Überblick</h3>
+              <h3 className="font-serif mb-4" style={{ fontSize: 22, fontWeight: 500, color: "var(--txt)" }}>Einsparungen im Überblick</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                 <DeltaKPI label="Endenergie" vorher={ist.endenergie} nachher={k.endenergie} unit="kWh/(m²·a)" />
                 <DeltaKPI label="CO₂-Emissionen" vorher={ist.co2} nachher={k.co2} unit="kg/(m²·a)" />
@@ -1925,87 +2149,46 @@ export default function App() {
           </div>
 
           <div className="mt-10">
-            <h3 className="font-serif mb-4" style={{ fontSize: 22, fontWeight: 500, color: "#1E1A15" }}>Schritt-für-Schritt-Wirkung</h3>
-            <KumuliertTabelle kumuliert={kumuliert} ist={ist} heizkostenIst={heizkosten} />
+            <h3 className="font-serif mb-4" style={{ fontSize: 22, fontWeight: 500, color: "var(--txt)" }}>Schritt-für-Schritt-Wirkung</h3>
+            <EekArrowScale
+              istKlasse={effizienzklasse}
+              zielKlasse={k.effizienzklasse}
+              istPe={`${ist.primaerenergie} kWh`}
+              zielPe={`${k.primaerenergie} kWh`}
+            />
+            <MergedTable kumuliert={kumuliert} ist={ist} />
           </div>
 
-          <div className="mt-10">
-            <h3 className="font-serif mb-4" style={{ fontSize: 22, fontWeight: 500, color: "#1E1A15" }}>Investition & Förderung</h3>
-            <div className="grid grid-cols-1 md:grid-cols-[1.2fr,1fr] gap-6">
-              <div style={{ background: "#FFFFFF", border: "1.25px solid #D3CAB9", borderRadius: 3, padding: "24px 28px" }}>
-                <div className="text-[11px] tracking-[0.22em] uppercase mb-4" style={{ color: "#B5623E", fontFamily: "'Geist Mono', monospace" }}>Aufteilung nach Paketen</div>
-                <table className="w-full text-[13.5px]" style={{ fontVariantNumeric: "tabular-nums" }}>
-                  <thead>
-                    <tr style={{ borderBottom: "1.25px solid #1E1A15" }}>
-                      <th className="text-left py-2.5 font-medium">Paket</th>
-                      <th className="text-right py-2.5 font-medium">Invest</th>
-                      <th className="text-right py-2.5 font-medium">Förderung</th>
-                      <th className="text-right py-2.5 font-medium">Eigenanteil</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {dynamicPakete.map(p => {
-                      const active = aktivePakete.includes(p.id);
-                      const invest = active ? p.massnahmen.reduce((s, m) => s + m.investition, 0) : 0;
-                      const foerd = active ? p.massnahmen.reduce((s, m) => {
-                        const netto = m.investition - (m.ohnehin_anteil ?? 0);
-                        const quote = m.foerderquote > 0 ? Math.min(m.foerderquote + BEG_BONUS.isfp_bonus, 0.5) : 0;
-                        return s + netto * quote;
-                      }, 0) : 0;
-                      return (
-                        <tr key={p.id} style={{ borderBottom: "1px solid #E2DBD0", opacity: active ? 1 : 0.4 }}>
-                          <td className="py-3">
-                            <div className="flex items-center gap-2.5">
-                              <span style={{ width: 10, height: 10, borderRadius: 100, background: PAKET_FARBEN[p.farbe].bg, display: "inline-block" }} />
-                              <span>{p.titel}</span>
-                            </div>
-                          </td>
-                          <td className="text-right py-3" style={{ fontFamily: "'Geist Mono', monospace" }}>{active ? fmtEur(invest) : "—"}</td>
-                          <td className="text-right py-3" style={{ fontFamily: "'Geist Mono', monospace", color: active && foerd > 0 ? "#00843D" : "#6B6259" }}>
-                            {active ? (foerd > 0 ? `−${fmtEur(foerd)}` : "0 €") : "—"}
-                          </td>
-                          <td className="text-right py-3" style={{ fontFamily: "'Geist Mono', monospace" }}>{active ? fmtEur(invest - foerd) : "—"}</td>
-                        </tr>
-                      );
-                    })}
-                    <tr style={{ borderTop: "1.5px solid #1E1A15" }}>
-                      <td className="py-3 font-medium">Gesamt</td>
-                      <td className="text-right py-3 font-medium" style={{ fontFamily: "'Geist Mono', monospace" }}>{fmtEur(k.invest_gesamt)}</td>
-                      <td className="text-right py-3 font-medium" style={{ fontFamily: "'Geist Mono', monospace", color: "#00843D" }}>−{fmtEur(k.foerderung_gesamt)}</td>
-                      <td className="text-right py-3 font-medium" style={{ fontFamily: "'Geist Mono', monospace" }}>{fmtEur(k.eigenanteil)}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+          <EnergieVerlaufChart ist={ist} kumuliert={kumuliert} />
 
-              <div style={{ background: "#F1EDE4", border: "1.25px solid #D3CAB9", borderRadius: 3, padding: "20px 24px" }}>
-                <div className="text-[11px] tracking-[0.22em] uppercase mb-3" style={{ color: "#B5623E", fontFamily: "'Geist Mono', monospace" }}>Förderannahmen dieser Demo</div>
-                <div className="text-[12px] leading-relaxed mb-4" style={{ color: "#6B6259" }}>
-                  Diese Vorabschätzung nutzt vereinfachte Förderannahmen je Maßnahmentyp. Die konkrete Förderung wird in der Maßnahmenübersicht und Kostenaufstellung je Paket berücksichtigt.
-                </div>
-                <div className="space-y-2 mb-4">
-                  {[
-                    ["Gebäudehülle · Fenster · Optimierung", "BEG EM + iSFP-Bonus (Demo-Logik)"],
-                    ["Heizungstausch · Wärmepumpe", "vereinfachte KfW-/BEG-Annahme"],
-                    ["PV · Eigenstrom", "kein Direktzuschuss in dieser Demo"],
-                  ].map(([cat, note], i) => (
-                    <div key={i} style={{ paddingBottom: 8, borderBottom: "1px solid #D3CAB9" }}>
-                      <div style={{ fontSize: 11.5, fontWeight: 500, color: "#1E1A15", marginBottom: 1 }}>{cat}</div>
-                      <div style={{ fontSize: 11, color: "#6B6259", fontFamily: "'Geist Mono', monospace" }}>{note}</div>
-                    </div>
-                  ))}
-                </div>
-                <div className="flex items-baseline justify-between gap-3 mb-3">
-                  <span style={{ fontSize: 12, fontWeight: 500, color: "#1E1A15" }}>Förderanteil (von Gesamtinvestition)</span>
-                  <span style={{ fontSize: 20, fontFamily: "'Fraunces', serif", color: "#00843D", fontVariantNumeric: "tabular-nums" }}>
-                    {k.invest_gesamt > 0
-                      ? `${Math.round(k.foerderung_gesamt / k.invest_gesamt * 100)} %`
-                      : "—"}
-                  </span>
-                </div>
-                <div style={{ fontSize: 10.5, color: "#9B8E82", lineHeight: 1.5 }}>
-                  Keine Förderzusage. Förderdeckel, Eigentümerstatus, Bonuskombinationen, technische Mindestanforderungen und Antragspflichten müssen im echten Prozess geprüft werden.
-                </div>
+          <div className="mt-10">
+            <div style={{ background: "var(--surface2)", border: "1.25px solid var(--bdr)", borderRadius: 3, padding: "20px 24px" }}>
+              <div className="text-[11px] tracking-[0.22em] uppercase mb-3" style={{ color: "var(--acc)", fontFamily: "'Geist Mono', monospace" }}>Förderannahmen dieser Demo</div>
+              <div className="text-[12px] leading-relaxed mb-4" style={{ color: "var(--sec)" }}>
+                Diese Vorabschätzung nutzt vereinfachte Förderannahmen je Maßnahmentyp. Die konkrete Förderung wird in der Maßnahmenübersicht und Kostenaufstellung je Paket berücksichtigt.
+              </div>
+              <div className="space-y-2 mb-4">
+                {[
+                  ["Gebäudehülle · Fenster · Optimierung", "BEG EM + iSFP-Bonus (Demo-Logik)"],
+                  ["Heizungstausch · Wärmepumpe", "vereinfachte KfW-/BEG-Annahme"],
+                  ["PV · Eigenstrom", "kein Direktzuschuss in dieser Demo"],
+                ].map(([cat, note], i) => (
+                  <div key={i} style={{ paddingBottom: 8, borderBottom: "1px solid var(--bdr)" }}>
+                    <div style={{ fontSize: 11.5, fontWeight: 500, color: "var(--txt)", marginBottom: 1 }}>{cat}</div>
+                    <div style={{ fontSize: 11, color: "var(--sec)", fontFamily: "'Geist Mono', monospace" }}>{note}</div>
+                  </div>
+                ))}
+              </div>
+              <div className="flex items-baseline justify-between gap-3 mb-3">
+                <span style={{ fontSize: 12, fontWeight: 500, color: "var(--txt)" }}>Förderanteil (von Gesamtinvestition)</span>
+                <span style={{ fontSize: 20, fontFamily: "'Fraunces', serif", color: "var(--pos)", fontVariantNumeric: "tabular-nums" }}>
+                  {k.invest_gesamt > 0
+                    ? `${Math.round(k.foerderung_gesamt / k.invest_gesamt * 100)} %`
+                    : "—"}
+                </span>
+              </div>
+              <div style={{ fontSize: 10.5, color: "var(--sec)", lineHeight: 1.5 }}>
+                Keine Förderzusage. Förderdeckel, Eigentümerstatus, Bonuskombinationen, technische Mindestanforderungen und Antragspflichten müssen im echten Prozess geprüft werden.
               </div>
             </div>
           </div>
@@ -2021,71 +2204,76 @@ export default function App() {
         <aside className="hidden lg:block print:hidden lg:sticky lg:top-[92px] lg:max-h-[calc(100vh-110px)] lg:overflow-y-auto"
                style={{ scrollbarWidth: "thin", paddingBottom: 24 }}>
           <div className="text-[9.5px] tracking-[0.18em] uppercase mb-3"
-               style={{ color: "#B5623E", fontFamily: "'Geist Mono', monospace" }}>Ergebnis · Live</div>
+               style={{ color: "var(--acc)", fontFamily: "'Geist Mono', monospace" }}>Ergebnis · Live</div>
 
           {/* EEK comparison */}
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-            <div style={{ flex: 1, background: "#FFFFFF", border: "1.25px solid #D3CAB9", borderRadius: 3,
+            <div style={{ flex: 1, background: "var(--surface)", border: "1.25px solid var(--bdr)", borderRadius: 3,
                           padding: "8px 10px", textAlign: "center" }}>
-              <div style={{ fontSize: 9, letterSpacing: "0.2em", color: "#6B6259",
+              <div style={{ fontSize: 9, letterSpacing: "0.2em", color: "var(--sec)",
                             fontFamily: "'Geist Mono', monospace", textTransform: "uppercase", marginBottom: 6 }}>Heute</div>
               <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center",
                             width: 36, height: 36, background: EFFIZIENZ_FARBEN[effizienzklasse] || "#6B6259",
                             borderRadius: 3, fontSize: 18, fontWeight: 600, fontFamily: "'Fraunces', serif",
                             color: ["C","D","E"].includes(effizienzklasse) ? "#1E1A15" : "#FFF" }}>{effizienzklasse}</div>
             </div>
-            <span style={{ fontSize: 22, color: "#B5623E", flexShrink: 0 }}>→</span>
+            <span style={{ fontSize: 22, color: "var(--acc)", flexShrink: 0 }}>→</span>
             <div style={{ flex: 1, background: EFFIZIENZ_FARBEN[k.effizienzklasse] || "#00843D",
                           border: "1.25px solid #1E1A15", borderRadius: 3, padding: "8px 10px", textAlign: "center" }}>
               <div style={{ fontSize: 9, letterSpacing: "0.2em", fontFamily: "'Geist Mono', monospace",
                             textTransform: "uppercase", marginBottom: 6,
                             color: ["B","C","D"].includes(k.effizienzklasse) ? "rgba(30,26,21,0.6)" : "rgba(248,245,239,0.7)" }}>Ziel</div>
               <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center",
-                            width: 36, height: 36, background: "#F8F5EF",
+                            width: 36, height: 36, background: "var(--bg)",
                             borderRadius: 3, fontSize: 18, fontWeight: 600, fontFamily: "'Fraunces', serif",
                             color: EFFIZIENZ_FARBEN[k.effizienzklasse] || "#00843D" }}>{k.effizienzklasse}</div>
             </div>
           </div>
 
-          {/* Metrics with mini bar charts */}
-          <div style={{ background: "#FFFFFF", border: "1.25px solid #D3CAB9", borderRadius: 3,
-                        padding: "8px 12px", marginBottom: 10 }}>
+          {/* KPI Scorecards 2×2 */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginBottom: 10 }}>
             {[
-              { label: "Primärenergie", istVal: ist.primaerenergie, zielVal: k.primaerenergie, unit: "kWh/(m²·a)" },
-              { label: "Endenergie",    istVal: ist.endenergie,     zielVal: k.endenergie,     unit: "kWh/(m²·a)" },
-              { label: "CO₂",          istVal: ist.co2,            zielVal: k.co2,            unit: "kg/(m²·a)"  },
-              { label: "Heizkosten",   istVal: heizkosten,          zielVal: k.heizkosten_gesamt, unit: "€/a"    },
-            ].map(({ label, istVal, zielVal, unit }, i, arr) => {
+              { label: "Primärenergie", istVal: ist.primaerenergie, zielVal: k.primaerenergie, unit: "kWh/(m²·a)", posColor: "var(--pos)" },
+              { label: "Endenergie",    istVal: ist.endenergie,     zielVal: k.endenergie,     unit: "kWh/(m²·a)", posColor: "var(--pos)" },
+              { label: "CO₂",          istVal: ist.co2,            zielVal: k.co2,            unit: "kg/(m²·a)",  posColor: "var(--pos)" },
+              { label: "Heizkosten",   istVal: heizkosten,          zielVal: k.heizkosten_gesamt, unit: "€/a",    posColor: "var(--gold)" },
+            ].map(({ label, istVal, zielVal, unit, posColor }) => {
               const pct = istVal > 0 ? Math.round(Math.abs(zielVal - istVal) / istVal * 100) : 0;
               const down = zielVal < istVal;
               const fill = istVal > 0 ? Math.round(Math.min(zielVal / istVal, 1) * 100) : 0;
               const fmtV = n => unit === "€/a" ? fmtEur(n) : new Intl.NumberFormat("de-DE").format(Math.round(n));
+              const barColor = down ? posColor : "var(--neg)";
               return (
-                <div key={label} style={{ padding: "5px 0", borderBottom: i < arr.length - 1 ? "1px solid #E2DBD0" : "none" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 2 }}>
-                    <span style={{ fontSize: 11, color: "#6B6259" }}>{label}</span>
-                    <span style={{ fontSize: 11, fontFamily: "'Geist Mono', monospace", color: down ? "#00843D" : "#B5623E", fontWeight: 600 }}>{down ? "−" : "+"}{pct} %</span>
+                <div key={label} style={{ background: "var(--surface)", border: "1.25px solid var(--bdr)",
+                                          borderRadius: 3, padding: "10px 11px" }}>
+                  <div style={{ fontSize: 8, fontFamily: "'Geist Mono', monospace", letterSpacing: "0.14em",
+                                textTransform: "uppercase", color: "var(--sec)", marginBottom: 3 }}>{label}</div>
+                  <div style={{ fontSize: 19, fontWeight: 600, fontFamily: "'Geist Mono', monospace",
+                                color: down ? posColor : "var(--neg)", marginBottom: 4, lineHeight: 1 }}>
+                    {down ? "−" : "+"}{pct}%
                   </div>
-                  <div style={{ height: 6, background: "#E2DBD0", borderRadius: 2, overflow: "hidden", marginBottom: 2 }}>
-                    <div style={{ height: "100%", width: `${fill}%`, background: EFFIZIENZ_FARBEN[k.effizienzklasse] || "#00843D", borderRadius: 2, transition: "width 0.3s" }} />
+                  <div style={{ height: 4, background: "var(--div)", borderRadius: 2, overflow: "hidden", marginBottom: 4 }}>
+                    <div style={{ height: "100%", width: `${fill}%`, background: barColor, borderRadius: 2, transition: "width 0.3s" }} />
                   </div>
-                  <div style={{ fontSize: 10, color: "#8B7B6E", fontFamily: "'Geist Mono', monospace" }}>{fmtV(istVal)} → {fmtV(zielVal)} {unit}</div>
+                  <div style={{ fontSize: 8.5, fontFamily: "'Geist Mono', monospace", color: "var(--sec)", lineHeight: 1.3 }}>
+                    {fmtV(istVal)} → {fmtV(zielVal)} {unit}
+                  </div>
                 </div>
               );
             })}
           </div>
 
           {/* Paket-Übersicht */}
-          <div style={{ background: "#FFFFFF", border: "1.25px solid #D3CAB9", borderRadius: 3, padding: "10px 12px", marginBottom: 10 }}>
-            <div className="text-[10.5px] tracking-[0.18em] uppercase mb-2" style={{ color: "#B5623E", fontFamily: "'Geist Mono', monospace" }}>Paket-Übersicht</div>
+          <div style={{ background: "var(--surface)", border: "1.25px solid var(--bdr)", borderRadius: 3, padding: "10px 12px", marginBottom: 10 }}>
+            <div className="text-[10.5px] tracking-[0.18em] uppercase mb-2" style={{ color: "var(--acc)", fontFamily: "'Geist Mono', monospace" }}>Paket-Übersicht</div>
             {reportSummaryPackages.length === 0 ? (
-              <div style={{ fontSize: 12, color: "#6B6259" }}>Noch keine Maßnahmen aktiv.</div>
+              <div style={{ fontSize: 12, color: "var(--sec)" }}>Noch keine Maßnahmen aktiv.</div>
             ) : reportSummaryPackages.map((pkg, idx) => (
               <div key={pkg.id} style={{ padding: "8px 0", borderBottom: idx < reportSummaryPackages.length - 1 ? "1px solid #E2DBD0" : "none" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 4 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                     <span style={{ width: 10, height: 10, borderRadius: "50%", background: PAKET_FARBEN[pkg.farbe]?.bg || "#6B6259", display: "inline-block", flexShrink: 0 }} />
-                    <span style={{ fontSize: 12.5, color: "#1E1A15", fontWeight: 500 }}>Paket {pkg.nummer} · {pkg.titel}</span>
+                    <span style={{ fontSize: 12.5, color: "var(--txt)", fontWeight: 500 }}>Paket {pkg.nummer} · {pkg.titel}</span>
                   </div>
                   <span style={{ fontSize: 10.5, fontFamily: "'Geist Mono', monospace", flexShrink: 0 }}>{fmtEur(pkg.kosten)}</span>
                 </div>
@@ -2101,18 +2289,18 @@ export default function App() {
                       <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 5, minHeight: 22, marginBottom: 1 }}>
                         <span
                           onClick={() => scrollToTab(`paket-${pkg.id}`)}
-                          style={{ fontSize: 11, color: "#3A332B", cursor: "pointer", flex: 1 }}
+                          style={{ fontSize: 11, color: "var(--body)", cursor: "pointer", flex: 1 }}
                           onMouseEnter={e => e.currentTarget.style.textDecoration = "underline"}
                           onMouseLeave={e => e.currentTarget.style.textDecoration = "none"}
                         >{m.kurztitel}</span>
                         {istEmpf && (
                           <Tooltip content={<span><b>Warum empfohlen:</b><br />{warum.grund}</span>}>
-                            <span style={{ fontSize: 9, padding: "1px 4px", borderRadius: 2, background: "#F6D400", color: "#1E1A15", fontFamily: "'Geist Mono', monospace", fontWeight: 600, flexShrink: 0 }}>★</span>
+                            <span style={{ fontSize: 9, padding: "1px 4px", borderRadius: 2, background: "#F6D400", color: "var(--txt)", fontFamily: "'Geist Mono', monospace", fontWeight: 600, flexShrink: 0 }}>★</span>
                           </Tooltip>
                         )}
                         {istNichtEmpf && (
                           <Tooltip content={<span><b>Wirtschaftlichkeit gering:</b><br />{warum.jetzt}</span>}>
-                            <span style={{ fontSize: 9, padding: "1px 4px", borderRadius: 2, background: "#E2DBD0", color: "#6B6259", fontFamily: "'Geist Mono', monospace", fontWeight: 600, flexShrink: 0 }}>✕</span>
+                            <span style={{ fontSize: 9, padding: "1px 4px", borderRadius: 2, background: "var(--div)", color: "var(--sec)", fontFamily: "'Geist Mono', monospace", fontWeight: 600, flexShrink: 0 }}>✕</span>
                           </Tooltip>
                         )}
                       </div>
@@ -2124,18 +2312,18 @@ export default function App() {
           </div>
 
           {/* Investment summary */}
-          <div style={{ background: "#F8F5EF", border: "1px solid #D3CAB9",
+          <div style={{ background: "var(--bg)", border: "1px solid var(--bdr)",
                         borderRadius: 3, padding: "10px 12px", fontSize: 12 }}>
-            <div className="flex justify-between mb-1.5" style={{ color: "#3A332B" }}>
+            <div className="flex justify-between mb-1.5" style={{ color: "var(--body)" }}>
               <span>Investition</span>
               <span style={{ fontFamily: "'Geist Mono', monospace" }}>{fmtEur(k.invest_gesamt)}</span>
             </div>
-            <div className="flex justify-between mb-1.5" style={{ color: "#00843D" }}>
+            <div className="flex justify-between mb-1.5" style={{ color: "var(--pos)" }}>
               <span>Förderung</span>
               <span style={{ fontFamily: "'Geist Mono', monospace" }}>−{fmtEur(k.foerderung_gesamt)}</span>
             </div>
             <div className="flex justify-between font-medium"
-                 style={{ color: "#1E1A15", marginTop: 4, paddingTop: 6, borderTop: "1px solid #D3CAB9" }}>
+                 style={{ color: "var(--txt)", marginTop: 4, paddingTop: 6, borderTop: "1px solid var(--bdr)" }}>
               <span>Eigenanteil</span>
               <span style={{ fontFamily: "'Geist Mono', monospace" }}>{fmtEur(k.eigenanteil)}</span>
             </div>
@@ -2162,16 +2350,16 @@ export default function App() {
         aktiveMassnahmen={aktiveMassnahmen}
       />
 
-      <footer className="print-hide px-5 md:px-10" style={{ borderTop: "1px solid #D3CAB9", paddingTop: 32, paddingBottom: 32, marginTop: 40 }}>
+      <footer className="print-hide px-5 md:px-10" style={{ borderTop: "1px solid var(--bdr)", paddingTop: 32, paddingBottom: 32, marginTop: 40 }}>
         <div className="mx-auto max-w-[1400px] flex items-center justify-between flex-wrap gap-4 text-[11.5px]"
-             style={{ color: "#6B6259", fontFamily: "'Geist Mono', monospace", letterSpacing: "0.05em" }}>
+             style={{ color: "var(--sec)", fontFamily: "'Geist Mono', monospace", letterSpacing: "0.05em" }}>
           <span>Demonstrator · keine rechtsverbindliche Energieberatung</span>
           <span>Stand April 2026 · BEG + GEG · TABULA-Baseline</span>
         </div>
       </footer>
 
       {/* Print-Footer */}
-      <div className="print-only" style={{ padding: "24px 40px", borderTop: "1px solid #D3CAB9", fontSize: 10, color: "#6B6259", fontFamily: "'Geist Mono', monospace", textAlign: "center" }}>
+      <div className="print-only" style={{ padding: "24px 40px", borderTop: "1px solid var(--bdr)", fontSize: 10, color: "var(--sec)", fontFamily: "'Geist Mono', monospace", textAlign: "center" }}>
         Demonstrator — kein BAFA-iSFP. Stand April 2026.
       </div>
     </div>
