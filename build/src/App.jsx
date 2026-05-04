@@ -273,27 +273,50 @@ const MobileResultsDrawer = ({ effizienzklasse, k, ist, heizkosten, aktiveEmpfoh
 
 // ═══ TOOLTIP ═══════════════════════════════════════════════════════════
 const Tooltip = ({ content, children, align = "center" }) => {
-  const [show, setShow] = useState(false);
+  const triggerRef = useRef(null);
+  const [pos, setPos] = useState(null);
+
+  const open = () => {
+    if (!triggerRef.current) return;
+    const r = triggerRef.current.getBoundingClientRect();
+    setPos({ cx: r.left + r.width / 2, top: r.top });
+  };
+  const close = () => setPos(null);
+
+  let left = null;
+  let caretLeft = 140;
+  if (pos) {
+    const raw = align === "right" ? pos.cx - 280 : align === "left" ? pos.cx : pos.cx - 140;
+    left = Math.max(8, Math.min(raw, (typeof window !== "undefined" ? window.innerWidth : 800) - 296));
+    caretLeft = Math.max(10, Math.min(pos.cx - left, 270));
+  }
+
   return (
-    <span style={{ position: "relative", display: "inline-flex", alignItems: "center", cursor: "help" }}
-      onMouseEnter={() => setShow(true)} onMouseLeave={() => setShow(false)}
-      onClick={() => setShow(s => !s)}>
+    <span ref={triggerRef}
+      style={{ position: "relative", display: "inline-flex", alignItems: "center", cursor: "help" }}
+      onMouseEnter={open} onMouseLeave={close}
+      onClick={() => pos ? close() : open()}>
       {children}
-      {show && (
+      {pos && (
         <span style={{
-          position: "absolute", bottom: "calc(100% + 8px)", left: "50%",
-          transform: align === "right" ? "translateX(-100%)" : (align === "left" ? "translateX(0)" : "translateX(-50%)"), zIndex: 100,
+          position: "fixed",
+          top: pos.top - 8,
+          left,
+          transform: "translateY(-100%)",
+          zIndex: 9999,
           background: "#1E1A15", color: "#F8F5EF",
           padding: "10px 14px", borderRadius: 3, fontSize: 12,
           lineHeight: 1.5, width: 280, textAlign: "left",
           boxShadow: "0 4px 18px rgba(30,26,21,0.25)", fontWeight: 400,
-          pointerEvents: "none", maxWidth: "min(92vw, 320px)",
+          pointerEvents: "none",
         }}>
           {content}
-          <span style={{ position: "absolute", top: "100%", left: "50%",
+          <span style={{
+            position: "absolute", top: "100%", left: caretLeft,
             transform: "translateX(-50%)", width: 0, height: 0,
             borderLeft: "6px solid transparent", borderRight: "6px solid transparent",
-            borderTop: "6px solid #1E1A15" }} />
+            borderTop: "6px solid #1E1A15",
+          }} />
         </span>
       )}
     </span>
@@ -651,7 +674,7 @@ function getWarum(measureId, ctx) {
         ? "Wände teilgedämmt — Aufdopplung lohnt nur bei sowieso fälliger Putzerneuerung."
         : "Fassade bereits gut gedämmt — Dämmung lohnt energetisch kaum.";
       const jetzt = nichtEmpfohlen
-        ? "Ihr €/kWh-Score liegt deutlich über dem Median — andere Maßnahmen sind effizienter."
+        ? "Ihr €/kWh-Score liegt über 20 €/kWh — andere Maßnahmen bringen mehr Einsparung je investiertem Euro."
         : "Idealerweise gemeinsam mit fälliger Putzerneuerung umsetzen — Gerüstkosten bereits eingerechnet.";
       return { grund, jetzt };
     }
@@ -763,7 +786,7 @@ const PaketBlock = ({ paket, aktiv, onToggle, onToggleMassnahme = () => {}, akti
                   </span>
                 )}
                 {empfohleneMassnahmen.includes(massnahme.id) && (
-                  <span className="print-hide" title="Kosten-Nutzen deutlich besser als Durchschnitt (< 75 % des Medianwerts in €/kWh Primärenergie)" style={{ background: "#F6D400", color: "#1E1A15", padding: "1px 8px", borderRadius: 100, fontSize: 10, fontFamily: "'Geist Mono', monospace", fontWeight: 600, letterSpacing: "0.06em", flexShrink: 0, cursor: "help" }}>
+                  <span className="print-hide" title="Score unter 10,5 €/kWh Primärenergie — wirtschaftlich besonders empfehlenswert für diese Gebäudesituation." style={{ background: "#F6D400", color: "#1E1A15", padding: "1px 8px", borderRadius: 100, fontSize: 10, fontFamily: "'Geist Mono', monospace", fontWeight: 600, letterSpacing: "0.06em", flexShrink: 0, cursor: "help" }}>
                     ★ Empfohlen
                   </span>
                 )}
@@ -773,7 +796,7 @@ const PaketBlock = ({ paket, aktiv, onToggle, onToggleMassnahme = () => {}, akti
                   </span>
                 )}
                 {nichtEmpfohleneMassnahmen.includes(massnahme.id) && !empfohleneMassnahmen.includes(massnahme.id) && (
-                  <span className="print-hide" title="Kosten-Nutzen deutlich schlechter als Durchschnitt (> 2× Medianwert in €/kWh Primärenergie)" style={{ background: "#E2DBD0", color: "#6B6259", padding: "1px 8px", borderRadius: 100, fontSize: 10, fontFamily: "'Geist Mono', monospace", fontWeight: 600, letterSpacing: "0.06em", flexShrink: 0, cursor: "help" }}>
+                  <span className="print-hide" title="Score über 20 €/kWh Primärenergie oder kein messbarer PE-Effekt — andere Maßnahmen deutlich effizienter." style={{ background: "#E2DBD0", color: "#6B6259", padding: "1px 8px", borderRadius: 100, fontSize: 10, fontFamily: "'Geist Mono', monospace", fontWeight: 600, letterSpacing: "0.06em", flexShrink: 0, cursor: "help" }}>
                     ✕ Nicht empfohlen
                   </span>
                 )}
@@ -1312,7 +1335,7 @@ const WieFunktioniertSection = () => {
             <b>Endenergie</b> ist die dem Gebäude zugeführte Energie (Öl, Gas, Strom). <b>Primärenergie</b> = Endenergie × Primärenergiefaktor — berücksichtigt die Verluste bei Gewinnung und Transport des Energieträgers. Die <b>Effizienzklasse A+–H</b> basiert auf der Primärenergie nach GEG §86. Die Bauteil-Stufen 1–7 beschreiben den Sanierungsstand; sie bestimmen, wie groß die Einsparung jeder Maßnahme für Ihr Haus konkret ist.
           </Sub>
           <Sub title="Wie wird die Reihenfolge der Maßnahmen bestimmt?">
-            Jede Maßnahme erhält eine Punktzahl: Netto-Investition ÷ eingesparte Primärenergie [€/kWh]. Niedrig = wirtschaftlich sinnvoll. Die Pakete werden nach dieser Punktzahl sortiert und aktualisieren sich automatisch, wenn Sie Gebäudedaten oder Bauteil-Stufen ändern. Die <b>★ Empfohlen</b>-Markierung zeigt Maßnahmen mit deutlich besserem Kosten-Nutzen als der Durchschnitt (Score &lt; 75 % des Medians). <b>✕ Nicht empfohlen</b> kennzeichnet Maßnahmen mit sehr hohem Score (&gt; 2× Median) oder ohne messbaren Primärenergie-Effekt.
+            Jede Maßnahme erhält eine Punktzahl: Netto-Investition ÷ eingesparte Primärenergie [€/kWh PE]. Niedrig = wirtschaftlich sinnvoll. Die Pakete werden nach dieser Punktzahl sortiert und aktualisieren sich automatisch, wenn Sie Gebäudedaten oder Bauteil-Stufen ändern. Die <b>★ Empfohlen</b>-Markierung zeigt Maßnahmen mit Score unter 10,5 €/kWh PE — besonders wirtschaftlich für Ihr Gebäude. <b>✕ Nicht empfohlen</b> kennzeichnet Maßnahmen mit Score über 20 €/kWh PE oder ohne messbaren Primärenergie-Effekt.
           </Sub>
           <Sub title="Wie werden die Förderungen berechnet?">
             <b>BEG EM (BAFA)</b>: 15 % Grundförderung auf den energetisch bedingten Mehraufwand (Investition minus Sowieso-Kosten). <b>Wärmepumpe (KfW 458)</b>: bis zu 50 % (30 % Grundförderung + 20 % Klimageschwindigkeits-Bonus möglich). <b>iSFP-Bonus</b>: +5 % auf alle Maßnahmen, die im Fahrplan hinterlegt sind — das ist der Kern des iSFP-Verfahrens.
@@ -1729,7 +1752,7 @@ export default function App() {
                 tooltip="Hat keinen Einfluss auf die Energierechnung in dieser Demo. Wird für die Dokumentation im Bericht verwendet." />
               <NumberInput label="Wohnfläche"           value={gebaeude.wohnflaeche}         onChange={v => updateGebaeude("wohnflaeche", v)} unit="m²" min={20} />
               <NumberInput label="Gebäudenutzfläche AN" value={gebaeude.gebaeudenutzflaeche} onChange={v => updateGebaeude("gebaeudenutzflaeche", v)} unit="m²" min={20}
-                tooltip="Bezugsfläche für Kennzahlen nach GEG. Typisch 1,3 × Wohnfläche." />
+                tooltip="AN = beheizbare Nettogrundfläche nach DIN V 18599. Bezugsfläche für GEG-Kennzahlen (PE, CO₂). Faustregel: AN ≈ 1,2–1,4 × Wohnfläche." />
             </Card>
 
             <Card>
@@ -1738,7 +1761,8 @@ export default function App() {
                 tooltip="Bestimmt Primärenergiefaktor und Heizkosten-Tarif. Änderung setzt auch die Bauteil-Note 'Heizung' zurück." />
               <NumberInput label="Baujahr Heizung"   value={gebaeude.heizung_bj}  onChange={v => updateGebaeude("heizung_bj", v)} min={1950} max={2030} />
               <SelectInput label="Warmwasser"        value={gebaeude.warmwasser}  onChange={v => updateGebaeude("warmwasser", v)} options={OPTIONS_WARMWASSER} />
-              <SelectInput label="Lüftung"           value={gebaeude.lueftung}    onChange={v => updateGebaeude("lueftung", v)} options={OPTIONS_LUEFTUNG} />
+              <SelectInput label="Lüftung"           value={gebaeude.lueftung}    onChange={v => updateGebaeude("lueftung", v)} options={OPTIONS_LUEFTUNG}
+                tooltip="WRG = Wärmerückgewinnung. Eine Lüftungsanlage mit WRG entzieht der Abluft Wärme und gibt sie an die Frischluft ab — spart 10–15 kWh/(m²·a) Primärenergie ggü. Fensterlüftung." />
               <SelectInput label="Erneuerbare"       value={gebaeude.erneuerbare} onChange={v => updateGebaeude("erneuerbare", v)} options={OPTIONS_ERNEUERBARE}
                 tooltip="Wird automatisch vorgeschlagen, wenn Heizung auf Wärmepumpe oder Pellets steht. Manuelle Überschreibung möglich." />
               <SelectInput label="Dach"              value={gebaeude.dach}        onChange={v => updateGebaeude("dach", v)} options={OPTIONS_DACH} />
@@ -1763,7 +1787,7 @@ export default function App() {
                           options={SANIERUNGSSTAND_OPTIONS}
                           tooltip={SANIERUNGSSTAND_BAUTEIL_TOOLTIPS[id]}
                         />
-                        {selNote && <div style={{ fontSize: 10, color: "#9B8E82", paddingLeft: 12, marginTop: -4, marginBottom: 4 }}>{selNote}</div>}
+                        {selNote && <div style={{ fontSize: 10, color: "#9B8E82", paddingLeft: 12, marginTop: 3, marginBottom: 6 }}>{selNote}</div>}
                       </div>
                     );
                   })}
@@ -1807,7 +1831,7 @@ export default function App() {
 
         {/* Fahrplan */}
         <Section id="fahrplan" eyebrow="Schritt 2 · Fahrplan" title="Empfohlene Maßnahmenpakete"
-          subtitle="Reihenfolge nach Kosten-Nutzen (€/kWh Primärenergie). ★ = deutlich günstiger als Median; ✕ = deutlich teurer.">
+          subtitle="Reihenfolge nach Kosten-Nutzen (€/kWh Primärenergie). ★ = Score &lt; 10,5 €/kWh (empfohlen); ✕ = Score &gt; 20 €/kWh oder kein PE-Effekt.">
           {(() => {
             const totalCols = dynamicPakete.length + 2;
             const lineOffset = `${50 / totalCols}%`;
