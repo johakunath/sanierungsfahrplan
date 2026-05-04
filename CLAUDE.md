@@ -131,10 +131,10 @@ score = invest_netto / pe_saved   [€ per MWh primary energy saved]
 
 Lower score = better value. The function returns each measure with two derived flags:
 
-- `empfohlen: true` — score < **0.75 × median** of all finite scores (clearly cheaper per MWh than average)
-- `nichtEmpfohlen: true` — score > **2.0 × median**, or infinite (clearly more expensive, or no PE savings)
+- `empfohlen: true` — score < **10.5** €/(kWh PE/year) — absolute threshold, not relative. Bad buildings naturally have many low-scoring measures → more empfohlen flags. Good buildings have fewer.
+- `nichtEmpfohlen: true` — score > **20.0** or infinite (clearly expensive per kWh saved, or zero PE savings)
 
-Measures in between carry no badge. This scales automatically with any number of active measures; no fixed count like "top 3". Score updates whenever preset, bauteil sliders, or massnahmenOverrides change.
+Measures with BADGE_EXEMPT roles (`pflichtschritt`, `enabler`, `systempfad`, `begleitkosten`) never receive either badge — they're structurally required, not optional choices. Measures in between the two thresholds carry no badge.
 
 **Note**: This is a single-metric ranking (€/MWh PE). It does not factor in comfort, CO₂, subsidy urgency, or legal deadlines (GEG §71). Advisors should communicate this to clients.
 
@@ -210,8 +210,8 @@ These are the values `berechneNachMassnahmen` must produce for the efhNachkrieg 
 | Primärenergie | 236 kWh/(m²·a) | 86 kWh/(m²·a) |
 | EEK | G | C |
 | Investition | 142.800 € | |
-| BEG-Förderung | 23.250 € | |
-| Eigenanteil | 119.550 € | |
+| BEG-Förderung | 25.950 € (incl. +10 % Klimageschwindigkeitsbonus on M4) | |
+| Eigenanteil | 116.850 € | |
 
 ---
 
