@@ -64,7 +64,8 @@ const ISFPPrintReport = ({ ist, k, heizkostenIst, aktivePakete, aktiveMassnahmen
           const summeInvest = paket.massnahmen.reduce((s, m) => s + m.investition, 0);
           const summeFoerder = Math.round(paket.massnahmen.reduce((s, m) => {
             const netto = m.investition - (m.ohnehin_anteil ?? 0);
-            const quote = m.foerderquote > 0 ? Math.min(m.foerderquote + BEG_BONUS.isfp_bonus, 0.5) : 0;
+            const klimaBonus = (m.id === "M4" && /Heizöl|Erdgas/i.test(gebaeude.heizung_typ || "")) ? 0.10 : 0;
+            const quote = m.foerderquote > 0 ? Math.min(m.foerderquote + BEG_BONUS.isfp_bonus + klimaBonus, 0.5) : 0;
             return s + netto * quote;
           }, 0));
           return (
@@ -171,7 +172,8 @@ const ISFPPrintReport = ({ ist, k, heizkostenIst, aktivePakete, aktiveMassnahmen
         const summeFoerderfaehig = paket.massnahmen.reduce((s, m) => s + (m.investition - (m.ohnehin_anteil ?? 0)), 0);
         const summeFoerder = Math.round(paket.massnahmen.reduce((s, m) => {
           const netto = m.investition - (m.ohnehin_anteil ?? 0);
-          const quote = m.foerderquote > 0 ? Math.min(m.foerderquote + BEG_BONUS.isfp_bonus, 0.5) : 0;
+          const klimaBonus = (m.id === "M4" && /Heizöl|Erdgas/i.test(gebaeude.heizung_typ || "")) ? 0.10 : 0;
+          const quote = m.foerderquote > 0 ? Math.min(m.foerderquote + BEG_BONUS.isfp_bonus + klimaBonus, 0.5) : 0;
           return s + netto * quote;
         }, 0));
         const eigenanteil = summeInvest - summeFoerder;

@@ -688,7 +688,8 @@ const PaketBlock = ({ paket, aktiv, onToggle, onToggleMassnahme = () => {}, akti
   const summe_foerder = aktiveMassnahmenInPaket.reduce((s, massnahme) => {
     const netto = massnahme.investition - (massnahme.ohnehin_anteil ?? 0);
     const bonus = BEG_BONUS.isfp_bonus;
-    const quote = massnahme.foerderquote > 0 ? Math.min(massnahme.foerderquote + bonus, 0.5) : 0;
+    const klimaBonus = (massnahme.id === "M4" && /Heizöl|Erdgas/i.test(gebaeude.heizung_typ || "")) ? 0.10 : 0;
+    const quote = massnahme.foerderquote > 0 ? Math.min(massnahme.foerderquote + bonus + klimaBonus, 0.5) : 0;
     return s + netto * quote;
   }, 0);
   const eigenanteil   = summe_invest - summe_foerder;
@@ -1634,12 +1635,13 @@ export default function App() {
       const investition = aktiveInPaket.reduce((sum, m) => sum + m.investition, 0);
       const foerderung = aktiveInPaket.reduce((sum, m) => {
         const netto = m.investition - (m.ohnehin_anteil ?? 0);
-        const quote = m.foerderquote > 0 ? Math.min(m.foerderquote + BEG_BONUS.isfp_bonus, 0.5) : 0;
+        const klimaBonus = (m.id === "M4" && /Heizöl|Erdgas/i.test(gebaeude.heizung_typ || "")) ? 0.10 : 0;
+        const quote = m.foerderquote > 0 ? Math.min(m.foerderquote + BEG_BONUS.isfp_bonus + klimaBonus, 0.5) : 0;
         return sum + netto * quote;
       }, 0);
       return { id: paket.id, nummer: paket.nummer, titel: paket.titel, farbe: paket.farbe, kosten: investition - foerderung, massnahmen_aktiv: aktiveInPaket.map(m => m.id) };
     }).filter(Boolean);
-  }, [dynamicPakete, aktiveMassnahmen]);
+  }, [dynamicPakete, aktiveMassnahmen, gebaeude]);
 
   const handleExport = () => {
     exportAsPDF();
@@ -1944,10 +1946,10 @@ export default function App() {
                   ))}
                 </div>
                 <div className="flex items-baseline justify-between gap-3 mb-3">
-                  <span style={{ fontSize: 12, fontWeight: 500, color: "#1E1A15" }}>Effektive Förderquote (Demo)</span>
+                  <span style={{ fontSize: 12, fontWeight: 500, color: "#1E1A15" }}>Förderanteil (von Gesamtinvestition)</span>
                   <span style={{ fontSize: 20, fontFamily: "'Fraunces', serif", color: "#00843D", fontVariantNumeric: "tabular-nums" }}>
-                    {k.invest_gesamt > k.instand_gesamt
-                      ? `${Math.round(k.foerderung_gesamt / (k.invest_gesamt - k.instand_gesamt) * 100)} %`
+                    {k.invest_gesamt > 0
+                      ? `${Math.round(k.foerderung_gesamt / k.invest_gesamt * 100)} %`
                       : "—"}
                   </span>
                 </div>
