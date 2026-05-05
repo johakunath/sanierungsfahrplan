@@ -150,8 +150,8 @@ const MobileResultsDrawer = ({ effizienzklasse, k, ist, heizkosten, aktiveEmpfoh
       transform: open ? "translateY(0)" : "translateY(calc(100% - 68px))",
       transition: "transform 0.28s cubic-bezier(0.4,0,0.2,1)",
       maxHeight: "75vh",
-      background: "var(--paper)",
-      borderTop: "1.5px solid #D3CAB9",
+      background: "var(--surface)",
+      borderTop: "1.5px solid var(--bdr)",
       borderRadius: "12px 12px 0 0",
       boxShadow: "0 -6px 32px rgba(30,26,21,0.13)",
       display: "flex", flexDirection: "column",
@@ -196,28 +196,34 @@ const MobileResultsDrawer = ({ effizienzklasse, k, ist, heizkosten, aktiveEmpfoh
           </div>
         </div>
 
-        {/* Metrics with mini bar charts */}
-        <div style={{ background: "var(--surface)", border: "1.25px solid var(--bdr)", borderRadius: 3, padding: "8px 12px", marginBottom: 10 }}>
+        {/* KPI Scorecards 2×2 */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginBottom: 10 }}>
           {[
-            { label: "Primärenergie", istVal: ist.primaerenergie, zielVal: k.primaerenergie, unit: "kWh/(m²·a)" },
-            { label: "Endenergie",    istVal: ist.endenergie,     zielVal: k.endenergie,     unit: "kWh/(m²·a)" },
-            { label: "CO₂",          istVal: ist.co2,            zielVal: k.co2,            unit: "kg/(m²·a)"  },
-            { label: "Heizkosten",   istVal: heizkosten,          zielVal: k.heizkosten_gesamt, unit: "€/a"    },
-          ].map(({ label, istVal, zielVal, unit }, i, arr) => {
+            { label: "Primärenergie", istVal: ist.primaerenergie, zielVal: k.primaerenergie, unit: "kWh/(m²·a)", posColor: "var(--pos)" },
+            { label: "Endenergie",    istVal: ist.endenergie,     zielVal: k.endenergie,     unit: "kWh/(m²·a)", posColor: "var(--pos)" },
+            { label: "CO₂",          istVal: ist.co2,            zielVal: k.co2,            unit: "kg/(m²·a)",  posColor: "var(--pos)" },
+            { label: "Heizkosten",   istVal: heizkosten,          zielVal: k.heizkosten_gesamt, unit: "€/a",    posColor: "var(--gold)" },
+          ].map(({ label, istVal, zielVal, unit, posColor }) => {
             const pct = istVal > 0 ? Math.round(Math.abs(zielVal - istVal) / istVal * 100) : 0;
             const down = zielVal < istVal;
             const fill = istVal > 0 ? Math.round(Math.min(zielVal / istVal, 1) * 100) : 0;
             const fmtV = n => unit === "€/a" ? fmtEur(n) : new Intl.NumberFormat("de-DE").format(Math.round(n));
+            const barColor = down ? posColor : "var(--neg)";
             return (
-              <div key={label} style={{ padding: "5px 0", borderBottom: i < arr.length - 1 ? "1px solid #E2DBD0" : "none" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 2 }}>
-                  <span style={{ fontSize: 11, color: "var(--sec)" }}>{label}</span>
-                  <span style={{ fontSize: 11, fontFamily: "'Geist Mono', monospace", color: down ? "#00843D" : "#B5623E", fontWeight: 600 }}>{down ? "−" : "+"}{pct} %</span>
+              <div key={label} style={{ background: "var(--surface)", border: "1.25px solid var(--bdr)",
+                                        borderRadius: 3, padding: "10px 11px" }}>
+                <div style={{ fontSize: 8, fontFamily: "'Geist Mono', monospace", letterSpacing: "0.14em",
+                              textTransform: "uppercase", color: "var(--sec)", marginBottom: 3 }}>{label}</div>
+                <div style={{ fontSize: 19, fontWeight: 600, fontFamily: "'Geist Mono', monospace",
+                              color: down ? posColor : "var(--neg)", marginBottom: 4, lineHeight: 1 }}>
+                  {down ? "−" : "+"}{pct}%
                 </div>
-                <div style={{ height: 6, background: "var(--div)", borderRadius: 2, overflow: "hidden", marginBottom: 2 }}>
-                  <div style={{ height: "100%", width: `${fill}%`, background: EFFIZIENZ_FARBEN[k.effizienzklasse] || "#00843D", borderRadius: 2, transition: "width 0.3s" }} />
+                <div style={{ height: 4, background: "var(--div)", borderRadius: 2, overflow: "hidden", marginBottom: 4 }}>
+                  <div style={{ height: "100%", width: `${fill}%`, background: barColor, borderRadius: 2, transition: "width 0.3s" }} />
                 </div>
-                <div style={{ fontSize: 10, color: "var(--sec)", fontFamily: "'Geist Mono', monospace" }}>{fmtV(istVal)} → {fmtV(zielVal)} {unit}</div>
+                <div style={{ fontSize: 8.5, fontFamily: "'Geist Mono', monospace", color: "var(--sec)", lineHeight: 1.3 }}>
+                  {fmtV(istVal)} → {fmtV(zielVal)} {unit}
+                </div>
               </div>
             );
           })}
@@ -229,7 +235,7 @@ const MobileResultsDrawer = ({ effizienzklasse, k, ist, heizkosten, aktiveEmpfoh
           {reportSummaryPackages.length === 0 ? (
             <div style={{ fontSize: 12, color: "var(--sec)" }}>Noch keine Maßnahmen aktiv.</div>
           ) : reportSummaryPackages.map((pkg, idx) => (
-            <div key={pkg.id} style={{ padding: "8px 0", borderBottom: idx < reportSummaryPackages.length - 1 ? "1px solid #E2DBD0" : "none" }}>
+            <div key={pkg.id} style={{ padding: "8px 0", borderBottom: idx < reportSummaryPackages.length - 1 ? "1px solid var(--div)" : "none" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 4 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                   <span style={{ width: 10, height: 10, borderRadius: "50%", background: PAKET_FARBEN[pkg.farbe]?.bg || "#6B6259", display: "inline-block", flexShrink: 0 }} />
@@ -513,7 +519,7 @@ const PresetPicker = ({ activeId, onPick, onUploadClick, uploadLoading }) => (
           <div className="font-serif text-[17px] leading-tight mb-1" style={{ fontWeight: 500 }}>
             {preset.label}
           </div>
-          <div className="text-[12px]" style={{ color: active ? "rgba(240,237,230,0.7)" : "var(--sec)" }}>
+          <div className="text-[12px]" style={{ color: active ? "var(--bg)" : "var(--sec)", opacity: active ? 0.72 : 1 }}>
             {preset.beschreibung}
           </div>
         </button>
@@ -746,11 +752,11 @@ const PaketBlock = ({ paket, aktiv, onToggle, onToggleMassnahme = () => {}, akti
   return (
     <div id={`paket-${paket.id}`} className="transition-all" style={{
       background: "var(--surface)",
-      border: aktiv ? "1.75px solid #1E1A15" : "1.25px solid #D3CAB9",
+      border: aktiv ? "1.75px solid var(--txt)" : "1.25px solid var(--bdr)",
       borderRadius: 3, overflow: "hidden", opacity: aktiv ? 1 : 0.55,
     }}>
       <div className="flex items-stretch">
-        <div className="flex items-center justify-center shrink-0" style={{ width: 88, background: "var(--bg)", borderRight: "1.25px solid #D3CAB9" }}>
+        <div className="flex items-center justify-center shrink-0" style={{ width: 88, background: "var(--bg)", borderRight: "1.25px solid var(--bdr)" }}>
           <PaketHaus farbe={paket.farbe} aktiv={aktiv} nummer={paket.nummer} size={62} />
         </div>
         <div className="flex-1 p-5 flex items-center justify-between gap-4 flex-wrap">
@@ -955,7 +961,7 @@ const PaketBlock = ({ paket, aktiv, onToggle, onToggleMassnahme = () => {}, akti
         })}
       </div>
 
-      <div className="px-5 py-4 grid grid-cols-3 gap-4" style={{ background: "var(--bg)", borderTop: "1.25px solid #D3CAB9" }}>
+      <div className="px-5 py-4 grid grid-cols-3 gap-4" style={{ background: "var(--bg)", borderTop: "1.25px solid var(--bdr)" }}>
         <div>
           <div className="text-[10.5px] tracking-[0.18em] uppercase mb-1" style={{ color: "var(--sec)", fontFamily: "'Geist Mono', monospace" }}>Investition</div>
           <div className="text-[15px]" style={{ fontFamily: "'Geist Mono', monospace", color: "var(--txt)", fontVariantNumeric: "tabular-nums" }}>{fmtEur(summe_invest)}</div>
@@ -1564,7 +1570,7 @@ const WieFunktioniertSection = () => {
         <span style={{ color: "var(--acc)", fontSize: 13 }}>{open ? "▲ Schließen" : "▼ Anzeigen"}</span>
       </button>
       {open && (
-        <div style={{ borderTop: "1.25px solid #D3CAB9", padding: "24px 24px 32px" }}>
+        <div style={{ borderTop: "1.25px solid var(--bdr)", padding: "24px 24px 32px" }}>
           <Sub title="Was macht dieses Tool?">
             Sie geben Gebäudedaten ein — Baujahr, Heizung, Wohnfläche, Bauteil-Zustand — und erhalten einen priorisierten Sanierungsfahrplan mit Energiekennzahlen, Kosten und BEG-Förderung. Das Tool ist kein BAFA-zertifizierter iSFP, sondern ein Demonstrator auf Basis realer Marktdaten 2026.
           </Sub>
@@ -2269,7 +2275,7 @@ export default function App() {
             {reportSummaryPackages.length === 0 ? (
               <div style={{ fontSize: 12, color: "var(--sec)" }}>Noch keine Maßnahmen aktiv.</div>
             ) : reportSummaryPackages.map((pkg, idx) => (
-              <div key={pkg.id} style={{ padding: "8px 0", borderBottom: idx < reportSummaryPackages.length - 1 ? "1px solid #E2DBD0" : "none" }}>
+              <div key={pkg.id} style={{ padding: "8px 0", borderBottom: idx < reportSummaryPackages.length - 1 ? "1px solid var(--div)" : "none" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 4 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                     <span style={{ width: 10, height: 10, borderRadius: "50%", background: PAKET_FARBEN[pkg.farbe]?.bg || "#6B6259", display: "inline-block", flexShrink: 0 }} />
