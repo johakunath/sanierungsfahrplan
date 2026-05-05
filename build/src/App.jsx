@@ -376,18 +376,18 @@ const NumberInput = ({ label, value, onChange, unit, min, max, step = 1, tooltip
   };
   return (
     <RowShell>
-      <span style={labelStyle} className="flex items-center gap-1.5">
+      <span style={{ ...labelStyle, minWidth: 0 }} className="flex items-center gap-1.5 flex-wrap">
         {label}
         {tooltip && <Tooltip align="right" content={tooltip}><span style={{ color: "var(--acc)" }}><InfoIcon /></span></Tooltip>}
       </span>
-      <span className="flex items-baseline gap-1.5">
+      <span className="flex items-baseline gap-1.5" style={{ flexShrink: 0 }}>
         <input type="text" inputMode="decimal" value={local}
           onChange={(e) => setLocal(e.target.value)} onBlur={commit}
           onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
           style={{ ...valueStyle, background: "transparent", border: "none",
-                   borderBottom: "1px dotted #D3CAB9", outline: "none",
+                   borderBottom: "1px dotted var(--bdr)", outline: "none",
                    textAlign: "right", width: 92, padding: "2px 2px", fontSize: 14 }} />
-        {unit && <span style={{ fontSize: 12, color: "var(--sec)" }}>{unit}</span>}
+        {unit && <span style={{ fontSize: 12, color: "var(--sec)", whiteSpace: "nowrap" }}>{unit}</span>}
       </span>
     </RowShell>
   );
