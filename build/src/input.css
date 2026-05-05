@@ -14,6 +14,7 @@
   --pos: #00843D;
   --neg: #B83A2E;
   --gold: #C8820A;
+  --highlight: #FFFBE6;
 }
 [data-theme="dark"] {
   --bg: #0E0D0B;
@@ -28,6 +29,7 @@
   --pos: #2DB870;
   --neg: #D94F42;
   --gold: #E8A020;
+  --highlight: #272310;
 }
 @media print {
   :root {
