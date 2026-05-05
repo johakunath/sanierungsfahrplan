@@ -150,10 +150,10 @@ const MobileResultsDrawer = ({ effizienzklasse, k, ist, heizkosten, aktiveEmpfoh
       transform: open ? "translateY(0)" : "translateY(calc(100% - 68px))",
       transition: "transform 0.28s cubic-bezier(0.4,0,0.2,1)",
       maxHeight: "75vh",
-      background: "var(--surface)",
+      background: "var(--bg)",
       borderTop: "1.5px solid var(--bdr)",
       borderRadius: "12px 12px 0 0",
-      boxShadow: "0 -6px 32px rgba(30,26,21,0.13)",
+      boxShadow: "0 -6px 32px rgba(0,0,0,0.18)",
       display: "flex", flexDirection: "column",
     }}>
       {/* Collapsed handle strip — always visible, tappable */}
@@ -190,7 +190,7 @@ const MobileResultsDrawer = ({ effizienzklasse, k, ist, heizkosten, aktiveEmpfoh
             <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 36, height: 36, background: istColor, borderRadius: 3, fontSize: 18, fontWeight: 600, fontFamily: "'Fraunces', serif", color: istText }}>{effizienzklasse}</div>
           </div>
           <span style={{ fontSize: 22, color: "var(--acc)", flexShrink: 0 }}>→</span>
-          <div style={{ flex: 1, background: zielColor, border: "1.25px solid #1E1A15", borderRadius: 3, padding: "8px 10px", textAlign: "center" }}>
+          <div style={{ flex: 1, background: zielColor, border: "1.25px solid var(--txt)", borderRadius: 3, padding: "8px 10px", textAlign: "center" }}>
             <div style={{ fontSize: 9, letterSpacing: "0.2em", fontFamily: "'Geist Mono', monospace", textTransform: "uppercase", marginBottom: 6, color: zielText === "#FFF" ? "rgba(248,245,239,0.7)" : "rgba(30,26,21,0.6)" }}>Ziel</div>
             <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 36, height: 36, background: "var(--bg)", borderRadius: 3, fontSize: 18, fontWeight: 600, fontFamily: "'Fraunces', serif", color: zielColor }}>{k.effizienzklasse}</div>
           </div>
@@ -533,8 +533,8 @@ const PresetPicker = ({ activeId, onPick, onUploadClick, uploadLoading }) => (
         borderRadius: 3, cursor: "pointer", transition: "all 0.12s",
         outline: "none",
       }}
-      onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#B5623E"; }}
-      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#D3CAB9"; }}
+      onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--acc)"; }}
+      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--bdr)"; }}
     >
       <div className="flex items-center gap-2 mb-1.5">
         <span className="text-[10.5px] tracking-[0.2em] uppercase"
@@ -1107,7 +1107,7 @@ const VorherNachher = ({ ist, k, heizkostenIst, gebaeude }) => {
       </div>
 
       {/* ZIEL */}
-      <div style={{ background: EFFIZIENZ_FARBEN[k.effizienzklasse] || "#00843D", border: "1.25px solid #1E1A15", borderRadius: 3, padding: "28px 26px", color: dark ? "#1E1A15" : "#F8F5EF" }}>
+      <div style={{ background: EFFIZIENZ_FARBEN[k.effizienzklasse] || "#00843D", border: "1.25px solid var(--txt)", borderRadius: 3, padding: "28px 26px", color: dark ? "#1E1A15" : "#F8F5EF" }}>
         <div className="flex items-center justify-between mb-5">
           <div className="text-[11px] tracking-[0.22em] uppercase" style={{ color: dark ? "rgba(30,26,21,0.65)" : "rgba(248,245,239,0.75)", fontFamily: "'Geist Mono', monospace" }}>Ihr Haus in der Zukunft</div>
           <div className="inline-flex items-center justify-center font-serif"
@@ -2097,7 +2097,7 @@ export default function App() {
               <div className="mb-10" style={{ position: "relative", display: "grid", gridTemplateColumns: `repeat(${totalCols}, 1fr)`, gap: 0 }}>
                 <div className="absolute" style={{ left: lineOffset, right: lineOffset, top: 24, height: 2, background: "linear-gradient(to right, #E30613, #F07D00, #7C3AED, #F6D400, #00843D, #2563EB)", pointerEvents: "none" }} />
                 <div className="flex flex-col items-center gap-1.5 relative">
-                  <div style={{ width: 46, height: 50, background: EFFIZIENZ_FARBEN[effizienzklasse] || "#6B6259", borderRadius: 3, border: "1.5px solid #1E1A15", display: "flex", alignItems: "center", justifyContent: "center" }}><span className="font-serif text-[16px]" style={{ color: ["C","D","E"].includes(effizienzklasse) ? "#1E1A15" : "#FFF" }}>{effizienzklasse}</span></div>
+                  <div style={{ width: 46, height: 50, background: EFFIZIENZ_FARBEN[effizienzklasse] || "#6B6259", borderRadius: 3, border: "1.5px solid var(--txt)", display: "flex", alignItems: "center", justifyContent: "center" }}><span className="font-serif text-[16px]" style={{ color: ["C","D","E"].includes(effizienzklasse) ? "#1E1A15" : "#FFF" }}>{effizienzklasse}</span></div>
                   <div className="text-[9px] tracking-[0.18em] uppercase text-center" style={{ color: "var(--sec)", fontFamily: "'Geist Mono', monospace" }}>Heute</div>
                   <div className="text-[10px]" style={{ color: "var(--body)" }}>Kl. {effizienzklasse}</div>
                 </div>
@@ -2112,7 +2112,7 @@ export default function App() {
                   </div>
                 ))}
                 <div className="flex flex-col items-center gap-1.5 relative">
-                  <div style={{ width: 46, height: 50, background: EFFIZIENZ_FARBEN[k.effizienzklasse] || "#00843D", borderRadius: 3, border: "1.5px solid #1E1A15", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <div style={{ width: 46, height: 50, background: EFFIZIENZ_FARBEN[k.effizienzklasse] || "#00843D", borderRadius: 3, border: "1.5px solid var(--txt)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                     <span className="font-serif text-[16px]" style={{ color: ["B","C","D"].includes(k.effizienzklasse) ? "#1E1A15" : "#FFF" }}>{k.effizienzklasse}</span>
                   </div>
                   <div className="text-[9px] tracking-[0.18em] uppercase text-center" style={{ color: "var(--sec)", fontFamily: "'Geist Mono', monospace" }}>Ziel</div>
@@ -2225,7 +2225,7 @@ export default function App() {
             </div>
             <span style={{ fontSize: 22, color: "var(--acc)", flexShrink: 0 }}>→</span>
             <div style={{ flex: 1, background: EFFIZIENZ_FARBEN[k.effizienzklasse] || "#00843D",
-                          border: "1.25px solid #1E1A15", borderRadius: 3, padding: "8px 10px", textAlign: "center" }}>
+                          border: "1.25px solid var(--txt)", borderRadius: 3, padding: "8px 10px", textAlign: "center" }}>
               <div style={{ fontSize: 9, letterSpacing: "0.2em", fontFamily: "'Geist Mono', monospace",
                             textTransform: "uppercase", marginBottom: 6,
                             color: ["B","C","D"].includes(k.effizienzklasse) ? "rgba(30,26,21,0.6)" : "rgba(248,245,239,0.7)" }}>Ziel</div>
