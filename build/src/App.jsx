@@ -145,7 +145,7 @@ const MobileResultsDrawer = ({ effizienzklasse, k, ist, heizkosten, aktiveEmpfoh
   const istText   = ["C","D","E"].includes(effizienzklasse)   ? "#1E1A15" : "#FFF";
 
   return (
-    <div className="lg:hidden print:hidden" style={{
+    <div className="flex flex-col lg:hidden print:hidden" style={{
       position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 40,
       transform: open ? "translateY(0)" : "translateY(calc(100% - 68px))",
       transition: "transform 0.28s cubic-bezier(0.4,0,0.2,1)",
@@ -154,7 +154,6 @@ const MobileResultsDrawer = ({ effizienzklasse, k, ist, heizkosten, aktiveEmpfoh
       borderTop: "1.5px solid var(--bdr)",
       borderRadius: "12px 12px 0 0",
       boxShadow: "0 -6px 32px rgba(0,0,0,0.18)",
-      display: "flex", flexDirection: "column",
     }}>
       {/* Collapsed handle strip — always visible, tappable */}
       <button onClick={() => setOpen(o => !o)} style={{
