@@ -128,6 +128,8 @@ export const PRESETS = {
     id: "efhNachkrieg",
     label: "EFH Nachkriegszeit 1965",
     beschreibung: "1 WE · 145 m² · Heizöl · Klasse F/G · typisches Sanierungsobjekt",
+    photoUrl: "",
+    photoCredit: "",
     gebaeude: {
       standort: "München", strasse: "Musterweg 12", plz: "81675",
       baujahr: 1965, typ: "Einfamilienhaus",
@@ -144,6 +146,8 @@ export const PRESETS = {
     id: "efh70er",
     label: "EFH 70er-Jahre",
     beschreibung: "1 WE · 160 m² · Erdgas · Klasse E/F · Fenster bereits getauscht",
+    photoUrl: "",
+    photoCredit: "",
     bauteile_overrides: { fenster: 5 },
     gebaeude: {
       standort: "Hannover", strasse: "Birkenallee 8", plz: "30519",
@@ -161,6 +165,8 @@ export const PRESETS = {
     id: "efh2000er",
     label: "EFH 2000er",
     beschreibung: "1 WE · 150 m² · Gas-Brennwert · Klasse C/D · solide Grundlage",
+    photoUrl: "",
+    photoCredit: "",
     gebaeude: {
       standort: "Stuttgart", strasse: "Eichenweg 23", plz: "70569",
       baujahr: 2002, typ: "Einfamilienhaus",
