@@ -1702,6 +1702,12 @@ Gesamtfahrplan — alle 6 Maßnahmen:
   CO₂:  63 → 20 kg/(m²·a)  (−68 %)
   Investition 130.800 €  ·  Förderung ca. 21.000 €`}</pre>
           </Sub>
+          <Sub title="Wie wird die Amortisation berechnet?">
+            <b>Gesamt-Amortisation</b> (Sidebar-KPI): Eigenanteil ÷ (IST-Heizkosten − ZIEL-Heizkosten) bei statischen Energiepreisen. Bei einer vollständigen Sanierung mit Wärmepumpe liegt die rechnerische Amortisation oft bei 30–50 Jahren — das ist ehrlich. Mit realistischer Energiepreissteigerung von 2–3 %/Jahr halbiert sich dieser Wert typisch auf 15–25 Jahre. <b>PV-Ertrag</b>: angenommen 10 kWp · 950 kWh/kWp. Eigenverbrauchsquote 35 % (ohne WP) bzw. 60 % (mit WP + Speicher). Eigenverbrauch bewertet zu 0,31 €/kWh (Haushaltstarif), Einspeisung zu 0,082 €/kWh (EEG 2024). Daraus ergibt sich ein Jahresertrag von ca. 1.330–2.020 €, Amortisation ~9–14 Jahre.
+          </Sub>
+          <Sub title="Wie wird die 20-Jahr-Bilanz gebildet?">
+            „Ohne Sanierung": 20 × aktuelle Heizkosten (IST). „Mit Sanierung": Eigenanteil + 20 × ZIEL-Heizkosten. Beide Seiten nutzen <b>statische Energiepreise</b> — kein Preisanstieg einkalkuliert. Das macht den Vergleich nachvollziehbar, unterschätzt aber die Wirtschaftlichkeit der Sanierung, da Energiepreise historisch steigen.
+          </Sub>
           <div style={{ marginTop: 8, fontSize: 11.5, color: "var(--sec)", fontStyle: "italic", lineHeight: 1.6 }}>
             Alle Werte sind Richtwerte auf Basis realistischer Marktpreise und BEG-Konditionen Stand April 2026. Dieser Rechner ist ein Demonstrator und ersetzt keine zertifizierte iSFP-Beratung nach BAFA-Anforderungen.
           </div>
@@ -2323,7 +2329,7 @@ export default function App() {
                 {[
                   ["Gebäudehülle · Fenster · Optimierung", "BEG EM + iSFP-Bonus (Demo-Logik)"],
                   ["Heizungstausch · Wärmepumpe", "vereinfachte KfW-/BEG-Annahme"],
-                  ["PV · Eigenstrom", "kein Direktzuschuss in dieser Demo"],
+                  ["PV · Eigenstrom", "kein Direktzuschuss — Ertrag aus Eigenverbrauch (0,31 €/kWh) + Einspeisung (0,082 €/kWh EEG 2024)"],
                 ].map(([cat, note], i) => (
                   <div key={i} style={{ paddingBottom: 8, borderBottom: "1px solid var(--bdr)" }}>
                     <div style={{ fontSize: 11.5, fontWeight: 500, color: "var(--txt)", marginBottom: 1 }}>{cat}</div>
