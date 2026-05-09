@@ -264,6 +264,12 @@ export const EINSPEISETARIF       = 0.082; // €/kWh EEG 2024, <10 kWp
 export const PV_EV_QUOTE_OHNE_WP  = 0.35;
 export const PV_EV_QUOTE_MIT_WP   = 0.60; // Speicher + WP-Synergie
 
+// Annual operating cost uplift from new systems (net of saved legacy maintenance)
+export const WARTUNGSKOSTEN = {
+  wp_netto: 120,  // WP-Vollwartung ~300 €/J minus eingesparte Heizungswartung ~180 €/J
+  pv:       150,  // PV-Versicherung + Wechselrichterrücklage (Tausch ~1.800 € nach ~12 J)
+};
+
 export function berechnePvErtrag(mitWP) {
   const total   = PV_KWP * PV_SPEZ_ERTRAG;
   const evQ     = mitWP ? PV_EV_QUOTE_MIT_WP : PV_EV_QUOTE_OHNE_WP;
