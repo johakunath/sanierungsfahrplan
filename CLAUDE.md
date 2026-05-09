@@ -107,6 +107,28 @@ Applying a preset resets all state. efh70er has `bauteile_overrides: { fenster: 
 
 Pinned by `data.test.js`. Update both together when changing impact functions or presets.
 
+### PV revenue model (`berechnePvErtrag` in data.js)
+
+Constants (all exported from `data.js`):
+
+| Constant | Value | Note |
+|----------|-------|------|
+| `PV_KWP` | 10 | kWp system size assumed |
+| `PV_SPEZ_ERTRAG` | 950 | kWh/kWp/year, average German site |
+| `STROMPREIS_HAUSHALT` | 0.31 | €/kWh household tariff 2026 |
+| `EINSPEISETARIF` | 0.082 | €/kWh EEG 2024, <10 kWp |
+| `PV_EV_QUOTE_OHNE_WP` | 0.35 | self-consumption share without WP |
+| `PV_EV_QUOTE_MIT_WP` | 0.60 | self-consumption share with WP + Speicher |
+
+`berechnePvErtrag(mitWP)` returns `{ gesamtEur, evEur, einsEur }`. Called in M6 cost line (PaketBlock) with `mitWP = aktiveMassnahmen.includes("M4")`.
+
+Expected outputs: ~1.330 €/year without WP (amortisation ~14 J), ~2.020 €/year with WP (amortisation ~9 J).
+
+### Amortisation model
+
+- **Sidebar/Drawer KPI**: `Eigenanteil ÷ (IST-Heizkosten − ZIEL-Heizkosten)` at static prices. Only shown when `heizkosten > k.heizkosten_gesamt`.
+- **20-Jahr-Bilanz** (Ergebnis section): `ohneEur = heizkosten × 20`, `mitEur = k.eigenanteil + k.heizkosten_gesamt × 20`. Static prices, no escalation.
+
 ---
 
 ## Deployment
@@ -160,3 +182,6 @@ git remote set-url origin http://local_proxy@127.0.0.1:${PROXY_PORT}/git/johakun
 | WP COP | Wärmeverteilung informational only; WP savings use fixed PE factor + envelope malus |
 | CO₂ values | Per-measure CO₂ reductions are static estimates |
 | Multi-WE | Treats ZFH/DHH/RH identically to EFH |
+| Amortisation | Static energy prices only; no real energy price escalation (typically 2–3 %/year) |
+| PV revenue | Fixed 10 kWp assumed; no shading, orientation, or roof-area checks |
+| PV EV quote | Fixed 35 %/60 % split; real value depends on household consumption profile |

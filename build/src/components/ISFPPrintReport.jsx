@@ -1,13 +1,26 @@
 import React from "react";
 import { fmt, fmtEur, textColorFor, waermeEEK, EnergyBar } from "../helpers.jsx";
-import { MASSNAHMENPAKETE, EFFIZIENZ_FARBEN, PAKET_FARBEN, BEG_BONUS, berechneEffizienzklasse } from "../data.js";
+import { MASSNAHMENPAKETE, EFFIZIENZ_FARBEN, PAKET_FARBEN, BEG_BONUS, berechneEffizienzklasse, berechnePvErtrag, berechneHeizungWartung, traegerFuerHeizung } from "../data.js";
 
-const ISFPPrintReport = ({ ist, k, heizkostenIst, aktivePakete, aktiveMassnahmen, gebaeude, kumuliert, effectivePakete = MASSNAHMENPAKETE }) => {
+const ISFPPrintReport = ({ ist, k, heizkostenIst, aktivePakete, aktiveMassnahmen, gebaeude, kumuliert, effectivePakete = MASSNAHMENPAKETE, resolvedWpVariante = "monovalent" }) => {
   const istKlasse = berechneEffizienzklasse(ist.primaerenergie);
   const aktivePaketeObj = effectivePakete.filter(p => aktivePakete.includes(p.id));
   const co2Gesamt = Math.round(ist.co2 * gebaeude.gebaeudenutzflaeche);
   const co2Ziel = Math.round(k.co2 * gebaeude.gebaeudenutzflaeche);
   const kostenEinsparPct = heizkostenIst > 0 ? Math.round((1 - k.heizkosten_gesamt / heizkostenIst) * 100) : 0;
+
+  const hatWP = aktiveMassnahmen.includes("M4");
+  const hasPV = aktiveMassnahmen.includes("M6");
+  const pvRevenue = hasPV ? berechnePvErtrag(hatWP).gesamtEur : 0;
+  const istTraeger = traegerFuerHeizung(gebaeude.heizung_typ);
+  const { istJahr: wartungIst, zielJahr: wartungZiel } = berechneHeizungWartung({
+    traeger: istTraeger, wpVariante: resolvedWpVariante, hatWP, hatPV: hasPV,
+  });
+  const annualNetSaving = Math.round(heizkostenIst - k.heizkosten_gesamt + pvRevenue + wartungIst - wartungZiel);
+  const amortYears = annualNetSaving > 0 && k.eigenanteil > 0 ? Math.round(k.eigenanteil / annualNetSaving) : null;
+  const H = 20;
+  const ohneEur20 = Math.round((heizkostenIst + wartungIst) * H);
+  const mitEur20 = Math.round(k.eigenanteil + (k.heizkosten_gesamt + wartungZiel) * H - pvRevenue * H);
 
   return (
     <div className="print-only" style={{ fontFamily: "'Geist', sans-serif", color: "#1E1A15" }}>
@@ -125,6 +138,36 @@ const ISFPPrintReport = ({ ist, k, heizkostenIst, aktivePakete, aktiveMassnahmen
               <div style={{ display: "flex", justifyContent: "space-between", gap: 12, borderTop: "1px solid #D3CAB9", paddingTop: 3 }}>
                 <span style={{ color: "#1E1A15", fontWeight: 700 }}>Eigenanteil</span>
                 <span style={{ color: "#1E1A15", fontWeight: 700 }}>{fmtEur(k.eigenanteil)}</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* WIRTSCHAFTLICHKEIT KOMPAKT */}
+        {amortYears && (
+          <div style={{ display: "flex", gap: 0, border: "1px solid #D3CAB9", background: "#F8F5EF", marginTop: 4, marginBottom: 2 }}>
+            <div style={{ flex: 1, padding: "8px 14px", borderRight: "1px solid #D3CAB9" }}>
+              <div style={{ fontSize: 10, letterSpacing: "0.18em", color: "#6B6259", fontFamily: "'Geist Mono', monospace", textTransform: "uppercase", marginBottom: 3 }}>Amortisation (statische Preise)</div>
+              <div style={{ fontFamily: "'Geist Mono', monospace", fontSize: 13, fontWeight: 700, color: "#B5623E" }}>~{amortYears} Jahre</div>
+              <div style={{ fontSize: 10, color: "#6B6259", marginTop: 2, fontFamily: "'Geist Mono', monospace" }}>
+                {fmtEur(k.eigenanteil)} ÷ {fmtEur(annualNetSaving)}/J netto
+                {hasPV ? " inkl. PV" : ""}
+              </div>
+            </div>
+            <div style={{ flex: 1, padding: "8px 14px" }}>
+              <div style={{ fontSize: 10, letterSpacing: "0.18em", color: "#6B6259", fontFamily: "'Geist Mono', monospace", textTransform: "uppercase", marginBottom: 3 }}>20-Jahr-Bilanz</div>
+              <div style={{ fontFamily: "'Geist Mono', monospace", fontSize: 11.5 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 2 }}>
+                  <span style={{ color: "#6B6259" }}>Ohne Sanierung</span>
+                  <span style={{ color: "#C0392B", fontWeight: 600 }}>{fmtEur(ohneEur20)}</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ color: "#6B6259" }}>Mit Sanierung</span>
+                  <span style={{ color: mitEur20 < ohneEur20 ? "#00843D" : "#1E1A15", fontWeight: 600 }}>{fmtEur(mitEur20)}</span>
+                </div>
+                {mitEur20 < ohneEur20 && (
+                  <div style={{ fontSize: 10, color: "#00843D", marginTop: 3 }}>Einsparung {fmtEur(ohneEur20 - mitEur20)} über 20 J</div>
+                )}
               </div>
             </div>
           </div>
@@ -268,6 +311,39 @@ const ISFPPrintReport = ({ ist, k, heizkostenIst, aktivePakete, aktiveMassnahmen
                     ))}
                   </div>
                 </div>
+
+                {/* Wirtschaftlichkeit pro Paket */}
+                {(() => {
+                  const prevHK = i === 0 ? heizkostenIst : kumuliert[i-1].nachher.heizkosten_gesamt;
+                  const energySavingStep = prevHK - step.nachher.heizkosten_gesamt;
+                  const hasPVStep = paket.massnahmen.some(m => m.id === "M6");
+                  const mitWPStep = kumuliert.slice(0, i+1).some(s => s.paket.massnahmen.some(m => m.id === "M4"));
+                  const pvRevStep = hasPVStep ? berechnePvErtrag(mitWPStep).gesamtEur : 0;
+                  const annualStep = energySavingStep + pvRevStep;
+                  const stepAmortYears = annualStep > 0 && eigenanteil > 0 ? Math.round(eigenanteil / annualStep) : null;
+                  if (!stepAmortYears) return null;
+                  return (
+                    <div style={{ marginBottom: 12 }}>
+                      <div style={{ fontSize: 11, letterSpacing: "0.18em", color: "#B5623E", fontFamily: "'Geist Mono', monospace", textTransform: "uppercase", marginBottom: 5 }}>Wirtschaftlichkeit</div>
+                      <div style={{ fontFamily: "'Geist Mono', monospace", fontSize: 11.5, border: "1px solid #E2DBD0", background: "#F8F5EF", padding: "6px 11px" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 3 }}>
+                          <span style={{ color: "#3A332B" }}>Jährl. Einsparung Energie</span>
+                          <span style={{ color: "#00843D", fontWeight: 600 }}>{fmtEur(Math.round(energySavingStep))}/J</span>
+                        </div>
+                        {hasPVStep && (
+                          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 3 }}>
+                            <span style={{ color: "#3A332B" }}>PV-Ertrag (10 kWp)</span>
+                            <span style={{ color: "#00843D", fontWeight: 600 }}>{fmtEur(pvRevStep)}/J</span>
+                          </div>
+                        )}
+                        <div style={{ display: "flex", justifyContent: "space-between", borderTop: "1px solid #E2DBD0", paddingTop: 3 }}>
+                          <span style={{ color: "#1E1A15", fontWeight: 600 }}>Amortisation (statische Preise)</span>
+                          <span style={{ color: "#B5623E", fontWeight: 700 }}>~{stepAmortYears} Jahre</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {/* Freitextfelder */}
                 {[

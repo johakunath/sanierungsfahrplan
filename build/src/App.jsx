@@ -8,7 +8,8 @@ import {
   berechneNachMassnahmen, berechneKumuliert, berechneEffizienzklasse, berechneHeizkosten,
   preisFuerHeizung, traegerFuerHeizung,
   bewerteMassnahmen, vorlauftemperaturFuer, wpTypEmpfehlung,
-  WP_VARIANTEN, wpTypVarianteKey,
+  WP_VARIANTEN, wpTypVarianteKey, berechnePvErtrag,
+  berechneHeizungWartung,
   EFFIZIENZ_FARBEN, NOTE_FARBEN, PAKET_FARBEN,
 } from "./data.js";
 import { extractFromPDF } from "./pdfExtract.js";
@@ -136,7 +137,7 @@ export class ErrorBoundary extends React.Component {
 }
 
 // ═══ MOBILE RESULTS DRAWER ═════════════════════════════════════════════
-const MobileResultsDrawer = ({ effizienzklasse, k, ist, heizkosten, aktiveEmpfohleneMassnahmen, empfohleneMassnahmen, reportSummaryPackages, nichtEmpfohleneMassnahmen = [], scrollToTab = () => {}, effectiveBauteilState = {}, gebaeude = {}, aktiveMassnahmen = [] }) => {
+const MobileResultsDrawer = ({ effizienzklasse, k, ist, heizkosten, aktiveEmpfohleneMassnahmen, empfohleneMassnahmen, reportSummaryPackages, nichtEmpfohleneMassnahmen = [], scrollToTab = () => {}, effectiveBauteilState = {}, gebaeude = {}, aktiveMassnahmen = [], resolvedWpVariante = "monovalent" }) => {
   const [open, setOpen] = useState(false);
   const peReduction = ist.primaerenergie > 0 ? Math.round((1 - k.primaerenergie / ist.primaerenergie) * 100) : 0;
   const zielColor = EFFIZIENZ_FARBEN[k.effizienzklasse] || "#00843D";
@@ -227,6 +228,35 @@ const MobileResultsDrawer = ({ effizienzklasse, k, ist, heizkosten, aktiveEmpfoh
             );
           })}
         </div>
+
+        {/* Amortisation KPI — drawer */}
+        {k.eigenanteil > 0 && (() => {
+          const hatWP = aktiveMassnahmen.includes("M4");
+          const hasPV = aktiveMassnahmen.includes("M6");
+          const pvRevenue = hasPV ? berechnePvErtrag(hatWP).gesamtEur : 0;
+          const { istJahr, zielJahr } = berechneHeizungWartung({
+            traeger: traegerFuerHeizung(gebaeude.heizung_typ), wpVariante: resolvedWpVariante, hatWP, hatPV: hasPV,
+          });
+          const annualSaving = Math.round(heizkosten - k.heizkosten_gesamt + pvRevenue + istJahr - zielJahr);
+          if (annualSaving <= 0) return null;
+          const years = Math.round(k.eigenanteil / annualSaving);
+          return (
+            <div style={{ background: "var(--surface)", border: "1.25px solid var(--bdr)",
+                          borderRadius: 3, padding: "10px 11px", marginBottom: 10 }}>
+              <div style={{ fontSize: 8, fontFamily: "'Geist Mono', monospace", letterSpacing: "0.14em",
+                            textTransform: "uppercase", color: "var(--sec)", marginBottom: 3 }}>Amortisation</div>
+              <div style={{ fontSize: 19, fontWeight: 600, fontFamily: "'Geist Mono', monospace",
+                            color: "var(--gold)", marginBottom: 4, lineHeight: 1 }}>~{years} Jahre</div>
+              <div style={{ height: 4, background: "var(--div)", borderRadius: 2, overflow: "hidden", marginBottom: 4 }}>
+                <div style={{ height: "100%", width: `${Math.min(Math.round(20 / years * 100), 100)}%`,
+                              background: years <= 20 ? "var(--pos)" : "var(--gold)", borderRadius: 2 }} />
+              </div>
+              <div style={{ fontSize: 8.5, fontFamily: "'Geist Mono', monospace", color: "var(--sec)", lineHeight: 1.3 }}>
+                {fmtEur(k.eigenanteil)} / {fmtEur(annualSaving)}/J netto · statische Preise
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Paket-Übersicht */}
         <div style={{ background: "var(--surface)", border: "1.25px solid var(--bdr)", borderRadius: 3, padding: "10px 12px", marginBottom: 10 }}>
@@ -763,6 +793,7 @@ const PaketBlock = ({ paket, aktiv, onToggle, onToggleMassnahme = () => {}, akti
   const firstM        = aktiveMassnahmenInPaket[0];
   const [warumOffen, setWarumOffen] = useState(new Set());
   const toggleWarum = mid => setWarumOffen(prev => { const s = new Set(prev); s.has(mid) ? s.delete(mid) : s.add(mid); return s; });
+  const [vorOrtOffen, setVorOrtOffen] = useState(false);
 
   return (
     <div id={`paket-${paket.id}`} className="transition-all" style={{
@@ -884,23 +915,39 @@ const PaketBlock = ({ paket, aktiv, onToggle, onToggleMassnahme = () => {}, akti
               {massnahme.investition > 0 && (
                 <div style={{ fontFamily: "'Geist Mono', monospace", fontSize: 11.5, color: "var(--sec)", marginTop: 6, display: "flex", gap: 8, flexWrap: "wrap" }}>
                   <span style={{ color: "var(--txt)" }}>{fmtEur(massnahme.investition)}</span>
-                  {massnahme.foerderquote > 0 && (() => {
-                    const effQuote = Math.min((massnahme.foerderquote ?? 0) + 0.05, 0.50);
-                    const foerderBetrag = Math.round(massnahme.investition * effQuote);
-                    return (
-                      <>
-                        <span>·</span>
-                        <span>{Math.round(effQuote * 100)} % BEG → −{fmtEur(foerderBetrag)}</span>
-                      </>
-                    );
-                  })()}
+                  {massnahme.id === "M6"
+                    ? (() => {
+                        const mitWP = aktiveMassnahmen.includes("M4");
+                        const { gesamtEur, evEur, einsEur } = berechnePvErtrag(mitWP);
+                        const amort = Math.round(massnahme.investition / gesamtEur);
+                        return (
+                          <>
+                            <span>·</span>
+                            <span style={{ color: "var(--pos)" }}>{fmtEur(gesamtEur)}/J Ertrag</span>
+                            <span style={{ fontSize: 10.5 }}>(10 kWp · {fmtEur(evEur)} Eigenverbrauch{mitWP ? " inkl. WP" : ""} + {fmtEur(einsEur)} Einspeisung)</span>
+                            <span>· Amortisation ~{amort} J</span>
+                          </>
+                        );
+                      })()
+                    : massnahme.foerderquote > 0
+                      ? (() => {
+                          const effQuote = Math.min((massnahme.foerderquote ?? 0) + 0.05, 0.50);
+                          return (
+                            <>
+                              <span>·</span>
+                              <span>{Math.round(effQuote * 100)} % BEG → −{fmtEur(Math.round(massnahme.investition * effQuote))}</span>
+                            </>
+                          );
+                        })()
+                      : null
+                  }
                 </div>
               )}
             </div>
             {massnahme.id === "M4" && (() => {
               const m7Geplant = (bauteile_state.verteilung || 2) >= 6;
               const vt = m7Geplant ? 35 : vorlauftemperaturFuer(gebaeude.waermeverteilung);
-              const envAvg = ((bauteile_state.waende||2) + (bauteile_state.dach||2)) / 2;
+              const envAvg = ((bauteile_state.waende||2) + (bauteile_state.dach||2) + (bauteile_state.fenster||2)) / 3;
               const istOel = /Heizöl/i.test(gebaeude.heizung_typ || "");
               const hatGas = /Gas/i.test(gebaeude.heizung_typ || "");
               // For oil buildings, auto never picks hybrid — mirror suppression logic from effectiveBauteilState
@@ -950,6 +997,39 @@ const PaketBlock = ({ paket, aktiv, onToggle, onToggleMassnahme = () => {}, akti
                       ℹ️ Heizstab deckt ~5 % der Jahresheizlast (Spitzenlast, COP = 1). Geschätzte Mehrkosten: ~200–400 €/Jahr gegenüber monovalentem Betrieb.
                     </div>
                   )}
+                  {/* HP-Eignungseinschätzung */}
+                  <div style={{
+                    marginTop: 10, fontSize: 11.5, padding: "7px 10px", borderRadius: 3,
+                    background: vt <= 50 && envAvg >= 4 ? "rgba(27,104,58,0.08)" : "var(--surface2)",
+                    color: "var(--body)",
+                    border: `1px solid ${vt <= 50 && envAvg >= 4 ? "#8CBDB5" : "var(--bdr)"}`,
+                  }}>
+                    {vt <= 50 && envAvg >= 4
+                      ? `✓ Thermisch sehr gut geeignet (VT ${vt} °C, Hülle gut) — Monovalent-Betrieb mit COP 4–5 realistisch.`
+                      : vt <= 55
+                      ? `Thermisch geeignet bei VT ${vt} °C — ${WP_VARIANTEN[autoKey]?.label} sinnvoll. Praktische Eignung vorbehaltlich Vor-Ort-Klärung.`
+                      : `Vorlauftemperatur ${vt} °C derzeit zu hoch — Hüllsanierung und/oder M7 (Wärmeverteilung) vor WP-Einbau empfohlen.`
+                    }
+                  </div>
+                  {/* Vor-Ort-Klärung */}
+                  <div style={{ marginTop: 8 }}>
+                    <button onClick={() => setVorOrtOffen(v => !v)}
+                      style={{ background: "none", border: "none", padding: 0, cursor: "pointer",
+                               fontSize: 11.5, color: "var(--acc)", fontFamily: "'Geist Mono', monospace",
+                               display: "flex", alignItems: "center", gap: 4 }}>
+                      Vor-Ort zu klären {vorOrtOffen ? "▾" : "▸"}
+                    </button>
+                    {vorOrtOffen && (
+                      <div style={{ marginTop: 8, paddingLeft: 10, borderLeft: "2px solid var(--bdr)",
+                                    fontSize: 11, color: "var(--body)", display: "flex", flexDirection: "column", gap: 7 }}>
+                        <div><b>Aufstellort Außengerät</b> — Mindestabstand 3 m zur Nachbargrenze (TA Lärm). Bei Reihenhaus oft kritisch.</div>
+                        <div><b>Stromanschluss</b> — 3-Phasen 400 V mit freiem 3×16 A (oder 3×25 A). Altbauten oft 1-phasig oder 35 A Hausanschluss → Erneuerung ca. 1.500–4.000 €.</div>
+                        <div><b>Trinkwarmwasser</b> — Bei &gt;4 Personen Pufferspeicher 300+ L oder separate Brauchwasser-WP empfohlen.</div>
+                        <div><b>Heizflächen-Reserve</b> — Auch bei VT 50 °C können Einzelräume (Bad, Eckzimmer) unterdimensionierte Heizkörper haben → punktueller Tausch ggf. nötig.</div>
+                        <div><b>Schallimmission</b> — Aufstellung ≥ 3 m vom Nachbar-Schlafraum (TA Lärm: 35 dB(A) nachts am Immissionsort).</div>
+                      </div>
+                    )}
+                  </div>
                   {(istOel || hybridOhneGas) && (
                     <div style={{ marginTop: 10, borderTop: "1px solid var(--bdr)", paddingTop: 8 }}>
                       <div style={{ fontWeight: 600, fontSize: 10.5, color: "var(--sec)", marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.1em", fontFamily: "'Geist Mono', monospace" }}>Begleitkosten</div>
@@ -1247,7 +1327,7 @@ const EekArrowScale = ({ istKlasse, zielKlasse, istPe, zielPe }) => (
 );
 
 // ═══ MERGED TABLE (Energie + Kosten pro Schritt) ════════════════════════
-const MergedTable = ({ kumuliert, ist }) => {
+const MergedTable = ({ kumuliert, ist, heizkosten = 0 }) => {
   const maxEE = ist.endenergie || 1;
   const maxPE = ist.primaerenergie || 1;
   const maxCO2 = ist.co2 || 1;
@@ -1265,7 +1345,7 @@ const MergedTable = ({ kumuliert, ist }) => {
         </Tooltip>
       </div>
       <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
-      <table className="w-full text-[13px]" style={{ fontVariantNumeric: "tabular-nums", minWidth: 640 }}>
+      <table className="w-full text-[13px]" style={{ fontVariantNumeric: "tabular-nums", minWidth: 760 }}>
         <thead>
           <tr style={{ borderBottom: "1.25px solid var(--txt)" }}>
             <th className="text-left py-2.5 font-medium">Schritt</th>
@@ -1292,6 +1372,11 @@ const MergedTable = ({ kumuliert, ist }) => {
             </th>
             <th className="text-right py-2.5 font-medium">Förderung</th>
             <th className="text-right py-2.5 font-medium">Eigenanteil</th>
+            <th className="text-right py-2.5 font-medium">
+              <Tooltip content="Eigenanteil ÷ jährliche Nettoeinsparung (Energie + PV). Statische Preise.">
+                <span style={{ color: "var(--acc)", display: "inline-flex", verticalAlign: "middle" }}><InfoIcon size={11} /></span><span style={{ marginLeft: 5 }}>Amortis.</span>
+              </Tooltip>
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -1330,6 +1415,7 @@ const MergedTable = ({ kumuliert, ist }) => {
             <td className="text-right py-3" style={{ color: "var(--sec)", fontFamily: "'Geist Mono', monospace" }}>—</td>
             <td className="text-right py-3" style={{ color: "var(--sec)", fontFamily: "'Geist Mono', monospace" }}>—</td>
             <td className="text-right py-3" style={{ color: "var(--sec)", fontFamily: "'Geist Mono', monospace" }}>—</td>
+            <td className="text-right py-3" style={{ color: "var(--sec)", fontFamily: "'Geist Mono', monospace" }}>—</td>
           </tr>
           {kumuliert.map((r, i) => {
             const prevInvest = i === 0 ? 0 : kumuliert[i-1].nachher.invest_gesamt;
@@ -1337,6 +1423,13 @@ const MergedTable = ({ kumuliert, ist }) => {
             const stepInvest = r.nachher.invest_gesamt - prevInvest;
             const stepFoerd  = r.nachher.foerderung_gesamt - prevFoerd;
             const stepEigen  = stepInvest - stepFoerd;
+            const prevHK = i === 0 ? heizkosten : kumuliert[i-1].nachher.heizkosten_gesamt;
+            const energySaving = prevHK - r.nachher.heizkosten_gesamt;
+            const hasPVStep = r.paket.massnahmen.some(m => m.id === "M6");
+            const mitWPStep = kumuliert.slice(0, i+1).some(s => s.paket.massnahmen.some(m => m.id === "M4"));
+            const pvRev = hasPVStep ? berechnePvErtrag(mitWPStep).gesamtEur : 0;
+            const annualSavingStep = energySaving + pvRev;
+            const amortYears = annualSavingStep > 0 && stepEigen > 0 ? Math.round(stepEigen / annualSavingStep) : null;
             const barColor = EFFIZIENZ_FARBEN[r.nachher.effizienzklasse] || "var(--sec)";
             const eeW = Math.round(Math.min(r.nachher.endenergie / maxEE, 1) * 100);
             const peW = Math.round(Math.min(r.nachher.primaerenergie / maxPE, 1) * 100);
@@ -1382,6 +1475,9 @@ const MergedTable = ({ kumuliert, ist }) => {
                   {stepFoerd > 0 ? `−${fmtEur(stepFoerd)}` : "—"}
                 </td>
                 <td className="text-right py-3" style={{ fontFamily: "'Geist Mono', monospace" }}>{stepEigen > 0 ? fmtEur(stepEigen) : "—"}</td>
+                <td className="text-right py-3" style={{ fontFamily: "'Geist Mono', monospace", color: amortYears ? (amortYears <= 20 ? "var(--pos)" : "var(--gold)") : "var(--sec)" }}>
+                  {amortYears ? `~${amortYears} J` : "—"}
+                </td>
               </tr>
             );
           })}
@@ -1394,6 +1490,7 @@ const MergedTable = ({ kumuliert, ist }) => {
               {totalFoerd > 0 ? `−${fmtEur(totalFoerd)}` : "—"}
             </td>
             <td className="text-right py-3 font-medium" style={{ fontFamily: "'Geist Mono', monospace" }}>{fmtEur(totalInvest - totalFoerd)}</td>
+            <td className="text-right py-3" style={{ color: "var(--sec)", fontFamily: "'Geist Mono', monospace" }}>—</td>
           </tr>
         </tfoot>
       </table>
@@ -1629,6 +1726,12 @@ Gesamtfahrplan — alle 6 Maßnahmen:
   Primärenergie ZIEL  78 kWh/(m²·a)  →  Klasse C
   CO₂:  63 → 20 kg/(m²·a)  (−68 %)
   Investition 130.800 €  ·  Förderung ca. 21.000 €`}</pre>
+          </Sub>
+          <Sub title="Wie wird die Amortisation berechnet?">
+            <b>Gesamt-Amortisation</b> (Sidebar-KPI): Eigenanteil ÷ (IST-Heizkosten − ZIEL-Heizkosten) bei statischen Energiepreisen. Bei einer vollständigen Sanierung mit Wärmepumpe liegt die rechnerische Amortisation oft bei 30–50 Jahren — das ist ehrlich. Mit realistischer Energiepreissteigerung von 2–3 %/Jahr halbiert sich dieser Wert typisch auf 15–25 Jahre. <b>PV-Ertrag</b>: angenommen 10 kWp · 950 kWh/kWp. Eigenverbrauchsquote 35 % (ohne WP) bzw. 60 % (mit WP + Speicher). Eigenverbrauch bewertet zu 0,31 €/kWh (Haushaltstarif), Einspeisung zu 0,082 €/kWh (EEG 2024). Daraus ergibt sich ein Jahresertrag von ca. 1.330–2.020 €, Amortisation ~9–14 Jahre.
+          </Sub>
+          <Sub title="Wie wird die 20-Jahr-Bilanz gebildet?">
+            „Ohne Sanierung": 20 × aktuelle Heizkosten (IST). „Mit Sanierung": Eigenanteil + 20 × ZIEL-Heizkosten. Beide Seiten nutzen <b>statische Energiepreise</b> — kein Preisanstieg einkalkuliert. Das macht den Vergleich nachvollziehbar, unterschätzt aber die Wirtschaftlichkeit der Sanierung, da Energiepreise historisch steigen.
           </Sub>
           <div style={{ marginTop: 8, fontSize: 11.5, color: "var(--sec)", fontStyle: "italic", lineHeight: 1.6 }}>
             Alle Werte sind Richtwerte auf Basis realistischer Marktpreise und BEG-Konditionen Stand April 2026. Dieser Rechner ist ein Demonstrator und ersetzt keine zertifizierte iSFP-Beratung nach BAFA-Anforderungen.
@@ -1917,6 +2020,7 @@ export default function App() {
     () => berechneHeizkosten(ist.endenergie, gebaeude.wohnflaeche, gebaeude.heizung_typ),
     [ist.endenergie, gebaeude.wohnflaeche, gebaeude.heizung_typ]
   );
+  const appIstTraeger = useMemo(() => traegerFuerHeizung(gebaeude.heizung_typ), [gebaeude.heizung_typ]);
   const heizkostenWE = useMemo(() => gebaeude.wohneinheiten > 0 ? Math.round(heizkosten / gebaeude.wohneinheiten) : 0, [heizkosten, gebaeude.wohneinheiten]);
   const effizienzklasse = useMemo(() => berechneEffizienzklasse(ist.primaerenergie), [ist.primaerenergie]);
   const gebaeudeWithState = useMemo(() => ({ ...gebaeude, bauteile_state: effectiveBauteilState }), [gebaeude, effectiveBauteilState]);
@@ -1991,7 +2095,7 @@ export default function App() {
       </header>
 
       {/* Print-Title (nur im PDF) */}
-      <ISFPPrintReport ist={ist} k={k} heizkostenIst={heizkosten} aktivePakete={aktivePakete} aktiveMassnahmen={aktiveMassnahmen} gebaeude={gebaeude} kumuliert={kumuliert} effectivePakete={effectivePakete} />
+      <ISFPPrintReport ist={ist} k={k} heizkostenIst={heizkosten} aktivePakete={aktivePakete} aktiveMassnahmen={aktiveMassnahmen} gebaeude={gebaeude} kumuliert={kumuliert} effectivePakete={effectivePakete} resolvedWpVariante={resolvedWpVariante} />
 
       <main className="mx-auto max-w-[1400px] print-hide px-5 md:px-10" style={{ paddingTop: 36, paddingBottom: 80 }}>
 
@@ -2192,10 +2296,65 @@ export default function App() {
               istPe={`${ist.primaerenergie} kWh`}
               zielPe={`${k.primaerenergie} kWh`}
             />
-            <MergedTable kumuliert={kumuliert} ist={ist} />
+            <MergedTable kumuliert={kumuliert} ist={ist} heizkosten={heizkosten} />
           </div>
 
           <EnergieVerlaufChart ist={ist} kumuliert={kumuliert} />
+
+          {/* 20-Jahr-Bilanz */}
+          {heizkosten > 0 && k.heizkosten_gesamt > 0 && (() => {
+            const H = 20;
+            const hatWP = aktiveMassnahmen.includes("M4");
+            const hasPV = aktiveMassnahmen.includes("M6");
+            const pvRevenue20J = hasPV ? berechnePvErtrag(hatWP).gesamtEur * H : 0;
+            const { istJahr, zielJahr } = berechneHeizungWartung({
+              traeger: appIstTraeger, wpVariante: resolvedWpVariante, hatWP, hatPV: hasPV,
+            });
+            const ohneEur  = Math.round((heizkosten + istJahr) * H);
+            const mitEur   = Math.round(k.eigenanteil + (k.heizkosten_gesamt + zielJahr) * H - pvRevenue20J);
+            const delta    = mitEur - ohneEur;
+            const annualNetSaving = (heizkosten + istJahr) - (k.heizkosten_gesamt + zielJahr) + pvRevenue20J / H;
+            const breakevenJ = annualNetSaving > 0
+              ? Math.round(k.eigenanteil / annualNetSaving) : null;
+            return (
+              <div style={{ marginTop: 8, marginBottom: 32 }}>
+                <div style={{ fontSize: 9, letterSpacing: "0.18em", textTransform: "uppercase",
+                              fontFamily: "var(--mono)", color: "var(--acc)", marginBottom: 10 }}>
+                  20-Jahr-Bilanz · statische Energiepreise
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginBottom: 8 }}>
+                  <div style={{ background: "var(--surface2)", border: "1.25px solid var(--bdr)", borderRadius: 3, padding: "10px 12px" }}>
+                    <div style={{ fontSize: 8, fontFamily: "var(--mono)", letterSpacing: "0.1em",
+                                  textTransform: "uppercase", color: "var(--sec)", marginBottom: 4 }}>Ohne Sanierung</div>
+                    <div style={{ fontSize: 16, fontWeight: 600, fontFamily: "var(--mono)",
+                                  color: "var(--neg)", marginBottom: 2 }}>{fmtEur(ohneEur)}</div>
+                    <div style={{ fontSize: 9, fontFamily: "var(--mono)", color: "var(--sec)" }}>
+                      {H} × {fmtEur(Math.round(heizkosten))}/J Energie + {H} × {fmtEur(istJahr)}/J Wartung
+                    </div>
+                  </div>
+                  <div style={{ background: "var(--surface)", border: "1.25px solid var(--bdr)", borderRadius: 3, padding: "10px 12px" }}>
+                    <div style={{ fontSize: 8, fontFamily: "var(--mono)", letterSpacing: "0.1em",
+                                  textTransform: "uppercase", color: "var(--sec)", marginBottom: 4 }}>Mit Sanierung</div>
+                    <div style={{ fontSize: 16, fontWeight: 600, fontFamily: "var(--mono)",
+                                  color: delta < 0 ? "var(--pos)" : "var(--body)", marginBottom: 2 }}>{fmtEur(mitEur)}</div>
+                    <div style={{ fontSize: 9, fontFamily: "var(--mono)", color: "var(--sec)" }}>
+                      {fmtEur(k.eigenanteil)} Eigenanteil
+                      {` + ${H} × ${fmtEur(Math.round(k.heizkosten_gesamt))}/J Energie`}
+                      {` + ${H} × ${fmtEur(zielJahr)}/J Wartung`}
+                      {pvRevenue20J > 0 && ` − ${H} × ${fmtEur(Math.round(pvRevenue20J / H))}/J PV`}
+                    </div>
+                  </div>
+                </div>
+                <div style={{ fontSize: 11, fontFamily: "var(--mono)", color: "var(--sec)", lineHeight: 1.5 }}>
+                  {delta < 0
+                    ? `Sanierung spart über ${H} Jahre ${fmtEur(Math.abs(delta))} gegenüber Nicht-Sanieren.`
+                    : `Bei statischen Preisen nach ${H} Jahren noch ${fmtEur(delta)} Mehraufwand.`}
+                  {breakevenJ && ` Amortisation bei ~${breakevenJ} Jahren.`}
+                  {" "}Heizungstausch bei Nicht-Sanierung nicht einkalkuliert.
+                </div>
+              </div>
+            );
+          })()}
 
           <div className="mt-10">
             <div style={{ background: "var(--surface2)", border: "1.25px solid var(--bdr)", borderRadius: 3, padding: "20px 24px" }}>
@@ -2207,7 +2366,7 @@ export default function App() {
                 {[
                   ["Gebäudehülle · Fenster · Optimierung", "BEG EM + iSFP-Bonus (Demo-Logik)"],
                   ["Heizungstausch · Wärmepumpe", "vereinfachte KfW-/BEG-Annahme"],
-                  ["PV · Eigenstrom", "kein Direktzuschuss in dieser Demo"],
+                  ["PV · Eigenstrom", "kein Direktzuschuss — Ertrag aus Eigenverbrauch (0,31 €/kWh) + Einspeisung (0,082 €/kWh EEG 2024)"],
                 ].map(([cat, note], i) => (
                   <div key={i} style={{ paddingBottom: 8, borderBottom: "1px solid var(--bdr)" }}>
                     <div style={{ fontSize: 11.5, fontWeight: 500, color: "var(--txt)", marginBottom: 1 }}>{cat}</div>
@@ -2299,6 +2458,35 @@ export default function App() {
             })}
           </div>
 
+          {/* Amortisation KPI — sidebar */}
+          {k.eigenanteil > 0 && (() => {
+            const hatWP = aktiveMassnahmen.includes("M4");
+            const hasPV = aktiveMassnahmen.includes("M6");
+            const pvRevenue = hasPV ? berechnePvErtrag(hatWP).gesamtEur : 0;
+            const { istJahr, zielJahr } = berechneHeizungWartung({
+              traeger: appIstTraeger, wpVariante: resolvedWpVariante, hatWP, hatPV: hasPV,
+            });
+            const annualSaving = Math.round(heizkosten - k.heizkosten_gesamt + pvRevenue + istJahr - zielJahr);
+            if (annualSaving <= 0) return null;
+            const years = Math.round(k.eigenanteil / annualSaving);
+            return (
+              <div style={{ background: "var(--surface)", border: "1.25px solid var(--bdr)",
+                            borderRadius: 3, padding: "10px 11px", marginBottom: 10 }}>
+                <div style={{ fontSize: 8, fontFamily: "'Geist Mono', monospace", letterSpacing: "0.14em",
+                              textTransform: "uppercase", color: "var(--sec)", marginBottom: 3 }}>Amortisation</div>
+                <div style={{ fontSize: 19, fontWeight: 600, fontFamily: "'Geist Mono', monospace",
+                              color: "var(--gold)", marginBottom: 4, lineHeight: 1 }}>~{years} Jahre</div>
+                <div style={{ height: 4, background: "var(--div)", borderRadius: 2, overflow: "hidden", marginBottom: 4 }}>
+                  <div style={{ height: "100%", width: `${Math.min(Math.round(20 / years * 100), 100)}%`,
+                                background: years <= 20 ? "var(--pos)" : "var(--gold)", borderRadius: 2 }} />
+                </div>
+                <div style={{ fontSize: 8.5, fontFamily: "'Geist Mono', monospace", color: "var(--sec)", lineHeight: 1.3 }}>
+                  {fmtEur(k.eigenanteil)} / {fmtEur(annualSaving)}/J netto · statische Preise
+                </div>
+              </div>
+            );
+          })()}
+
           {/* Paket-Übersicht */}
           <div style={{ background: "var(--surface)", border: "1.25px solid var(--bdr)", borderRadius: 3, padding: "10px 12px", marginBottom: 10 }}>
             <div className="text-[10.5px] tracking-[0.18em] uppercase mb-2" style={{ color: "var(--acc)", fontFamily: "'Geist Mono', monospace" }}>Paket-Übersicht</div>
@@ -2384,6 +2572,7 @@ export default function App() {
         effectiveBauteilState={effectiveBauteilState}
         gebaeude={gebaeude}
         aktiveMassnahmen={aktiveMassnahmen}
+        resolvedWpVariante={resolvedWpVariante}
       />
 
       <footer className="print-hide px-5 md:px-10" style={{ borderTop: "1px solid var(--bdr)", paddingTop: 32, paddingBottom: 32, marginTop: 40 }}>
