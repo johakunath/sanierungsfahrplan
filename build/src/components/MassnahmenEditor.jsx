@@ -2,7 +2,10 @@ import React, { useState } from "react";
 // intentional: uses raw MASSNAHMENPAKETE — editor must show pre-override base values
 import { MASSNAHMENPAKETE, PAKET_FARBEN } from "../data.js";
 
-const MassnahmenEditor = ({ overrides, onUpdate, onReset }) => {
+const MassnahmenEditor = ({ overrides, onUpdate, onReset,
+  wirtschaftlichkeitOverrides = {}, heizkostenIstCalc = 0, heizkostenZielCalc = 0,
+  wartungIstCalc = 0, wartungZielCalc = 0,
+  onUpdateWirtschaftlichkeit = () => {}, onResetWirtschaftlichkeit = () => {} }) => {
   const [open, setOpen] = useState(false);
   const allM = MASSNAHMENPAKETE.flatMap(paket => paket.massnahmen.map(massnahme => ({ ...massnahme, paketFarbe: paket.farbe })));
   return (
@@ -82,6 +85,51 @@ const MassnahmenEditor = ({ overrides, onUpdate, onReset }) => {
           </table>
           <div style={{ padding: "9px 20px 11px", borderTop: "1px solid var(--div)", fontSize: 11, color: "var(--sec)", fontStyle: "italic" }}>
             Änderungen wirken sofort auf Fahrplan, Energiebilanz und Förderberechnung. Gelb hinterlegte Felder wurden geändert.
+          </div>
+
+          {/* Energiekosten & Wartung overrides */}
+          <div style={{ borderTop: "1.25px solid var(--bdr)", padding: "14px 20px 16px" }}>
+            <div style={{ fontSize: 10.5, letterSpacing: "0.18em", textTransform: "uppercase",
+                          fontFamily: "'Geist Mono', monospace", color: "var(--acc)", marginBottom: 10 }}>
+              Wirtschaftlichkeit · Energiekosten &amp; Wartung
+            </div>
+            <div style={{ fontSize: 11, color: "var(--sec)", marginBottom: 12, lineHeight: 1.5 }}>
+              Standardwerte werden aus Energiemodell und Heizungstyp abgeleitet. Hier überschreiben für z.B. reale Jahresrechnung oder abweichende Wartungsverträge. Wirkt nur auf Amortisations- und 20-Jahr-Bilanzberechnung.
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+              {[
+                { key: "heizkostenIst",  label: "Heizkosten IST",  calc: heizkostenIstCalc,  hint: "Energie IST €/J" },
+                { key: "heizkostenZiel", label: "Heizkosten ZIEL", calc: heizkostenZielCalc, hint: "Energie ZIEL €/J" },
+                { key: "wartungIst",     label: "Wartung IST",     calc: wartungIstCalc,     hint: "Wartung IST €/J" },
+                { key: "wartungZiel",    label: "Wartung ZIEL",    calc: wartungZielCalc,    hint: "Wartung ZIEL €/J" },
+              ].map(({ key, label, calc }) => {
+                const ov = wirtschaftlichkeitOverrides[key];
+                const val = ov !== undefined ? ov : calc;
+                const changed = ov !== undefined;
+                return (
+                  <div key={key} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                    <div style={{ fontSize: 10.5, color: "var(--body)", fontFamily: "'Geist Mono', monospace" }}>{label}</div>
+                    <div style={{ fontSize: 9.5, color: "var(--sec)", fontFamily: "'Geist Mono', monospace", marginBottom: 2 }}>
+                      berechnet: {Math.round(calc).toLocaleString("de-DE")} €/J
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                      <input type="number" min={0} step={50} value={val}
+                        onChange={e => onUpdateWirtschaftlichkeit(key, Math.max(0, parseInt(e.target.value, 10) || 0))}
+                        style={{ width: 90, fontFamily: "'Geist Mono', monospace", fontSize: 12.5, textAlign: "right",
+                          background: changed ? "var(--highlight)" : "transparent",
+                          color: "var(--txt)",
+                          border: "1px solid var(--bdr)", borderRadius: 2, padding: "3px 6px", outline: "none" }} />
+                      <span style={{ fontSize: 11, color: "var(--sec)" }}>€</span>
+                      {changed && (
+                        <button onClick={() => onResetWirtschaftlichkeit(key)} title="Standardwert wiederherstellen"
+                          style={{ fontSize: 14, color: "var(--acc)", background: "transparent", border: "1px solid var(--bdr)",
+                                   borderRadius: 2, padding: "1px 7px", cursor: "pointer" }}>↺</button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       )}

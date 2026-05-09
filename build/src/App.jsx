@@ -137,7 +137,7 @@ export class ErrorBoundary extends React.Component {
 }
 
 // ═══ MOBILE RESULTS DRAWER ═════════════════════════════════════════════
-const MobileResultsDrawer = ({ effizienzklasse, k, ist, heizkosten, aktiveEmpfohleneMassnahmen, empfohleneMassnahmen, reportSummaryPackages, nichtEmpfohleneMassnahmen = [], scrollToTab = () => {}, effectiveBauteilState = {}, gebaeude = {}, aktiveMassnahmen = [], resolvedWpVariante = "monovalent" }) => {
+const MobileResultsDrawer = ({ effizienzklasse, k, ist, heizkosten, aktiveEmpfohleneMassnahmen, empfohleneMassnahmen, reportSummaryPackages, nichtEmpfohleneMassnahmen = [], scrollToTab = () => {}, effectiveBauteilState = {}, gebaeude = {}, aktiveMassnahmen = [], resolvedWpVariante = "monovalent", wirtschaftlichkeitOverrides = {} }) => {
   const [open, setOpen] = useState(false);
   const peReduction = ist.primaerenergie > 0 ? Math.round((1 - k.primaerenergie / ist.primaerenergie) * 100) : 0;
   const zielColor = EFFIZIENZ_FARBEN[k.effizienzklasse] || "#00843D";
@@ -237,7 +237,11 @@ const MobileResultsDrawer = ({ effizienzklasse, k, ist, heizkosten, aktiveEmpfoh
           const { istJahr, zielJahr } = berechneHeizungWartung({
             traeger: traegerFuerHeizung(gebaeude.heizung_typ), wpVariante: resolvedWpVariante, hatWP, hatPV: hasPV,
           });
-          const annualSaving = Math.round(heizkosten - k.heizkosten_gesamt + pvRevenue + istJahr - zielJahr);
+          const effHKIst  = wirtschaftlichkeitOverrides.heizkostenIst  ?? heizkosten;
+          const effHKZiel = wirtschaftlichkeitOverrides.heizkostenZiel ?? k.heizkosten_gesamt;
+          const effWIst   = wirtschaftlichkeitOverrides.wartungIst     ?? istJahr;
+          const effWZiel  = wirtschaftlichkeitOverrides.wartungZiel    ?? zielJahr;
+          const annualSaving = Math.round(effHKIst - effHKZiel + pvRevenue + effWIst - effWZiel);
           if (annualSaving <= 0) return null;
           const years = Math.round(k.eigenanteil / annualSaving);
           return (
@@ -1782,6 +1786,8 @@ export default function App() {
   );
   const [activeTab, setActiveTab] = useState("gebaeude");
   const [darkMode, setDarkMode] = useState(false);
+  const [wirtschaftlichkeitOverrides, setWirtschaftlichkeitOverrides] = useState({});
+  const [foerderannahmenOffen, setFoerderannahmenOffen] = useState(false);
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", darkMode ? "dark" : "light");
@@ -1941,6 +1947,13 @@ export default function App() {
     setMassnahmenOverrides(prev => { const n = { ...prev }; delete n[id]; return n; });
   }, []);
 
+  const updateWirtschaftlichkeit = useCallback((key, value) => {
+    setWirtschaftlichkeitOverrides(prev => ({ ...prev, [key]: value }));
+  }, []);
+  const resetWirtschaftlichkeit = useCallback((key) => {
+    setWirtschaftlichkeitOverrides(prev => { const n = { ...prev }; delete n[key]; return n; });
+  }, []);
+
   // ─── Derived values ──
   const bauteile_state = useMemo(() => {
     const bs = {};
@@ -2022,10 +2035,25 @@ export default function App() {
   );
   const appIstTraeger = useMemo(() => traegerFuerHeizung(gebaeude.heizung_typ), [gebaeude.heizung_typ]);
   const heizkostenWE = useMemo(() => gebaeude.wohneinheiten > 0 ? Math.round(heizkosten / gebaeude.wohneinheiten) : 0, [heizkosten, gebaeude.wohneinheiten]);
+  const wartungCalcResult = useMemo(
+    () => berechneHeizungWartung({
+      traeger: appIstTraeger,
+      wpVariante: resolvedWpVariante,
+      hatWP: aktiveMassnahmen.includes("M4"),
+      hatPV: aktiveMassnahmen.includes("M6"),
+    }),
+    [appIstTraeger, resolvedWpVariante, aktiveMassnahmen]
+  );
+  const wartungIstCalc  = wartungCalcResult.istJahr;
+  const wartungZielCalc = wartungCalcResult.zielJahr;
   const effizienzklasse = useMemo(() => berechneEffizienzklasse(ist.primaerenergie), [ist.primaerenergie]);
   const gebaeudeWithState = useMemo(() => ({ ...gebaeude, bauteile_state: effectiveBauteilState }), [gebaeude, effectiveBauteilState]);
   const k = useMemo(() => berechneNachMassnahmen(aktiveMassnahmen, ist, gebaeudeWithState, dynamicPakete), [aktiveMassnahmen, ist, gebaeudeWithState, dynamicPakete]);
   const kumuliert = useMemo(() => berechneKumuliert(aktiveMassnahmen, ist, gebaeudeWithState, dynamicPakete), [aktiveMassnahmen, ist, gebaeudeWithState, dynamicPakete]);
+  const effHeizkostenIst  = wirtschaftlichkeitOverrides.heizkostenIst  ?? heizkosten;
+  const effHeizkostenZiel = wirtschaftlichkeitOverrides.heizkostenZiel ?? k.heizkosten_gesamt;
+  const effWartungIst  = wirtschaftlichkeitOverrides.wartungIst  ?? wartungIstCalc;
+  const effWartungZiel = wirtschaftlichkeitOverrides.wartungZiel ?? wartungZielCalc;
   const bewertung = useMemo(() =>
     bewerteMassnahmen(effectivePakete.flatMap(p => p.massnahmen), effectiveBauteilState, gebaeude),
     [effectivePakete, effectiveBauteilState, gebaeude]
@@ -2302,18 +2330,15 @@ export default function App() {
           <EnergieVerlaufChart ist={ist} kumuliert={kumuliert} />
 
           {/* 20-Jahr-Bilanz */}
-          {heizkosten > 0 && k.heizkosten_gesamt > 0 && (() => {
+          {effHeizkostenIst > 0 && effHeizkostenZiel > 0 && (() => {
             const H = 20;
-            const hatWP = aktiveMassnahmen.includes("M4");
-            const hasPV = aktiveMassnahmen.includes("M6");
-            const pvRevenue20J = hasPV ? berechnePvErtrag(hatWP).gesamtEur * H : 0;
-            const { istJahr, zielJahr } = berechneHeizungWartung({
-              traeger: appIstTraeger, wpVariante: resolvedWpVariante, hatWP, hatPV: hasPV,
-            });
-            const ohneEur  = Math.round((heizkosten + istJahr) * H);
-            const mitEur   = Math.round(k.eigenanteil + (k.heizkosten_gesamt + zielJahr) * H - pvRevenue20J);
+            const hasPV_20 = aktiveMassnahmen.includes("M6");
+            const hatWP_20 = aktiveMassnahmen.includes("M4");
+            const pvRevenue20J = hasPV_20 ? berechnePvErtrag(hatWP_20).gesamtEur * H : 0;
+            const ohneEur  = Math.round((effHeizkostenIst + effWartungIst) * H);
+            const mitEur   = Math.round(k.eigenanteil + (effHeizkostenZiel + effWartungZiel) * H - pvRevenue20J);
             const delta    = mitEur - ohneEur;
-            const annualNetSaving = (heizkosten + istJahr) - (k.heizkosten_gesamt + zielJahr) + pvRevenue20J / H;
+            const annualNetSaving = (effHeizkostenIst + effWartungIst) - (effHeizkostenZiel + effWartungZiel) + pvRevenue20J / H;
             const breakevenJ = annualNetSaving > 0
               ? Math.round(k.eigenanteil / annualNetSaving) : null;
             return (
@@ -2329,7 +2354,7 @@ export default function App() {
                     <div style={{ fontSize: 16, fontWeight: 600, fontFamily: "var(--mono)",
                                   color: "var(--neg)", marginBottom: 2 }}>{fmtEur(ohneEur)}</div>
                     <div style={{ fontSize: 9, fontFamily: "var(--mono)", color: "var(--sec)" }}>
-                      {H} × {fmtEur(Math.round(heizkosten))}/J Energie + {H} × {fmtEur(istJahr)}/J Wartung
+                      {H} × {fmtEur(Math.round(effHeizkostenIst))}/J Energie + {H} × {fmtEur(effWartungIst)}/J Wartung
                     </div>
                   </div>
                   <div style={{ background: "var(--surface)", border: "1.25px solid var(--bdr)", borderRadius: 3, padding: "10px 12px" }}>
@@ -2339,8 +2364,8 @@ export default function App() {
                                   color: delta < 0 ? "var(--pos)" : "var(--body)", marginBottom: 2 }}>{fmtEur(mitEur)}</div>
                     <div style={{ fontSize: 9, fontFamily: "var(--mono)", color: "var(--sec)" }}>
                       {fmtEur(k.eigenanteil)} Eigenanteil
-                      {` + ${H} × ${fmtEur(Math.round(k.heizkosten_gesamt))}/J Energie`}
-                      {` + ${H} × ${fmtEur(zielJahr)}/J Wartung`}
+                      {` + ${H} × ${fmtEur(Math.round(effHeizkostenZiel))}/J Energie`}
+                      {` + ${H} × ${fmtEur(effWartungZiel)}/J Wartung`}
                       {pvRevenue20J > 0 && ` − ${H} × ${fmtEur(Math.round(pvRevenue20J / H))}/J PV`}
                     </div>
                   </div>
@@ -2357,38 +2382,63 @@ export default function App() {
           })()}
 
           <div className="mt-10">
-            <div style={{ background: "var(--surface2)", border: "1.25px solid var(--bdr)", borderRadius: 3, padding: "20px 24px" }}>
-              <div className="text-[11px] tracking-[0.22em] uppercase mb-3" style={{ color: "var(--acc)", fontFamily: "'Geist Mono', monospace" }}>Förderannahmen dieser Demo</div>
-              <div className="text-[12px] leading-relaxed mb-4" style={{ color: "var(--sec)" }}>
-                Diese Vorabschätzung nutzt vereinfachte Förderannahmen je Maßnahmentyp. Die konkrete Förderung wird in der Maßnahmenübersicht und Kostenaufstellung je Paket berücksichtigt.
-              </div>
-              <div className="space-y-2 mb-4">
-                {[
-                  ["Gebäudehülle · Fenster · Optimierung", "BEG EM + iSFP-Bonus (Demo-Logik)"],
-                  ["Heizungstausch · Wärmepumpe", "vereinfachte KfW-/BEG-Annahme"],
-                  ["PV · Eigenstrom", "kein Direktzuschuss — Ertrag aus Eigenverbrauch (0,31 €/kWh) + Einspeisung (0,082 €/kWh EEG 2024)"],
-                ].map(([cat, note], i) => (
-                  <div key={i} style={{ paddingBottom: 8, borderBottom: "1px solid var(--bdr)" }}>
-                    <div style={{ fontSize: 11.5, fontWeight: 500, color: "var(--txt)", marginBottom: 1 }}>{cat}</div>
-                    <div style={{ fontSize: 11, color: "var(--sec)", fontFamily: "'Geist Mono', monospace" }}>{note}</div>
-                  </div>
-                ))}
-              </div>
-              <div className="flex items-baseline justify-between gap-3 mb-3">
-                <span style={{ fontSize: 12, fontWeight: 500, color: "var(--txt)" }}>Förderanteil (von Gesamtinvestition)</span>
-                <span style={{ fontSize: 20, fontFamily: "'Fraunces', serif", color: "var(--pos)", fontVariantNumeric: "tabular-nums" }}>
-                  {k.invest_gesamt > 0
-                    ? `${Math.round(k.foerderung_gesamt / k.invest_gesamt * 100)} %`
-                    : "—"}
+            <div style={{ background: "var(--surface2)", border: "1.25px solid var(--bdr)", borderRadius: 3 }}>
+              <button onClick={() => setFoerderannahmenOffen(o => !o)}
+                style={{ width: "100%", padding: "14px 20px", background: "transparent", border: "none", cursor: "pointer",
+                         display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div className="text-[11px] tracking-[0.22em] uppercase" style={{ color: "var(--acc)", fontFamily: "'Geist Mono', monospace" }}>
+                  Förderannahmen dieser Demo
+                  {k.invest_gesamt > 0 && (
+                    <span style={{ marginLeft: 10, color: "var(--pos)", fontWeight: 600 }}>
+                      {Math.round(k.foerderung_gesamt / k.invest_gesamt * 100)} %
+                    </span>
+                  )}
+                </div>
+                <span style={{ fontSize: 11, color: "var(--sec)", fontFamily: "'Geist Mono', monospace" }}>
+                  {foerderannahmenOffen ? "▲ Schließen" : "▼ Details"}
                 </span>
-              </div>
-              <div style={{ fontSize: 10.5, color: "var(--sec)", lineHeight: 1.5 }}>
-                Keine Förderzusage. Förderdeckel, Eigentümerstatus, Bonuskombinationen, technische Mindestanforderungen und Antragspflichten müssen im echten Prozess geprüft werden.
-              </div>
+              </button>
+              {foerderannahmenOffen && (
+                <div style={{ borderTop: "1.25px solid var(--bdr)", padding: "16px 20px" }}>
+                  <div className="text-[12px] leading-relaxed mb-4" style={{ color: "var(--sec)" }}>
+                    Diese Vorabschätzung nutzt vereinfachte Förderannahmen je Maßnahmentyp. Die konkrete Förderung wird in der Maßnahmenübersicht und Kostenaufstellung je Paket berücksichtigt.
+                  </div>
+                  <div className="space-y-2 mb-4">
+                    {[
+                      ["Gebäudehülle · Fenster · Optimierung", "BEG EM + iSFP-Bonus (Demo-Logik)"],
+                      ["Heizungstausch · Wärmepumpe", "vereinfachte KfW-/BEG-Annahme"],
+                      ["PV · Eigenstrom", "kein Direktzuschuss — Ertrag aus Eigenverbrauch (0,31 €/kWh) + Einspeisung (0,082 €/kWh EEG 2024)"],
+                    ].map(([cat, note], i) => (
+                      <div key={i} style={{ paddingBottom: 8, borderBottom: "1px solid var(--bdr)" }}>
+                        <div style={{ fontSize: 11.5, fontWeight: 500, color: "var(--txt)", marginBottom: 1 }}>{cat}</div>
+                        <div style={{ fontSize: 11, color: "var(--sec)", fontFamily: "'Geist Mono', monospace" }}>{note}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex items-baseline justify-between gap-3 mb-3">
+                    <span style={{ fontSize: 12, fontWeight: 500, color: "var(--txt)" }}>Förderanteil (von Gesamtinvestition)</span>
+                    <span style={{ fontSize: 20, fontFamily: "'Fraunces', serif", color: "var(--pos)", fontVariantNumeric: "tabular-nums" }}>
+                      {k.invest_gesamt > 0
+                        ? `${Math.round(k.foerderung_gesamt / k.invest_gesamt * 100)} %`
+                        : "—"}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: 10.5, color: "var(--sec)", lineHeight: 1.5 }}>
+                    Keine Förderzusage. Förderdeckel, Eigentümerstatus, Bonuskombinationen, technische Mindestanforderungen und Antragspflichten müssen im echten Prozess geprüft werden.
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
-          <MassnahmenEditor overrides={massnahmenOverrides} onUpdate={updateMassnahme} onReset={resetMassnahme} />
+          <MassnahmenEditor overrides={massnahmenOverrides} onUpdate={updateMassnahme} onReset={resetMassnahme}
+            wirtschaftlichkeitOverrides={wirtschaftlichkeitOverrides}
+            heizkostenIstCalc={heizkosten}
+            heizkostenZielCalc={k.heizkosten_gesamt}
+            wartungIstCalc={wartungIstCalc}
+            wartungZielCalc={wartungZielCalc}
+            onUpdateWirtschaftlichkeit={updateWirtschaftlichkeit}
+            onResetWirtschaftlichkeit={resetWirtschaftlichkeit} />
 
           <WieFunktioniertSection />
         </Section>
@@ -2463,10 +2513,7 @@ export default function App() {
             const hatWP = aktiveMassnahmen.includes("M4");
             const hasPV = aktiveMassnahmen.includes("M6");
             const pvRevenue = hasPV ? berechnePvErtrag(hatWP).gesamtEur : 0;
-            const { istJahr, zielJahr } = berechneHeizungWartung({
-              traeger: appIstTraeger, wpVariante: resolvedWpVariante, hatWP, hatPV: hasPV,
-            });
-            const annualSaving = Math.round(heizkosten - k.heizkosten_gesamt + pvRevenue + istJahr - zielJahr);
+            const annualSaving = Math.round(effHeizkostenIst - effHeizkostenZiel + pvRevenue + effWartungIst - effWartungZiel);
             if (annualSaving <= 0) return null;
             const years = Math.round(k.eigenanteil / annualSaving);
             return (
@@ -2573,6 +2620,7 @@ export default function App() {
         gebaeude={gebaeude}
         aktiveMassnahmen={aktiveMassnahmen}
         resolvedWpVariante={resolvedWpVariante}
+        wirtschaftlichkeitOverrides={wirtschaftlichkeitOverrides}
       />
 
       <footer className="print-hide px-5 md:px-10" style={{ borderTop: "1px solid var(--bdr)", paddingTop: 32, paddingBottom: 32, marginTop: 40 }}>
