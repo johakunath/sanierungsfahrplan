@@ -257,6 +257,21 @@ export const ENERGIEPREISE = {
   // strom_wp = WP Wärmestromtarif (Sondertarif) — typisch 2026 Deutschland
 };
 
+export const PV_KWP               = 10;
+export const PV_SPEZ_ERTRAG       = 950;   // kWh/kWp/year, mittlerer dt. Standort
+export const STROMPREIS_HAUSHALT  = 0.31;  // €/kWh Haushaltstarif 2026
+export const EINSPEISETARIF       = 0.082; // €/kWh EEG 2024, <10 kWp
+export const PV_EV_QUOTE_OHNE_WP  = 0.35;
+export const PV_EV_QUOTE_MIT_WP   = 0.60; // Speicher + WP-Synergie
+
+export function berechnePvErtrag(mitWP) {
+  const total   = PV_KWP * PV_SPEZ_ERTRAG;
+  const evQ     = mitWP ? PV_EV_QUOTE_MIT_WP : PV_EV_QUOTE_OHNE_WP;
+  const evEur   = Math.round(total * evQ * STROMPREIS_HAUSHALT);
+  const einsEur = Math.round(total * (1 - evQ) * EINSPEISETARIF);
+  return { gesamtEur: evEur + einsEur, evEur, einsEur };
+}
+
 // ─── Impact helper (stufe 1–7 lookup table) ───────────────────────────────
 const _imp = (tbl, stufe) => {
   const s = Math.max(0, Math.min(6, Math.round(stufe || 2) - 1));
