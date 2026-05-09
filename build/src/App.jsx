@@ -196,72 +196,6 @@ const MobileResultsDrawer = ({ effizienzklasse, k, ist, heizkosten, aktiveEmpfoh
           </div>
         </div>
 
-        {/* KPI Scorecards 2×2 */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginBottom: 10 }}>
-          {[
-            { label: "Primärenergie", istVal: ist.primaerenergie, zielVal: k.primaerenergie, unit: "kWh/(m²·a)", posColor: "var(--pos)" },
-            { label: "Endenergie",    istVal: ist.endenergie,     zielVal: k.endenergie,     unit: "kWh/(m²·a)", posColor: "var(--pos)" },
-            { label: "CO₂",          istVal: ist.co2,            zielVal: k.co2,            unit: "kg/(m²·a)",  posColor: "var(--pos)" },
-            { label: "Heizkosten",   istVal: heizkosten,          zielVal: k.heizkosten_gesamt, unit: "€/a",    posColor: "var(--gold)" },
-          ].map(({ label, istVal, zielVal, unit, posColor }) => {
-            const pct = istVal > 0 ? Math.round(Math.abs(zielVal - istVal) / istVal * 100) : 0;
-            const down = zielVal < istVal;
-            const fill = istVal > 0 ? Math.round(Math.min(zielVal / istVal, 1) * 100) : 0;
-            const fmtV = n => unit === "€/a" ? fmtEur(n) : new Intl.NumberFormat("de-DE").format(Math.round(n));
-            const barColor = down ? posColor : "var(--neg)";
-            return (
-              <div key={label} style={{ background: "var(--surface)", border: "1.25px solid var(--bdr)",
-                                        borderRadius: 3, padding: "10px 11px" }}>
-                <div style={{ fontSize: 8, fontFamily: "'Geist Mono', monospace", letterSpacing: "0.14em",
-                              textTransform: "uppercase", color: "var(--sec)", marginBottom: 3 }}>{label}</div>
-                <div style={{ fontSize: 19, fontWeight: 600, fontFamily: "'Geist Mono', monospace",
-                              color: down ? posColor : "var(--neg)", marginBottom: 4, lineHeight: 1 }}>
-                  {down ? "−" : "+"}{pct}%
-                </div>
-                <div style={{ height: 4, background: "var(--div)", borderRadius: 2, overflow: "hidden", marginBottom: 4 }}>
-                  <div style={{ height: "100%", width: `${fill}%`, background: barColor, borderRadius: 2, transition: "width 0.3s" }} />
-                </div>
-                <div style={{ fontSize: 8.5, fontFamily: "'Geist Mono', monospace", color: "var(--sec)", lineHeight: 1.3 }}>
-                  {fmtV(istVal)} → {fmtV(zielVal)} {unit}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Amortisation KPI — drawer */}
-        {k.eigenanteil > 0 && (() => {
-          const hatWP = aktiveMassnahmen.includes("M4");
-          const hasPV = aktiveMassnahmen.includes("M6");
-          const pvRevenue = hasPV ? berechnePvErtrag(hatWP).gesamtEur : 0;
-          const { istJahr, zielJahr } = berechneHeizungWartung({
-            traeger: traegerFuerHeizung(gebaeude.heizung_typ), wpVariante: resolvedWpVariante, hatWP, hatPV: hasPV,
-          });
-          const effHKIst  = wirtschaftlichkeitOverrides.heizkostenIst  ?? heizkosten;
-          const effHKZiel = wirtschaftlichkeitOverrides.heizkostenZiel ?? k.heizkosten_gesamt;
-          const effWIst   = wirtschaftlichkeitOverrides.wartungIst     ?? istJahr;
-          const effWZiel  = wirtschaftlichkeitOverrides.wartungZiel    ?? zielJahr;
-          const annualSaving = Math.round(effHKIst - effHKZiel + pvRevenue + effWIst - effWZiel);
-          if (annualSaving <= 0) return null;
-          const years = Math.round(k.eigenanteil / annualSaving);
-          return (
-            <div style={{ background: "var(--surface)", border: "1.25px solid var(--bdr)",
-                          borderRadius: 3, padding: "10px 11px", marginBottom: 10 }}>
-              <div style={{ fontSize: 8, fontFamily: "'Geist Mono', monospace", letterSpacing: "0.14em",
-                            textTransform: "uppercase", color: "var(--sec)", marginBottom: 3 }}>Amortisation</div>
-              <div style={{ fontSize: 19, fontWeight: 600, fontFamily: "'Geist Mono', monospace",
-                            color: "var(--gold)", marginBottom: 4, lineHeight: 1 }}>~{years} Jahre</div>
-              <div style={{ height: 4, background: "var(--div)", borderRadius: 2, overflow: "hidden", marginBottom: 4 }}>
-                <div style={{ height: "100%", width: `${Math.min(Math.round(20 / years * 100), 100)}%`,
-                              background: years <= 20 ? "var(--pos)" : "var(--gold)", borderRadius: 2 }} />
-              </div>
-              <div style={{ fontSize: 8.5, fontFamily: "'Geist Mono', monospace", color: "var(--sec)", lineHeight: 1.3 }}>
-                {fmtEur(k.eigenanteil)} / {fmtEur(annualSaving)}/J netto · statische Preise
-              </div>
-            </div>
-          );
-        })()}
-
         {/* Paket-Übersicht */}
         <div style={{ background: "var(--surface)", border: "1.25px solid var(--bdr)", borderRadius: 3, padding: "10px 12px", marginBottom: 10 }}>
           <div className="text-[10.5px] tracking-[0.18em] uppercase mb-2" style={{ color: "var(--acc)", fontFamily: "'Geist Mono', monospace" }}>Paket-Übersicht</div>
@@ -309,6 +243,90 @@ const MobileResultsDrawer = ({ effizienzklasse, k, ist, heizkosten, aktiveEmpfoh
             </div>
           ))}
         </div>
+
+        {/* KPI Scorecards 2×2 */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginBottom: 10 }}>
+          {[
+            { label: "Primärenergie", istVal: ist.primaerenergie, zielVal: k.primaerenergie, unit: "kWh/(m²·a)", posColor: "var(--pos)" },
+            { label: "Endenergie",    istVal: ist.endenergie,     zielVal: k.endenergie,     unit: "kWh/(m²·a)", posColor: "var(--pos)" },
+            { label: "CO₂",          istVal: ist.co2,            zielVal: k.co2,            unit: "kg/(m²·a)",  posColor: "var(--pos)" },
+            { label: "Heizkosten",   istVal: heizkosten,          zielVal: k.heizkosten_gesamt, unit: "€/a",    posColor: "var(--gold)" },
+          ].map(({ label, istVal, zielVal, unit, posColor }) => {
+            const pct = istVal > 0 ? Math.round(Math.abs(zielVal - istVal) / istVal * 100) : 0;
+            const down = zielVal < istVal;
+            const fill = istVal > 0 ? Math.round(Math.min(zielVal / istVal, 1) * 100) : 0;
+            const fmtV = n => unit === "€/a" ? fmtEur(n) : new Intl.NumberFormat("de-DE").format(Math.round(n));
+            const barColor = down ? posColor : "var(--neg)";
+            return (
+              <div key={label} style={{ background: "var(--surface)", border: "1.25px solid var(--bdr)",
+                                        borderRadius: 3, padding: "10px 11px" }}>
+                <div style={{ fontSize: 8, fontFamily: "'Geist Mono', monospace", letterSpacing: "0.14em",
+                              textTransform: "uppercase", color: "var(--sec)", marginBottom: 3 }}>{label}</div>
+                <div style={{ fontSize: 19, fontWeight: 600, fontFamily: "'Geist Mono', monospace",
+                              color: down ? posColor : "var(--neg)", marginBottom: 4, lineHeight: 1 }}>
+                  {down ? "−" : "+"}{pct}%
+                </div>
+                <div style={{ height: 4, background: "var(--div)", borderRadius: 2, overflow: "hidden", marginBottom: 4 }}>
+                  <div style={{ height: "100%", width: `${fill}%`, background: barColor, borderRadius: 2, transition: "width 0.3s" }} />
+                </div>
+                <div style={{ fontSize: 8.5, fontFamily: "'Geist Mono', monospace", color: "var(--sec)", lineHeight: 1.3 }}>
+                  {fmtV(istVal)} → {fmtV(zielVal)} {unit}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Amortisation + PE-Ausbeute — drawer */}
+        {k.eigenanteil > 0 && (() => {
+          const hatWP = aktiveMassnahmen.includes("M4");
+          const hasPV = aktiveMassnahmen.includes("M6");
+          const pvRevenue = hasPV ? berechnePvErtrag(hatWP).gesamtEur : 0;
+          const { istJahr, zielJahr } = berechneHeizungWartung({
+            traeger: traegerFuerHeizung(gebaeude.heizung_typ), wpVariante: resolvedWpVariante, hatWP, hatPV: hasPV,
+          });
+          const effHKIst  = wirtschaftlichkeitOverrides.heizkostenIst  ?? heizkosten;
+          const effHKZiel = wirtschaftlichkeitOverrides.heizkostenZiel ?? k.heizkosten_gesamt;
+          const effWIst   = wirtschaftlichkeitOverrides.wartungIst     ?? istJahr;
+          const effWZiel  = wirtschaftlichkeitOverrides.wartungZiel    ?? zielJahr;
+          const annualSaving = Math.round(effHKIst - effHKZiel + pvRevenue + effWIst - effWZiel);
+          const amortYears = annualSaving > 0 ? Math.round(k.eigenanteil / annualSaving) : null;
+          const peSavedTotal = Math.round((ist.primaerenergie - k.primaerenergie) * (gebaeude.wohnflaeche ?? 0));
+          const peAusbeute = peSavedTotal > 0 ? Math.round(peSavedTotal / k.eigenanteil * 1000) : null;
+          if (!amortYears && !peAusbeute) return null;
+          return (
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginBottom: 10 }}>
+              {amortYears ? (
+                <div style={{ background: "var(--surface)", border: "1.25px solid var(--bdr)",
+                              borderRadius: 3, padding: "10px 11px" }}>
+                  <div style={{ fontSize: 8, fontFamily: "'Geist Mono', monospace", letterSpacing: "0.14em",
+                                textTransform: "uppercase", color: "var(--sec)", marginBottom: 3 }}>Amortisation</div>
+                  <div style={{ fontSize: 19, fontWeight: 600, fontFamily: "'Geist Mono', monospace",
+                                color: "var(--gold)", marginBottom: 4, lineHeight: 1 }}>~{amortYears} J</div>
+                  <div style={{ height: 4, background: "var(--div)", borderRadius: 2, overflow: "hidden", marginBottom: 4 }}>
+                    <div style={{ height: "100%", width: `${Math.min(Math.round(20 / amortYears * 100), 100)}%`,
+                                  background: amortYears <= 20 ? "var(--pos)" : "var(--gold)", borderRadius: 2 }} />
+                  </div>
+                  <div style={{ fontSize: 8.5, fontFamily: "'Geist Mono', monospace", color: "var(--sec)", lineHeight: 1.3 }}>
+                    {fmtEur(k.eigenanteil)} / {fmtEur(annualSaving)}/J
+                  </div>
+                </div>
+              ) : <div />}
+              {peAusbeute ? (
+                <div style={{ background: "var(--surface)", border: "1.25px solid var(--bdr)",
+                              borderRadius: 3, padding: "10px 11px" }}>
+                  <div style={{ fontSize: 8, fontFamily: "'Geist Mono', monospace", letterSpacing: "0.14em",
+                                textTransform: "uppercase", color: "var(--sec)", marginBottom: 3 }}>PE-Ausbeute</div>
+                  <div style={{ fontSize: 19, fontWeight: 600, fontFamily: "'Geist Mono', monospace",
+                                color: "var(--pos)", marginBottom: 8, lineHeight: 1 }}>{peAusbeute}</div>
+                  <div style={{ fontSize: 8.5, fontFamily: "'Geist Mono', monospace", color: "var(--sec)", lineHeight: 1.3 }}>
+                    kWh PE / 1.000 € · {new Intl.NumberFormat("de-DE").format(peSavedTotal)} kWh/a
+                  </div>
+                </div>
+              ) : <div />}
+            </div>
+          );
+        })()}
 
         {/* Investment summary */}
         <div style={{ background: "var(--bg)", border: "1px solid var(--bdr)", borderRadius: 3, padding: "10px 12px", fontSize: 12 }}>
@@ -2475,65 +2493,6 @@ export default function App() {
             </div>
           </div>
 
-          {/* KPI Scorecards 2×2 */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginBottom: 10 }}>
-            {[
-              { label: "Primärenergie", istVal: ist.primaerenergie, zielVal: k.primaerenergie, unit: "kWh/(m²·a)", posColor: "var(--pos)" },
-              { label: "Endenergie",    istVal: ist.endenergie,     zielVal: k.endenergie,     unit: "kWh/(m²·a)", posColor: "var(--pos)" },
-              { label: "CO₂",          istVal: ist.co2,            zielVal: k.co2,            unit: "kg/(m²·a)",  posColor: "var(--pos)" },
-              { label: "Heizkosten",   istVal: heizkosten,          zielVal: k.heizkosten_gesamt, unit: "€/a",    posColor: "var(--gold)" },
-            ].map(({ label, istVal, zielVal, unit, posColor }) => {
-              const pct = istVal > 0 ? Math.round(Math.abs(zielVal - istVal) / istVal * 100) : 0;
-              const down = zielVal < istVal;
-              const fill = istVal > 0 ? Math.round(Math.min(zielVal / istVal, 1) * 100) : 0;
-              const fmtV = n => unit === "€/a" ? fmtEur(n) : new Intl.NumberFormat("de-DE").format(Math.round(n));
-              const barColor = down ? posColor : "var(--neg)";
-              return (
-                <div key={label} style={{ background: "var(--surface)", border: "1.25px solid var(--bdr)",
-                                          borderRadius: 3, padding: "10px 11px" }}>
-                  <div style={{ fontSize: 8, fontFamily: "'Geist Mono', monospace", letterSpacing: "0.14em",
-                                textTransform: "uppercase", color: "var(--sec)", marginBottom: 3 }}>{label}</div>
-                  <div style={{ fontSize: 19, fontWeight: 600, fontFamily: "'Geist Mono', monospace",
-                                color: down ? posColor : "var(--neg)", marginBottom: 4, lineHeight: 1 }}>
-                    {down ? "−" : "+"}{pct}%
-                  </div>
-                  <div style={{ height: 4, background: "var(--div)", borderRadius: 2, overflow: "hidden", marginBottom: 4 }}>
-                    <div style={{ height: "100%", width: `${fill}%`, background: barColor, borderRadius: 2, transition: "width 0.3s" }} />
-                  </div>
-                  <div style={{ fontSize: 8.5, fontFamily: "'Geist Mono', monospace", color: "var(--sec)", lineHeight: 1.3 }}>
-                    {fmtV(istVal)} → {fmtV(zielVal)} {unit}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Amortisation KPI — sidebar */}
-          {k.eigenanteil > 0 && (() => {
-            const hatWP = aktiveMassnahmen.includes("M4");
-            const hasPV = aktiveMassnahmen.includes("M6");
-            const pvRevenue = hasPV ? berechnePvErtrag(hatWP).gesamtEur : 0;
-            const annualSaving = Math.round(effHeizkostenIst - effHeizkostenZiel + pvRevenue + effWartungIst - effWartungZiel);
-            if (annualSaving <= 0) return null;
-            const years = Math.round(k.eigenanteil / annualSaving);
-            return (
-              <div style={{ background: "var(--surface)", border: "1.25px solid var(--bdr)",
-                            borderRadius: 3, padding: "10px 11px", marginBottom: 10 }}>
-                <div style={{ fontSize: 8, fontFamily: "'Geist Mono', monospace", letterSpacing: "0.14em",
-                              textTransform: "uppercase", color: "var(--sec)", marginBottom: 3 }}>Amortisation</div>
-                <div style={{ fontSize: 19, fontWeight: 600, fontFamily: "'Geist Mono', monospace",
-                              color: "var(--gold)", marginBottom: 4, lineHeight: 1 }}>~{years} Jahre</div>
-                <div style={{ height: 4, background: "var(--div)", borderRadius: 2, overflow: "hidden", marginBottom: 4 }}>
-                  <div style={{ height: "100%", width: `${Math.min(Math.round(20 / years * 100), 100)}%`,
-                                background: years <= 20 ? "var(--pos)" : "var(--gold)", borderRadius: 2 }} />
-                </div>
-                <div style={{ fontSize: 8.5, fontFamily: "'Geist Mono', monospace", color: "var(--sec)", lineHeight: 1.3 }}>
-                  {fmtEur(k.eigenanteil)} / {fmtEur(annualSaving)}/J netto · statische Preise
-                </div>
-              </div>
-            );
-          })()}
-
           {/* Paket-Übersicht */}
           <div style={{ background: "var(--surface)", border: "1.25px solid var(--bdr)", borderRadius: 3, padding: "10px 12px", marginBottom: 10 }}>
             <div className="text-[10.5px] tracking-[0.18em] uppercase mb-2" style={{ color: "var(--acc)", fontFamily: "'Geist Mono', monospace" }}>Paket-Übersicht</div>
@@ -2581,6 +2540,83 @@ export default function App() {
               </div>
             ))}
           </div>
+
+          {/* KPI Scorecards 2×2 */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginBottom: 10 }}>
+            {[
+              { label: "Primärenergie", istVal: ist.primaerenergie, zielVal: k.primaerenergie, unit: "kWh/(m²·a)", posColor: "var(--pos)" },
+              { label: "Endenergie",    istVal: ist.endenergie,     zielVal: k.endenergie,     unit: "kWh/(m²·a)", posColor: "var(--pos)" },
+              { label: "CO₂",          istVal: ist.co2,            zielVal: k.co2,            unit: "kg/(m²·a)",  posColor: "var(--pos)" },
+              { label: "Heizkosten",   istVal: heizkosten,          zielVal: k.heizkosten_gesamt, unit: "€/a",    posColor: "var(--gold)" },
+            ].map(({ label, istVal, zielVal, unit, posColor }) => {
+              const pct = istVal > 0 ? Math.round(Math.abs(zielVal - istVal) / istVal * 100) : 0;
+              const down = zielVal < istVal;
+              const fill = istVal > 0 ? Math.round(Math.min(zielVal / istVal, 1) * 100) : 0;
+              const fmtV = n => unit === "€/a" ? fmtEur(n) : new Intl.NumberFormat("de-DE").format(Math.round(n));
+              const barColor = down ? posColor : "var(--neg)";
+              return (
+                <div key={label} style={{ background: "var(--surface)", border: "1.25px solid var(--bdr)",
+                                          borderRadius: 3, padding: "10px 11px" }}>
+                  <div style={{ fontSize: 8, fontFamily: "'Geist Mono', monospace", letterSpacing: "0.14em",
+                                textTransform: "uppercase", color: "var(--sec)", marginBottom: 3 }}>{label}</div>
+                  <div style={{ fontSize: 19, fontWeight: 600, fontFamily: "'Geist Mono', monospace",
+                                color: down ? posColor : "var(--neg)", marginBottom: 4, lineHeight: 1 }}>
+                    {down ? "−" : "+"}{pct}%
+                  </div>
+                  <div style={{ height: 4, background: "var(--div)", borderRadius: 2, overflow: "hidden", marginBottom: 4 }}>
+                    <div style={{ height: "100%", width: `${fill}%`, background: barColor, borderRadius: 2, transition: "width 0.3s" }} />
+                  </div>
+                  <div style={{ fontSize: 8.5, fontFamily: "'Geist Mono', monospace", color: "var(--sec)", lineHeight: 1.3 }}>
+                    {fmtV(istVal)} → {fmtV(zielVal)} {unit}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Amortisation + PE-Ausbeute — sidebar */}
+          {k.eigenanteil > 0 && (() => {
+            const hatWP = aktiveMassnahmen.includes("M4");
+            const hasPV = aktiveMassnahmen.includes("M6");
+            const pvRevenue = hasPV ? berechnePvErtrag(hatWP).gesamtEur : 0;
+            const annualSaving = Math.round(effHeizkostenIst - effHeizkostenZiel + pvRevenue + effWartungIst - effWartungZiel);
+            const amortYears = annualSaving > 0 ? Math.round(k.eigenanteil / annualSaving) : null;
+            const peSavedTotal = Math.round((ist.primaerenergie - k.primaerenergie) * (gebaeude.wohnflaeche ?? 0));
+            const peAusbeute = peSavedTotal > 0 ? Math.round(peSavedTotal / k.eigenanteil * 1000) : null;
+            if (!amortYears && !peAusbeute) return null;
+            return (
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginBottom: 10 }}>
+                {amortYears ? (
+                  <div style={{ background: "var(--surface)", border: "1.25px solid var(--bdr)",
+                                borderRadius: 3, padding: "10px 11px" }}>
+                    <div style={{ fontSize: 8, fontFamily: "'Geist Mono', monospace", letterSpacing: "0.14em",
+                                  textTransform: "uppercase", color: "var(--sec)", marginBottom: 3 }}>Amortisation</div>
+                    <div style={{ fontSize: 19, fontWeight: 600, fontFamily: "'Geist Mono', monospace",
+                                  color: "var(--gold)", marginBottom: 4, lineHeight: 1 }}>~{amortYears} J</div>
+                    <div style={{ height: 4, background: "var(--div)", borderRadius: 2, overflow: "hidden", marginBottom: 4 }}>
+                      <div style={{ height: "100%", width: `${Math.min(Math.round(20 / amortYears * 100), 100)}%`,
+                                    background: amortYears <= 20 ? "var(--pos)" : "var(--gold)", borderRadius: 2 }} />
+                    </div>
+                    <div style={{ fontSize: 8.5, fontFamily: "'Geist Mono', monospace", color: "var(--sec)", lineHeight: 1.3 }}>
+                      {fmtEur(k.eigenanteil)} / {fmtEur(annualSaving)}/J
+                    </div>
+                  </div>
+                ) : <div />}
+                {peAusbeute ? (
+                  <div style={{ background: "var(--surface)", border: "1.25px solid var(--bdr)",
+                                borderRadius: 3, padding: "10px 11px" }}>
+                    <div style={{ fontSize: 8, fontFamily: "'Geist Mono', monospace", letterSpacing: "0.14em",
+                                  textTransform: "uppercase", color: "var(--sec)", marginBottom: 3 }}>PE-Ausbeute</div>
+                    <div style={{ fontSize: 19, fontWeight: 600, fontFamily: "'Geist Mono', monospace",
+                                  color: "var(--pos)", marginBottom: 8, lineHeight: 1 }}>{peAusbeute}</div>
+                    <div style={{ fontSize: 8.5, fontFamily: "'Geist Mono', monospace", color: "var(--sec)", lineHeight: 1.3 }}>
+                      kWh PE / 1.000 € · {new Intl.NumberFormat("de-DE").format(peSavedTotal)} kWh/a
+                    </div>
+                  </div>
+                ) : <div />}
+              </div>
+            );
+          })()}
 
           {/* Investment summary */}
           <div style={{ background: "var(--bg)", border: "1px solid var(--bdr)",
