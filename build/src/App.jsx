@@ -502,24 +502,40 @@ const PresetPicker = ({ activeId, onPick, onUploadClick, uploadLoading }) => (
         <button key={preset.id} onClick={() => onPick(preset.id)}
           className="print-hide"
           style={{
-            padding: "16px 20px", textAlign: "left",
+            padding: 0, textAlign: "left",
             background: active ? "var(--txt)" : "var(--surface)",
             color: active ? "var(--bg)" : "var(--txt)",
             border: active ? "1.5px solid var(--txt)" : "1.25px solid var(--bdr)",
             borderRadius: 3, cursor: "pointer", transition: "all 0.12s",
+            overflow: "hidden",
           }}
           onMouseEnter={(e) => { if (!active) e.currentTarget.style.borderColor = "var(--acc)"; }}
           onMouseLeave={(e) => { if (!active) e.currentTarget.style.borderColor = "var(--bdr)"; }}
         >
-          <div className="text-[10.5px] tracking-[0.2em] uppercase mb-1.5"
-               style={{ color: active ? "#F6A400" : "var(--acc)", fontFamily: "'Geist Mono', monospace" }}>
-            Preset
-          </div>
-          <div className="font-serif text-[17px] leading-tight mb-1" style={{ fontWeight: 500 }}>
-            {preset.label}
-          </div>
-          <div className="text-[12px]" style={{ color: active ? "var(--bg)" : "var(--sec)", opacity: active ? 0.72 : 1 }}>
-            {preset.beschreibung}
+          {preset.photoUrl && (
+            <div style={{ position: "relative" }}>
+              <img src={preset.photoUrl} alt={preset.label}
+                style={{ width: "100%", height: 110, objectFit: "cover", display: "block" }} />
+              {preset.photoCredit && (
+                <div style={{ position: "absolute", bottom: 0, right: 0, fontSize: 8,
+                              color: "rgba(255,255,255,0.75)", background: "rgba(0,0,0,0.35)",
+                              padding: "1px 5px", lineHeight: 1.4 }}>
+                  {preset.photoCredit}
+                </div>
+              )}
+            </div>
+          )}
+          <div style={{ padding: "14px 18px" }}>
+            <div className="text-[10.5px] tracking-[0.2em] uppercase mb-1.5"
+                 style={{ color: active ? "#F6A400" : "var(--acc)", fontFamily: "'Geist Mono', monospace" }}>
+              Preset
+            </div>
+            <div className="font-serif text-[17px] leading-tight mb-1" style={{ fontWeight: 500 }}>
+              {preset.label}
+            </div>
+            <div className="text-[12px]" style={{ color: active ? "var(--bg)" : "var(--sec)", opacity: active ? 0.72 : 1 }}>
+              {preset.beschreibung}
+            </div>
           </div>
         </button>
       );
@@ -865,6 +881,21 @@ const PaketBlock = ({ paket, aktiv, onToggle, onToggleMassnahme = () => {}, akti
                 </div>
               </div>
               <div className="text-[13px] leading-relaxed" style={{ color: "var(--body)" }}>{massnahme.beschreibung}</div>
+              {massnahme.investition > 0 && (
+                <div style={{ fontFamily: "'Geist Mono', monospace", fontSize: 11.5, color: "var(--sec)", marginTop: 6, display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  <span style={{ color: "var(--txt)" }}>{fmtEur(massnahme.investition)}</span>
+                  {massnahme.foerderquote > 0 && (() => {
+                    const effQuote = Math.min((massnahme.foerderquote ?? 0) + 0.05, 0.50);
+                    const foerderBetrag = Math.round(massnahme.investition * effQuote);
+                    return (
+                      <>
+                        <span>·</span>
+                        <span>{Math.round(effQuote * 100)} % BEG → −{fmtEur(foerderBetrag)}</span>
+                      </>
+                    );
+                  })()}
+                </div>
+              )}
             </div>
             {massnahme.id === "M4" && (() => {
               const m7Geplant = (bauteile_state.verteilung || 2) >= 6;
