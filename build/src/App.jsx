@@ -1327,7 +1327,7 @@ const EekArrowScale = ({ istKlasse, zielKlasse, istPe, zielPe }) => (
 );
 
 // ═══ MERGED TABLE (Energie + Kosten pro Schritt) ════════════════════════
-const MergedTable = ({ kumuliert, ist }) => {
+const MergedTable = ({ kumuliert, ist, heizkosten = 0 }) => {
   const maxEE = ist.endenergie || 1;
   const maxPE = ist.primaerenergie || 1;
   const maxCO2 = ist.co2 || 1;
@@ -1345,7 +1345,7 @@ const MergedTable = ({ kumuliert, ist }) => {
         </Tooltip>
       </div>
       <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
-      <table className="w-full text-[13px]" style={{ fontVariantNumeric: "tabular-nums", minWidth: 640 }}>
+      <table className="w-full text-[13px]" style={{ fontVariantNumeric: "tabular-nums", minWidth: 760 }}>
         <thead>
           <tr style={{ borderBottom: "1.25px solid var(--txt)" }}>
             <th className="text-left py-2.5 font-medium">Schritt</th>
@@ -1372,6 +1372,11 @@ const MergedTable = ({ kumuliert, ist }) => {
             </th>
             <th className="text-right py-2.5 font-medium">Förderung</th>
             <th className="text-right py-2.5 font-medium">Eigenanteil</th>
+            <th className="text-right py-2.5 font-medium">
+              <Tooltip content="Eigenanteil ÷ jährliche Nettoeinsparung (Energie + PV). Statische Preise.">
+                <span style={{ color: "var(--acc)", display: "inline-flex", verticalAlign: "middle" }}><InfoIcon size={11} /></span><span style={{ marginLeft: 5 }}>Amortis.</span>
+              </Tooltip>
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -1410,6 +1415,7 @@ const MergedTable = ({ kumuliert, ist }) => {
             <td className="text-right py-3" style={{ color: "var(--sec)", fontFamily: "'Geist Mono', monospace" }}>—</td>
             <td className="text-right py-3" style={{ color: "var(--sec)", fontFamily: "'Geist Mono', monospace" }}>—</td>
             <td className="text-right py-3" style={{ color: "var(--sec)", fontFamily: "'Geist Mono', monospace" }}>—</td>
+            <td className="text-right py-3" style={{ color: "var(--sec)", fontFamily: "'Geist Mono', monospace" }}>—</td>
           </tr>
           {kumuliert.map((r, i) => {
             const prevInvest = i === 0 ? 0 : kumuliert[i-1].nachher.invest_gesamt;
@@ -1417,6 +1423,13 @@ const MergedTable = ({ kumuliert, ist }) => {
             const stepInvest = r.nachher.invest_gesamt - prevInvest;
             const stepFoerd  = r.nachher.foerderung_gesamt - prevFoerd;
             const stepEigen  = stepInvest - stepFoerd;
+            const prevHK = i === 0 ? heizkosten : kumuliert[i-1].nachher.heizkosten_gesamt;
+            const energySaving = prevHK - r.nachher.heizkosten_gesamt;
+            const hasPVStep = r.paket.massnahmen.some(m => m.id === "M6");
+            const mitWPStep = kumuliert.slice(0, i+1).some(s => s.paket.massnahmen.some(m => m.id === "M4"));
+            const pvRev = hasPVStep ? berechnePvErtrag(mitWPStep).gesamtEur : 0;
+            const annualSavingStep = energySaving + pvRev;
+            const amortYears = annualSavingStep > 0 && stepEigen > 0 ? Math.round(stepEigen / annualSavingStep) : null;
             const barColor = EFFIZIENZ_FARBEN[r.nachher.effizienzklasse] || "var(--sec)";
             const eeW = Math.round(Math.min(r.nachher.endenergie / maxEE, 1) * 100);
             const peW = Math.round(Math.min(r.nachher.primaerenergie / maxPE, 1) * 100);
@@ -1462,6 +1475,9 @@ const MergedTable = ({ kumuliert, ist }) => {
                   {stepFoerd > 0 ? `−${fmtEur(stepFoerd)}` : "—"}
                 </td>
                 <td className="text-right py-3" style={{ fontFamily: "'Geist Mono', monospace" }}>{stepEigen > 0 ? fmtEur(stepEigen) : "—"}</td>
+                <td className="text-right py-3" style={{ fontFamily: "'Geist Mono', monospace", color: amortYears ? (amortYears <= 20 ? "var(--pos)" : "var(--gold)") : "var(--sec)" }}>
+                  {amortYears ? `~${amortYears} J` : "—"}
+                </td>
               </tr>
             );
           })}
@@ -1474,6 +1490,7 @@ const MergedTable = ({ kumuliert, ist }) => {
               {totalFoerd > 0 ? `−${fmtEur(totalFoerd)}` : "—"}
             </td>
             <td className="text-right py-3 font-medium" style={{ fontFamily: "'Geist Mono', monospace" }}>{fmtEur(totalInvest - totalFoerd)}</td>
+            <td className="text-right py-3" style={{ color: "var(--sec)", fontFamily: "'Geist Mono', monospace" }}>—</td>
           </tr>
         </tfoot>
       </table>
@@ -2078,7 +2095,7 @@ export default function App() {
       </header>
 
       {/* Print-Title (nur im PDF) */}
-      <ISFPPrintReport ist={ist} k={k} heizkostenIst={heizkosten} aktivePakete={aktivePakete} aktiveMassnahmen={aktiveMassnahmen} gebaeude={gebaeude} kumuliert={kumuliert} effectivePakete={effectivePakete} />
+      <ISFPPrintReport ist={ist} k={k} heizkostenIst={heizkosten} aktivePakete={aktivePakete} aktiveMassnahmen={aktiveMassnahmen} gebaeude={gebaeude} kumuliert={kumuliert} effectivePakete={effectivePakete} resolvedWpVariante={resolvedWpVariante} />
 
       <main className="mx-auto max-w-[1400px] print-hide px-5 md:px-10" style={{ paddingTop: 36, paddingBottom: 80 }}>
 
@@ -2279,7 +2296,7 @@ export default function App() {
               istPe={`${ist.primaerenergie} kWh`}
               zielPe={`${k.primaerenergie} kWh`}
             />
-            <MergedTable kumuliert={kumuliert} ist={ist} />
+            <MergedTable kumuliert={kumuliert} ist={ist} heizkosten={heizkosten} />
           </div>
 
           <EnergieVerlaufChart ist={ist} kumuliert={kumuliert} />
