@@ -229,8 +229,11 @@ const MobileResultsDrawer = ({ effizienzklasse, k, ist, heizkosten, aktiveEmpfoh
         </div>
 
         {/* Amortisation KPI — drawer */}
-        {k.eigenanteil > 0 && heizkosten > k.heizkosten_gesamt && (() => {
-          const annualSaving = Math.round(heizkosten - k.heizkosten_gesamt);
+        {k.eigenanteil > 0 && (() => {
+          const mitWP = aktiveMassnahmen.includes("M4");
+          const pvRevenue = aktiveMassnahmen.includes("M6") ? berechnePvErtrag(mitWP).gesamtEur : 0;
+          const annualSaving = Math.round(heizkosten - k.heizkosten_gesamt + pvRevenue);
+          if (annualSaving <= 0) return null;
           const years = Math.round(k.eigenanteil / annualSaving);
           return (
             <div style={{ background: "var(--surface)", border: "1.25px solid var(--bdr)",
@@ -244,7 +247,7 @@ const MobileResultsDrawer = ({ effizienzklasse, k, ist, heizkosten, aktiveEmpfoh
                               background: years <= 20 ? "var(--pos)" : "var(--gold)", borderRadius: 2 }} />
               </div>
               <div style={{ fontSize: 8.5, fontFamily: "'Geist Mono', monospace", color: "var(--sec)", lineHeight: 1.3 }}>
-                {fmtEur(k.eigenanteil)} / {fmtEur(annualSaving)}/J · statische Preise
+                {fmtEur(k.eigenanteil)} / {fmtEur(annualSaving)}/J{pvRevenue > 0 ? " inkl. PV" : ""} · statische Preise
               </div>
             </div>
           );
@@ -916,7 +919,7 @@ const PaketBlock = ({ paket, aktiv, onToggle, onToggleMassnahme = () => {}, akti
                           <>
                             <span>·</span>
                             <span style={{ color: "var(--pos)" }}>{fmtEur(gesamtEur)}/J Ertrag</span>
-                            <span style={{ fontSize: 10.5 }}>({fmtEur(evEur)} Eigenverbrauch{mitWP ? " inkl. WP" : ""} + {fmtEur(einsEur)} Einspeisung)</span>
+                            <span style={{ fontSize: 10.5 }}>(10 kWp · {fmtEur(evEur)} Eigenverbrauch{mitWP ? " inkl. WP" : ""} + {fmtEur(einsEur)} Einspeisung)</span>
                             <span>· Amortisation ~{amort} J</span>
                           </>
                         );
@@ -939,7 +942,7 @@ const PaketBlock = ({ paket, aktiv, onToggle, onToggleMassnahme = () => {}, akti
             {massnahme.id === "M4" && (() => {
               const m7Geplant = (bauteile_state.verteilung || 2) >= 6;
               const vt = m7Geplant ? 35 : vorlauftemperaturFuer(gebaeude.waermeverteilung);
-              const envAvg = ((bauteile_state.waende||2) + (bauteile_state.dach||2)) / 2;
+              const envAvg = ((bauteile_state.waende||2) + (bauteile_state.dach||2) + (bauteile_state.fenster||2)) / 3;
               const istOel = /Heizöl/i.test(gebaeude.heizung_typ || "");
               const hatGas = /Gas/i.test(gebaeude.heizung_typ || "");
               // For oil buildings, auto never picks hybrid — mirror suppression logic from effectiveBauteilState
@@ -2278,11 +2281,15 @@ export default function App() {
           {/* 20-Jahr-Bilanz */}
           {heizkosten > 0 && k.heizkosten_gesamt > 0 && (() => {
             const H = 20;
+            const mitWP = aktiveMassnahmen.includes("M4");
+            const pvRevenue20J = aktiveMassnahmen.includes("M6")
+              ? berechnePvErtrag(mitWP).gesamtEur * H : 0;
             const ohneEur  = Math.round(heizkosten * H);
-            const mitEur   = Math.round(k.eigenanteil + k.heizkosten_gesamt * H);
+            const mitEur   = Math.round(k.eigenanteil + k.heizkosten_gesamt * H - pvRevenue20J);
             const delta    = mitEur - ohneEur;
-            const breakevenJ = heizkosten > k.heizkosten_gesamt
-              ? Math.round(k.eigenanteil / (heizkosten - k.heizkosten_gesamt)) : null;
+            const annualNetSaving = heizkosten - k.heizkosten_gesamt + (pvRevenue20J / H);
+            const breakevenJ = annualNetSaving > 0
+              ? Math.round(k.eigenanteil / annualNetSaving) : null;
             return (
               <div style={{ marginTop: 8, marginBottom: 32 }}>
                 <div style={{ fontSize: 9, letterSpacing: "0.18em", textTransform: "uppercase",
@@ -2306,6 +2313,7 @@ export default function App() {
                                   color: delta < 0 ? "var(--pos)" : "var(--body)", marginBottom: 2 }}>{fmtEur(mitEur)}</div>
                     <div style={{ fontSize: 9, fontFamily: "var(--mono)", color: "var(--sec)" }}>
                       {fmtEur(k.eigenanteil)} Eigenanteil + {H} × {fmtEur(Math.round(k.heizkosten_gesamt))}/J
+                      {pvRevenue20J > 0 && ` − ${fmtEur(Math.round(pvRevenue20J / H))}/J PV-Ertrag`}
                     </div>
                   </div>
                 </div>
@@ -2314,6 +2322,7 @@ export default function App() {
                     ? `Sanierung spart über ${H} Jahre ${fmtEur(Math.abs(delta))} gegenüber Nicht-Sanieren.`
                     : `Bei statischen Preisen nach ${H} Jahren noch ${fmtEur(delta)} Mehraufwand.`}
                   {breakevenJ && ` Amortisation bei ~${breakevenJ} Jahren.`}
+                  {" "}Heizungstausch bei Nicht-Sanierung nicht einkalkuliert.
                 </div>
               </div>
             );
@@ -2422,8 +2431,11 @@ export default function App() {
           </div>
 
           {/* Amortisation KPI — sidebar */}
-          {k.eigenanteil > 0 && heizkosten > k.heizkosten_gesamt && (() => {
-            const annualSaving = Math.round(heizkosten - k.heizkosten_gesamt);
+          {k.eigenanteil > 0 && (() => {
+            const mitWP = aktiveMassnahmen.includes("M4");
+            const pvRevenue = aktiveMassnahmen.includes("M6") ? berechnePvErtrag(mitWP).gesamtEur : 0;
+            const annualSaving = Math.round(heizkosten - k.heizkosten_gesamt + pvRevenue);
+            if (annualSaving <= 0) return null;
             const years = Math.round(k.eigenanteil / annualSaving);
             return (
               <div style={{ background: "var(--surface)", border: "1.25px solid var(--bdr)",
@@ -2437,7 +2449,7 @@ export default function App() {
                                 background: years <= 20 ? "var(--pos)" : "var(--gold)", borderRadius: 2 }} />
                 </div>
                 <div style={{ fontSize: 8.5, fontFamily: "'Geist Mono', monospace", color: "var(--sec)", lineHeight: 1.3 }}>
-                  {fmtEur(k.eigenanteil)} / {fmtEur(annualSaving)}/J · statische Preise
+                  {fmtEur(k.eigenanteil)} / {fmtEur(annualSaving)}/J{pvRevenue > 0 ? " inkl. PV" : ""} · statische Preise
                 </div>
               </div>
             );
