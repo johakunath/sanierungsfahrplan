@@ -8,7 +8,8 @@ import {
   berechneNachMassnahmen, berechneKumuliert, berechneEffizienzklasse, berechneHeizkosten,
   preisFuerHeizung, traegerFuerHeizung,
   bewerteMassnahmen, vorlauftemperaturFuer, wpTypEmpfehlung,
-  WP_VARIANTEN, wpTypVarianteKey, berechnePvErtrag, WARTUNGSKOSTEN,
+  WP_VARIANTEN, wpTypVarianteKey, berechnePvErtrag,
+  berechneHeizungWartung,
   EFFIZIENZ_FARBEN, NOTE_FARBEN, PAKET_FARBEN,
 } from "./data.js";
 import { extractFromPDF } from "./pdfExtract.js";
@@ -136,7 +137,7 @@ export class ErrorBoundary extends React.Component {
 }
 
 // ═══ MOBILE RESULTS DRAWER ═════════════════════════════════════════════
-const MobileResultsDrawer = ({ effizienzklasse, k, ist, heizkosten, aktiveEmpfohleneMassnahmen, empfohleneMassnahmen, reportSummaryPackages, nichtEmpfohleneMassnahmen = [], scrollToTab = () => {}, effectiveBauteilState = {}, gebaeude = {}, aktiveMassnahmen = [] }) => {
+const MobileResultsDrawer = ({ effizienzklasse, k, ist, heizkosten, aktiveEmpfohleneMassnahmen, empfohleneMassnahmen, reportSummaryPackages, nichtEmpfohleneMassnahmen = [], scrollToTab = () => {}, effectiveBauteilState = {}, gebaeude = {}, aktiveMassnahmen = [], resolvedWpVariante = "monovalent" }) => {
   const [open, setOpen] = useState(false);
   const peReduction = ist.primaerenergie > 0 ? Math.round((1 - k.primaerenergie / ist.primaerenergie) * 100) : 0;
   const zielColor = EFFIZIENZ_FARBEN[k.effizienzklasse] || "#00843D";
@@ -230,11 +231,13 @@ const MobileResultsDrawer = ({ effizienzklasse, k, ist, heizkosten, aktiveEmpfoh
 
         {/* Amortisation KPI — drawer */}
         {k.eigenanteil > 0 && (() => {
-          const mitWP = aktiveMassnahmen.includes("M4");
+          const hatWP = aktiveMassnahmen.includes("M4");
           const hasPV = aktiveMassnahmen.includes("M6");
-          const pvRevenue  = hasPV ? berechnePvErtrag(mitWP).gesamtEur : 0;
-          const wartung    = (mitWP ? WARTUNGSKOSTEN.wp_netto : 0) + (hasPV ? WARTUNGSKOSTEN.pv : 0);
-          const annualSaving = Math.round(heizkosten - k.heizkosten_gesamt + pvRevenue - wartung);
+          const pvRevenue = hasPV ? berechnePvErtrag(hatWP).gesamtEur : 0;
+          const { istJahr, zielJahr } = berechneHeizungWartung({
+            traeger: traegerFuerHeizung(gebaeude.heizung_typ), wpVariante: resolvedWpVariante, hatWP, hatPV: hasPV,
+          });
+          const annualSaving = Math.round(heizkosten - k.heizkosten_gesamt + pvRevenue + istJahr - zielJahr);
           if (annualSaving <= 0) return null;
           const years = Math.round(k.eigenanteil / annualSaving);
           return (
@@ -2000,6 +2003,7 @@ export default function App() {
     () => berechneHeizkosten(ist.endenergie, gebaeude.wohnflaeche, gebaeude.heizung_typ),
     [ist.endenergie, gebaeude.wohnflaeche, gebaeude.heizung_typ]
   );
+  const appIstTraeger = useMemo(() => traegerFuerHeizung(gebaeude.heizung_typ), [gebaeude.heizung_typ]);
   const heizkostenWE = useMemo(() => gebaeude.wohneinheiten > 0 ? Math.round(heizkosten / gebaeude.wohneinheiten) : 0, [heizkosten, gebaeude.wohneinheiten]);
   const effizienzklasse = useMemo(() => berechneEffizienzklasse(ist.primaerenergie), [ist.primaerenergie]);
   const gebaeudeWithState = useMemo(() => ({ ...gebaeude, bauteile_state: effectiveBauteilState }), [gebaeude, effectiveBauteilState]);
@@ -2283,14 +2287,16 @@ export default function App() {
           {/* 20-Jahr-Bilanz */}
           {heizkosten > 0 && k.heizkosten_gesamt > 0 && (() => {
             const H = 20;
-            const mitWP = aktiveMassnahmen.includes("M4");
+            const hatWP = aktiveMassnahmen.includes("M4");
             const hasPV = aktiveMassnahmen.includes("M6");
-            const pvRevenue20J = hasPV ? berechnePvErtrag(mitWP).gesamtEur * H : 0;
-            const wartungJ     = (mitWP ? WARTUNGSKOSTEN.wp_netto : 0) + (hasPV ? WARTUNGSKOSTEN.pv : 0);
-            const ohneEur  = Math.round(heizkosten * H);
-            const mitEur   = Math.round(k.eigenanteil + k.heizkosten_gesamt * H - pvRevenue20J + wartungJ * H);
+            const pvRevenue20J = hasPV ? berechnePvErtrag(hatWP).gesamtEur * H : 0;
+            const { istJahr, zielJahr } = berechneHeizungWartung({
+              traeger: appIstTraeger, wpVariante: resolvedWpVariante, hatWP, hatPV: hasPV,
+            });
+            const ohneEur  = Math.round((heizkosten + istJahr) * H);
+            const mitEur   = Math.round(k.eigenanteil + (k.heizkosten_gesamt + zielJahr) * H - pvRevenue20J);
             const delta    = mitEur - ohneEur;
-            const annualNetSaving = heizkosten - k.heizkosten_gesamt + (pvRevenue20J / H) - wartungJ;
+            const annualNetSaving = (heizkosten + istJahr) - (k.heizkosten_gesamt + zielJahr) + pvRevenue20J / H;
             const breakevenJ = annualNetSaving > 0
               ? Math.round(k.eigenanteil / annualNetSaving) : null;
             return (
@@ -2306,7 +2312,7 @@ export default function App() {
                     <div style={{ fontSize: 16, fontWeight: 600, fontFamily: "var(--mono)",
                                   color: "var(--neg)", marginBottom: 2 }}>{fmtEur(ohneEur)}</div>
                     <div style={{ fontSize: 9, fontFamily: "var(--mono)", color: "var(--sec)" }}>
-                      {H} × {fmtEur(Math.round(heizkosten))}/J Heizkosten
+                      {H} × {fmtEur(Math.round(heizkosten))}/J Energie + {H} × {fmtEur(istJahr)}/J Wartung
                     </div>
                   </div>
                   <div style={{ background: "var(--surface)", border: "1.25px solid var(--bdr)", borderRadius: 3, padding: "10px 12px" }}>
@@ -2315,9 +2321,10 @@ export default function App() {
                     <div style={{ fontSize: 16, fontWeight: 600, fontFamily: "var(--mono)",
                                   color: delta < 0 ? "var(--pos)" : "var(--body)", marginBottom: 2 }}>{fmtEur(mitEur)}</div>
                     <div style={{ fontSize: 9, fontFamily: "var(--mono)", color: "var(--sec)" }}>
-                      {fmtEur(k.eigenanteil)} Eigenanteil + {H} × {fmtEur(Math.round(k.heizkosten_gesamt))}/J Heizk.
-                      {pvRevenue20J > 0 && ` − ${fmtEur(Math.round(pvRevenue20J / H))}/J PV`}
-                      {wartungJ > 0 && ` + ${fmtEur(wartungJ)}/J Wartung`}
+                      {fmtEur(k.eigenanteil)} Eigenanteil
+                      {` + ${H} × ${fmtEur(Math.round(k.heizkosten_gesamt))}/J Energie`}
+                      {` + ${H} × ${fmtEur(zielJahr)}/J Wartung`}
+                      {pvRevenue20J > 0 && ` − ${H} × ${fmtEur(Math.round(pvRevenue20J / H))}/J PV`}
                     </div>
                   </div>
                 </div>
@@ -2436,11 +2443,13 @@ export default function App() {
 
           {/* Amortisation KPI — sidebar */}
           {k.eigenanteil > 0 && (() => {
-            const mitWP = aktiveMassnahmen.includes("M4");
+            const hatWP = aktiveMassnahmen.includes("M4");
             const hasPV = aktiveMassnahmen.includes("M6");
-            const pvRevenue  = hasPV ? berechnePvErtrag(mitWP).gesamtEur : 0;
-            const wartung    = (mitWP ? WARTUNGSKOSTEN.wp_netto : 0) + (hasPV ? WARTUNGSKOSTEN.pv : 0);
-            const annualSaving = Math.round(heizkosten - k.heizkosten_gesamt + pvRevenue - wartung);
+            const pvRevenue = hasPV ? berechnePvErtrag(hatWP).gesamtEur : 0;
+            const { istJahr, zielJahr } = berechneHeizungWartung({
+              traeger: appIstTraeger, wpVariante: resolvedWpVariante, hatWP, hatPV: hasPV,
+            });
+            const annualSaving = Math.round(heizkosten - k.heizkosten_gesamt + pvRevenue + istJahr - zielJahr);
             if (annualSaving <= 0) return null;
             const years = Math.round(k.eigenanteil / annualSaving);
             return (
@@ -2546,6 +2555,7 @@ export default function App() {
         effectiveBauteilState={effectiveBauteilState}
         gebaeude={gebaeude}
         aktiveMassnahmen={aktiveMassnahmen}
+        resolvedWpVariante={resolvedWpVariante}
       />
 
       <footer className="print-hide px-5 md:px-10" style={{ borderTop: "1px solid var(--bdr)", paddingTop: 32, paddingBottom: 32, marginTop: 40 }}>

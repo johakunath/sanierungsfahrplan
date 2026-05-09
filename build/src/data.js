@@ -264,11 +264,30 @@ export const EINSPEISETARIF       = 0.082; // €/kWh EEG 2024, <10 kWp
 export const PV_EV_QUOTE_OHNE_WP  = 0.35;
 export const PV_EV_QUOTE_MIT_WP   = 0.60; // Speicher + WP-Synergie
 
-// Annual operating cost uplift from new systems (net of saved legacy maintenance)
-export const WARTUNGSKOSTEN = {
-  wp_netto: 120,  // WP-Vollwartung ~300 €/J minus eingesparte Heizungswartung ~180 €/J
-  pv:       150,  // PV-Versicherung + Wechselrichterrücklage (Tausch ~1.800 € nach ~12 J)
+// Annual O&M costs by IST heating carrier (heizkosten covers fuel; these cover service)
+export const HEIZUNG_WARTUNG_IST = {
+  heizoel:        260,  // Brennerwartung ~180 + Schornsteinfeger ~80
+  erdgas:         180,  // Gasbrenner-Vollwartung inkl. Abgasmessung
+  fernwaerme_gas:  40,  // Zählerpacht + Jahresabrechnung
+  biomasse:       200,  // Pelletkessel-Vollwartung
+  strom_wp:       300,  // IST-WP (edge case)
 };
+// ZIEL system service costs (absolute, not net)
+export const WARTUNGSKOSTEN_WP         = 300; // WP-Vollwartung/Jahr
+export const WARTUNGSKOSTEN_WP_HYBRID  = 100; // Gaskessel-Teilbetrieb bei Hybrid (Backupbetrieb)
+export const WARTUNGSKOSTEN_PV         = 150; // PV-Versicherung + Wechselrichterrücklage (~1.800 € nach 12 J)
+
+// Returns absolute IST and ZIEL annual O&M so callers can show both sides
+export function berechneHeizungWartung({ traeger, wpVariante, hatWP, hatPV }) {
+  const istJahr = HEIZUNG_WARTUNG_IST[traeger] ?? 180;
+  if (!hatWP) {
+    return { istJahr, zielJahr: istJahr + (hatPV ? WARTUNGSKOSTEN_PV : 0) };
+  }
+  const wpGesamt = wpVariante === "hybrid"
+    ? WARTUNGSKOSTEN_WP + WARTUNGSKOSTEN_WP_HYBRID
+    : WARTUNGSKOSTEN_WP;
+  return { istJahr, zielJahr: wpGesamt + (hatPV ? WARTUNGSKOSTEN_PV : 0) };
+}
 
 export function berechnePvErtrag(mitWP) {
   const total   = PV_KWP * PV_SPEZ_ERTRAG;
