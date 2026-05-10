@@ -49,4 +49,17 @@ if (errors.length) {
   if (fatal) fail(`Fatal JS error during render: ${errors[0]}`);
 }
 
-console.log("[verify] OK — #root has children, no ErrorBoundary, no fatal JS errors");
+// Check that no external CDN references remain in the built HTML
+const cdnPatterns = [
+  /fonts\.googleapis\.com/,
+  /fonts\.gstatic\.com/,
+  /cdnjs\.cloudflare\.com/,
+  /unpkg\.com/,
+];
+for (const pattern of cdnPatterns) {
+  if (pattern.test(html)) {
+    fail(`CDN reference found in built HTML: ${pattern} — all resources must be bundled offline`);
+  }
+}
+
+console.log("[verify] OK — #root has children, no ErrorBoundary, no fatal JS errors, no CDN references");

@@ -173,6 +173,20 @@ git remote set-url origin http://local_proxy@127.0.0.1:${PROXY_PORT}/git/johakun
 
 ---
 
+## Permanent maintenance rules
+
+After every task, verify the following invariants are still satisfied:
+
+| Invariant | How to check |
+|-----------|-------------|
+| **Golden values** | `npm test` must pass. If PE/EEK/Eigenanteil shift, update `data.test.js` AND this file AND `AGENTS.md` together. |
+| **Offline guarantee** | `npm run build && npm test` must pass including the CDN-check in `verify.mjs`. No `googleapis.com`, `gstatic.com`, `cdnjs.cloudflare.com`, or `unpkg.com` references allowed in `dist/index.html`. |
+| **Print/live consistency** | `ISFPPrintReport` must receive `dynamicPakete` (not `effectivePakete`). If M1→P3 logic in App.jsx changes, update the prop passed to `ISFPPrintReport`. |
+| **Recommendation logic** | `massnahmeIstSchonVorhanden` gates M4 and M6. Any new "already-present" check must update both `data.js` and the `updateGebaeude`/`applyPreset` callers in `App.jsx`. |
+| **PDF confirmation** | PDF extraction must never mutate state without user confirmation (`pendingExtraction` → review UI → `applyPendingExtraction`). Do not shortcut this flow. |
+
+---
+
 ## Technical debt (known simplifications)
 
 | Area | Simplification |

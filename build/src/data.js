@@ -591,6 +591,38 @@ export function bewerteMassnahmen(massnahmen, bauteile_state, gebaeude) {
   });
 }
 
+// Returns true if the measure is already present in the building (skip recommending/activating it).
+// M4 (Wärmepumpe): building already has a heat pump as heating system or as listed renewable.
+// M6 (PV + Speicher): building already has photovoltaic as listed renewable.
+export function massnahmeIstSchonVorhanden(massnahmeId, gebaeude) {
+  const erneuerbare = (gebaeude.erneuerbare || "").toLowerCase();
+  const heizungTyp  = (gebaeude.heizung_typ  || "").toLowerCase();
+  if (massnahmeId === "M4") {
+    return /wärmepumpe/i.test(heizungTyp) || /wärmepumpe/i.test(erneuerbare);
+  }
+  if (massnahmeId === "M6") {
+    return /photovoltaik/i.test(erneuerbare);
+  }
+  return false;
+}
+
+// Computes default active measures for a given building state — same logic as applyPreset.
+// Respects massnahmeIstSchonVorhanden so WP/PV are not re-recommended when already present.
+export function getDefaultAktiveMassnahmen(gebaeude, bauteile_state) {
+  const bs  = bauteile_state || {};
+  const vt  = vorlauftemperaturFuer(gebaeude.waermeverteilung);
+  const fossil = /Heizöl|Erdgas|Fernwärme \(Gas/i.test(gebaeude.heizung_typ || "");
+  return MASSNAHMENPAKETE.flatMap(pkg =>
+    pkg.massnahmen.filter(m => {
+      if (massnahmeIstSchonVorhanden(m.id, gebaeude)) return false;
+      if (m.id === "M7") return vt > 50;
+      if (m.id === "M4") return fossil;
+      const imp = m.impact ? m.impact(bs) : { primaerenergie_delta: m.primaerenergie_delta || 0 };
+      return Math.abs(imp.primaerenergie_delta) >= 3;
+    }).map(m => m.id)
+  );
+}
+
 export function vorlauftemperaturFuer(typ) {
   if (!typ || typ.includes(">60")) return 65;
   if (typ.includes("45–55"))       return 50;

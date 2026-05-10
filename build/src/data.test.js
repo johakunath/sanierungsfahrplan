@@ -8,6 +8,8 @@ import {
   PRESETS,
   MASSNAHMENPAKETE,
   berechneEffizienzklasse,
+  massnahmeIstSchonVorhanden,
+  getDefaultAktiveMassnahmen,
 } from "./data.js";
 
 // ─── helpers ──────────────────────────────────────────────────────────────
@@ -267,5 +269,81 @@ describe("berechneKumuliert (efhNachkrieg, all measures)", () => {
     for (let i = 1; i < steps.length; i++) {
       expect(steps[i].nachher.primaerenergie).toBeLessThanOrEqual(steps[i - 1].nachher.primaerenergie);
     }
+  });
+});
+
+// ─── massnahmeIstSchonVorhanden ───────────────────────────────────────────
+
+describe("massnahmeIstSchonVorhanden", () => {
+  it("M4 not present when heizung_typ is Heizöl", () => {
+    expect(massnahmeIstSchonVorhanden("M4", { heizung_typ: "Heizöl", erneuerbare: "" })).toBe(false);
+  });
+
+  it("M4 present when heizung_typ contains Wärmepumpe", () => {
+    expect(massnahmeIstSchonVorhanden("M4", { heizung_typ: "Wärmepumpe Luft/Wasser", erneuerbare: "" })).toBe(true);
+  });
+
+  it("M4 present when erneuerbare contains Wärmepumpe", () => {
+    expect(massnahmeIstSchonVorhanden("M4", { heizung_typ: "Erdgas Brennwert", erneuerbare: "Wärmepumpe" })).toBe(true);
+  });
+
+  it("M6 not present when erneuerbare is empty", () => {
+    expect(massnahmeIstSchonVorhanden("M6", { heizung_typ: "Heizöl", erneuerbare: "" })).toBe(false);
+  });
+
+  it("M6 present when erneuerbare contains Photovoltaik", () => {
+    expect(massnahmeIstSchonVorhanden("M6", { heizung_typ: "Heizöl", erneuerbare: "Photovoltaik" })).toBe(true);
+  });
+
+  it("M6 not present when erneuerbare is Solarthermie", () => {
+    expect(massnahmeIstSchonVorhanden("M6", { heizung_typ: "Heizöl", erneuerbare: "Solarthermie" })).toBe(false);
+  });
+
+  it("other measures always return false", () => {
+    expect(massnahmeIstSchonVorhanden("M1", { heizung_typ: "Wärmepumpe Luft/Wasser", erneuerbare: "Photovoltaik" })).toBe(false);
+    expect(massnahmeIstSchonVorhanden("M2", { heizung_typ: "Wärmepumpe Luft/Wasser", erneuerbare: "Photovoltaik" })).toBe(false);
+  });
+});
+
+// ─── getDefaultAktiveMassnahmen ───────────────────────────────────────────
+
+describe("getDefaultAktiveMassnahmen", () => {
+  it("efhNachkrieg: M4 active (fossil heating)", () => {
+    const { gebaeude } = buildGebaeudeWithState(PRESETS.efhNachkrieg);
+    const bs = Object.fromEntries(ableiteBauteile(gebaeude.baujahr, gebaeude.heizung_typ, gebaeude.lueftung, gebaeude.warmwasser).map(b => [b.id, b.note]));
+    const ids = getDefaultAktiveMassnahmen(gebaeude, bs);
+    expect(ids).toContain("M4");
+  });
+
+  it("WP building: M4 NOT active (already installed)", () => {
+    const gebaeude = { ...PRESETS.efhNachkrieg.gebaeude, heizung_typ: "Wärmepumpe Luft/Wasser" };
+    const bs = Object.fromEntries(ableiteBauteile(gebaeude.baujahr, gebaeude.heizung_typ, gebaeude.lueftung, gebaeude.warmwasser).map(b => [b.id, b.note]));
+    const ids = getDefaultAktiveMassnahmen(gebaeude, bs);
+    expect(ids).not.toContain("M4");
+  });
+
+  it("PV building: M6 NOT active (already installed)", () => {
+    const gebaeude = { ...PRESETS.efhNachkrieg.gebaeude, erneuerbare: "Photovoltaik" };
+    const bs = Object.fromEntries(ableiteBauteile(gebaeude.baujahr, gebaeude.heizung_typ, gebaeude.lueftung, gebaeude.warmwasser).map(b => [b.id, b.note]));
+    const ids = getDefaultAktiveMassnahmen(gebaeude, bs);
+    expect(ids).not.toContain("M6");
+  });
+
+  it("returns array of measure ID strings", () => {
+    const { gebaeude } = buildGebaeudeWithState(PRESETS.efhNachkrieg);
+    const bs = Object.fromEntries(ableiteBauteile(gebaeude.baujahr, gebaeude.heizung_typ, gebaeude.lueftung, gebaeude.warmwasser).map(b => [b.id, b.note]));
+    const ids = getDefaultAktiveMassnahmen(gebaeude, bs);
+    expect(Array.isArray(ids)).toBe(true);
+    ids.forEach(id => expect(typeof id).toBe("string"));
+  });
+});
+
+// ─── dynamicPakete M1→P3 when M4 active ─────────────────────────────────
+
+describe("MASSNAHMENPAKETE M1 placement", () => {
+  it("M1 is in P1 in raw MASSNAHMENPAKETE", () => {
+    const p1 = MASSNAHMENPAKETE.find(p => p.id === "P1");
+    const m1 = p1?.massnahmen.find(m => m.id === "M1");
+    expect(m1).toBeDefined();
   });
 });

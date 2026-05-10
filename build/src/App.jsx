@@ -10,6 +10,7 @@ import {
   bewerteMassnahmen, vorlauftemperaturFuer, wpTypEmpfehlung,
   WP_VARIANTEN, wpTypVarianteKey, berechnePvErtrag,
   berechneHeizungWartung,
+  massnahmeIstSchonVorhanden, getDefaultAktiveMassnahmen,
   EFFIZIENZ_FARBEN, NOTE_FARBEN, PAKET_FARBEN,
 } from "./data.js";
 import { extractFromPDF } from "./pdfExtract.js";
@@ -621,6 +622,87 @@ const PresetPicker = ({ activeId, onPick, onUploadClick, uploadLoading }) => (
 );
 
 // ═══ UPLOAD ZONE ═══════════════════════════════════════════════════════
+
+const PdfReviewPanel = ({ result, onApply, onReject }) => {
+  const [selected, setSelected] = React.useState(() => {
+    const s = new Set();
+    for (const m of result.matched || []) s.add(m.key + "/" + m.targetName);
+    return s;
+  });
+
+  const toggle = (key, targetName) => {
+    const composite = key + "/" + targetName;
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(composite)) next.delete(composite); else next.add(composite);
+      return next;
+    });
+  };
+
+  const gebaeudeFields = (result.matched || []).filter(m => m.targetName === "gebaeude");
+  const istFields = (result.matched || []).filter(m => m.targetName === "ist");
+
+  const FieldRow = ({ m }) => {
+    const composite = m.key + "/" + m.targetName;
+    const isChecked = selected.has(composite);
+    return (
+      <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer",
+                      padding: "5px 0", borderBottom: "1px solid var(--div)" }}>
+        <input type="checkbox" checked={isChecked} onChange={() => toggle(m.key, m.targetName)}
+          style={{ accentColor: "#00843D", width: 14, height: 14, cursor: "pointer", flexShrink: 0 }} />
+        <span style={{ fontSize: 12, color: "var(--sec)", minWidth: 130, flexShrink: 0 }}>{m.label}</span>
+        <span style={{ fontSize: 12, fontFamily: "'Geist Mono', monospace", color: isChecked ? "var(--txt)" : "var(--sec)" }}>
+          {String(m.value)}
+        </span>
+      </label>
+    );
+  };
+
+  return (
+    <div className="print-hide" style={{
+      background: "var(--surface)", border: "1.25px solid #B5623E",
+      borderRadius: 3, padding: "16px 20px",
+    }}>
+      <div style={{ fontSize: 13.5, fontWeight: 500, color: "var(--txt)", marginBottom: 4 }}>
+        {result.fileName} — {result.matched?.length ?? 0} Felder erkannt
+      </div>
+      <div style={{ fontSize: 12, color: "var(--sec)", marginBottom: 12 }}>
+        Prüfen Sie die extrahierten Werte und wählen Sie, welche übernommen werden sollen.
+      </div>
+      {gebaeudeFields.length > 0 && (
+        <div style={{ marginBottom: 10 }}>
+          <div style={{ fontSize: 10, letterSpacing: "0.15em", textTransform: "uppercase",
+                        fontFamily: "'Geist Mono', monospace", color: "var(--acc)", marginBottom: 4 }}>Gebäudedaten</div>
+          {gebaeudeFields.map(m => <FieldRow key={m.key + "/" + m.targetName} m={m} />)}
+        </div>
+      )}
+      {istFields.length > 0 && (
+        <div style={{ marginBottom: 12 }}>
+          <div style={{ fontSize: 10, letterSpacing: "0.15em", textTransform: "uppercase",
+                        fontFamily: "'Geist Mono', monospace", color: "var(--acc)", marginBottom: 4 }}>Energiekennzahlen</div>
+          {istFields.map(m => <FieldRow key={m.key + "/" + m.targetName} m={m} />)}
+        </div>
+      )}
+      {(result.missed?.length ?? 0) > 0 && (
+        <div style={{ fontSize: 11, fontStyle: "italic", color: "var(--sec)", marginBottom: 10 }}>
+          Nicht erkannt: {result.missed.join(", ")}
+        </div>
+      )}
+      <div style={{ display: "flex", gap: 8 }}>
+        <button onClick={() => onApply(selected)}
+          style={{ padding: "7px 16px", background: "#00843D", color: "#FFF", border: "none",
+                   borderRadius: 3, cursor: "pointer", fontSize: 13, fontWeight: 500 }}>
+          Übernehmen ({selected.size} Felder)
+        </button>
+        <button onClick={onReject}
+          style={{ padding: "7px 14px", background: "transparent", color: "var(--sec)",
+                   border: "1.25px solid var(--bdr)", borderRadius: 3, cursor: "pointer", fontSize: 13 }}>
+          Verwerfen
+        </button>
+      </div>
+    </div>
+  );
+};
 
 const ExtractionResult = ({ result, onDismiss }) => {
   const matchedCount = result.matched?.length ?? 0;
@@ -1794,6 +1876,7 @@ export default function App() {
   const [massnahmenOverrides, setMassnahmenOverrides] = useState({});
   const [wpVariante, setWpVariante] = useState("auto");
   const [extraction, setExtraction] = useState(null);
+  const [pendingExtraction, setPendingExtraction] = useState(null);
   const [sanierungsstandProBauteil, setSanierungsstandProBauteil] = useState(() =>
     sanierungsstandAusBauteile(ableiteBauteile(
       PRESETS.efhNachkrieg.gebaeude.baujahr,
@@ -1830,11 +1913,25 @@ export default function App() {
   const updateGebaeude = useCallback((field, value) => {
     setGebaeude(prev => {
       const next = { ...prev, [field]: value };
-      // Auto-derive Bauteile wenn baujahr/heizung/lueftung/warmwasser ändern
-      if (["baujahr", "heizung_typ", "lueftung", "warmwasser"].includes(field)) {
+      const rebuildBauteileFields = ["baujahr", "heizung_typ", "lueftung", "warmwasser"];
+      const recalcMassnahmenFields = ["baujahr", "heizung_typ", "lueftung", "warmwasser", "waermeverteilung", "erneuerbare"];
+      if (rebuildBauteileFields.includes(field)) {
         const neueBauteile = ableiteBauteile(next.baujahr, next.heizung_typ, next.lueftung, next.warmwasser);
         setBauteile(neueBauteile);
         setSanierungsstandProBauteil(sanierungsstandAusBauteile(neueBauteile));
+        if (recalcMassnahmenFields.includes(field)) {
+          const bs = {};
+          neueBauteile.forEach(b => { bs[b.id] = b.note; });
+          setAktiveMassnahmen(getDefaultAktiveMassnahmen(next, bs));
+        }
+      } else if (recalcMassnahmenFields.includes(field)) {
+        // No bauteile rebuild needed, but recalculate measures with current bauteile state
+        setBauteile(prevB => {
+          const bs = {};
+          prevB.forEach(b => { bs[b.id] = b.note; });
+          setAktiveMassnahmen(getDefaultAktiveMassnahmen(next, bs));
+          return prevB;
+        });
       }
       return next;
     });
@@ -1866,6 +1963,8 @@ export default function App() {
     // intentional: uses raw MASSNAHMENPAKETE — preset defaults must be override-independent
     const defaultAktive = MASSNAHMENPAKETE.flatMap(pkg =>
       pkg.massnahmen.filter(m => {
+        // Never activate measures already present in the building.
+        if (massnahmeIstSchonVorhanden(m.id, p.gebaeude)) return false;
         // M7: nur aktivieren wenn VT > 50 °C (Hochtemperatur-Heizkörper).
         if (m.id === "M7") return vt > 50;
         // M4: immer aktivieren bei fossiler Heizung — Heizungstausch ist sinnvoll.
@@ -1913,6 +2012,28 @@ export default function App() {
     setExtraction(result);
   }, []);
 
+  const applyPendingExtraction = useCallback((selectedKeys) => {
+    if (!pendingExtraction) return;
+    const filteredGebaeude = {};
+    const filteredIst = {};
+    for (const m of pendingExtraction.matched || []) {
+      if (!selectedKeys.has(m.key + "/" + m.targetName)) continue;
+      if (m.targetName === "ist") filteredIst[m.key] = m.value;
+      else filteredGebaeude[m.key] = m.value;
+    }
+    handleUpload({
+      ...pendingExtraction,
+      gebaeude: filteredGebaeude,
+      ist: filteredIst,
+      matched: (pendingExtraction.matched || []).filter(m => selectedKeys.has(m.key + "/" + m.targetName)),
+    });
+    setPendingExtraction(null);
+  }, [pendingExtraction, handleUpload]);
+
+  const rejectPendingExtraction = useCallback(() => {
+    setPendingExtraction(null);
+  }, []);
+
   const handleFileSelect = useCallback(async (file) => {
     if (!file) return;
     if (!file.name.toLowerCase().endsWith(".pdf")) { setUploadError("Bitte PDF-Datei verwenden."); return; }
@@ -1921,7 +2042,13 @@ export default function App() {
     try {
       const result = await extractFromPDF(file);
       result.fileName = file.name;
-      handleUpload(result);
+      if ((result.matched?.length ?? 0) === 0) {
+        // Nothing matched — skip review, show the "no fields" result banner directly
+        handleUpload(result);
+      } else {
+        setPendingExtraction(result);
+        setExtraction(null);
+      }
     } catch (e) {
       setUploadError("Datei konnte nicht gelesen werden: " + (e.message || "unbekannter Fehler"));
     } finally {
@@ -2141,7 +2268,7 @@ export default function App() {
       </header>
 
       {/* Print-Title (nur im PDF) */}
-      <ISFPPrintReport ist={ist} k={k} heizkostenIst={heizkosten} aktivePakete={aktivePakete} aktiveMassnahmen={aktiveMassnahmen} gebaeude={gebaeude} kumuliert={kumuliert} effectivePakete={effectivePakete} resolvedWpVariante={resolvedWpVariante} />
+      <ISFPPrintReport ist={ist} k={k} heizkostenIst={heizkosten} aktivePakete={aktivePakete} aktiveMassnahmen={aktiveMassnahmen} gebaeude={gebaeude} kumuliert={kumuliert} effectivePakete={dynamicPakete} resolvedWpVariante={resolvedWpVariante} />
 
       <main className="mx-auto max-w-[1400px] print-hide px-5 md:px-10" style={{ paddingTop: 36, paddingBottom: 80 }}>
 
@@ -2166,7 +2293,12 @@ export default function App() {
             {uploadError && (
               <div className="mt-3 text-[13px]" style={{ color: "#E30613" }}>{uploadError}</div>
             )}
-            {extraction && (
+            {pendingExtraction && (
+              <div className="mt-3">
+                <PdfReviewPanel result={pendingExtraction} onApply={applyPendingExtraction} onReject={rejectPendingExtraction} />
+              </div>
+            )}
+            {!pendingExtraction && extraction && (
               <div className="mt-3">
                 <ExtractionResult result={extraction} onDismiss={() => setExtraction(null)} />
               </div>

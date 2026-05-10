@@ -1,58 +1,30 @@
 // ============================================================================
 // PDF-EXTRAKTION für Energieausweis / Exposé / Gebäudedatenblatt
-// Strategy: PDF.js (CDN) → Textextraktion → Regex-Matching auf Standard-Felder
+// Strategy: PDF.js (bundled inline) → Textextraktion → Regex-Matching
 // ============================================================================
 
-// Lazy-load PDF.js (v3.11 UMD — läuft als script-tag, keine ESM-Probleme)
-const PDFJS_VERSION = "3.11.174";
-const PDFJS_CDNS = [
-  `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDFJS_VERSION}`,
-  `https://unpkg.com/pdfjs-dist@${PDFJS_VERSION}/build`,
-];
+// PDF.js is bundled inline by assemble.mjs — window.pdfjsLib is always available.
+// The worker source is stored as window.__pdfWorkerSrc (raw JS string).
 
-let _pdfjsPromise = null;
-let _loadedPdfJsBase = null;
+let _workerBlobUrl = null;
 
-const setWorkerFromBase = (base) => {
-  if (!window.pdfjsLib || !base) return;
-  window.pdfjsLib.GlobalWorkerOptions.workerSrc = `${base}/pdf.worker.min.js`;
-  _loadedPdfJsBase = base;
-};
-
-const loadScript = (src) => new Promise((resolve, reject) => {
-  const s = document.createElement("script");
-  s.src = src;
-  s.onload = resolve;
-  s.onerror = reject;
-  document.head.appendChild(s);
-});
+function ensureWorkerSrc() {
+  if (!window.pdfjsLib) return;
+  if (window.pdfjsLib.GlobalWorkerOptions.workerSrc) return;
+  if (!window.__pdfWorkerSrc) return;
+  if (!_workerBlobUrl) {
+    const blob = new Blob([window.__pdfWorkerSrc], { type: "application/javascript" });
+    _workerBlobUrl = URL.createObjectURL(blob);
+  }
+  window.pdfjsLib.GlobalWorkerOptions.workerSrc = _workerBlobUrl;
+}
 
 export function loadPdfJs() {
-  if (window.pdfjsLib) {
-    if (_loadedPdfJsBase) setWorkerFromBase(_loadedPdfJsBase);
-    return Promise.resolve(window.pdfjsLib);
+  if (!window.pdfjsLib) {
+    return Promise.reject(new Error("PDF.js wurde nicht geladen — bitte Seite neu laden."));
   }
-  if (_pdfjsPromise) return _pdfjsPromise;
-
-  _pdfjsPromise = (async () => {
-    let lastErr = null;
-    for (const base of PDFJS_CDNS) {
-      try {
-        await loadScript(`${base}/pdf.min.js`);
-        if (!window.pdfjsLib) throw new Error("pdfjsLib nicht verfügbar nach Laden");
-        setWorkerFromBase(base);
-        return window.pdfjsLib;
-      } catch (e) {
-        lastErr = e;
-      }
-    }
-    throw new Error(`PDF.js konnte nicht geladen werden (${PDFJS_CDNS.join(" oder ")})${lastErr ? `: ${lastErr.message || lastErr}` : ""}`);
-  })().catch((err) => {
-    _pdfjsPromise = null;
-    return Promise.reject(err);
-  });
-
-  return _pdfjsPromise;
+  ensureWorkerSrc();
+  return Promise.resolve(window.pdfjsLib);
 }
 
 // Hauptfunktion: File → { fields: {...}, rawText, matched: [...], missed: [...] }
@@ -92,11 +64,11 @@ export function parseEnergieausweisText(text) {
   const matched = [];
   const missed = [];
 
-  const tryGet = (label, fn, target, key) => {
+  const tryGet = (label, fn, target, key, targetName) => {
     const v = fn();
     if (v !== null && v !== undefined && v !== "") {
       target[key] = v;
-      matched.push({ label, value: v });
+      matched.push({ label, value: v, targetName: targetName || "gebaeude", key });
     } else {
       missed.push(label);
     }
@@ -190,7 +162,7 @@ export function parseEnergieausweisText(text) {
       const m2 = T.match(/Endenergie(?:verbrauch|bedarf)[^\d]*?(\d+[,.]?\d*)\s*kWh\/\(\s*m/i);
       return m2 ? parseFloat(m2[1].replace(",", ".")) : null;
     },
-    ist_partial, "endenergie");
+    ist_partial, "endenergie", "ist");
 
   tryGet("Primärenergie",
     () => {
@@ -199,7 +171,7 @@ export function parseEnergieausweisText(text) {
       const m2 = T.match(/Primärenergie(?:verbrauch|bedarf)[^\d]*?(\d+[,.]?\d*)\s*kWh\/\(\s*m/i);
       return m2 ? parseFloat(m2[1].replace(",", ".")) : null;
     },
-    ist_partial, "primaerenergie");
+    ist_partial, "primaerenergie", "ist");
 
   // CO₂-Emissionen (optional - häufig leer)
   tryGet("CO₂-Emissionen",
@@ -207,7 +179,7 @@ export function parseEnergieausweisText(text) {
       const m = T.match(/CO[₂2]?\s*[-–]?\s*Emissionen[^\d]{1,20}(\d+[,.]?\d*)\s*kg/i);
       return m ? parseFloat(m[1].replace(",", ".")) : null;
     },
-    ist_partial, "co2");
+    ist_partial, "co2", "ist");
 
   // ─── Rundung der Zahlen ──────────────────────────────────────────
   if (ist_partial.endenergie)     ist_partial.endenergie     = Math.round(ist_partial.endenergie);
@@ -219,12 +191,22 @@ export function parseEnergieausweisText(text) {
   if (gebaeude_partial.strasse_full) {
     const addr = gebaeude_partial.strasse_full;
     const plzMatch = addr.match(/(.+?)\s*,?\s*(\d{5})\s+(.+)/);
+    // Replace the 'Adresse' matched entry with split fields
+    const adresseIdx = matched.findIndex(m => m.key === "strasse_full");
     if (plzMatch) {
       gebaeude_partial.strasse = plzMatch[1].trim();
       gebaeude_partial.plz = plzMatch[2];
       gebaeude_partial.standort = plzMatch[3].trim();
+      const derived = [
+        { label: "Straße", value: gebaeude_partial.strasse, targetName: "gebaeude", key: "strasse" },
+        { label: "PLZ", value: gebaeude_partial.plz, targetName: "gebaeude", key: "plz" },
+        { label: "Standort", value: gebaeude_partial.standort, targetName: "gebaeude", key: "standort" },
+      ];
+      if (adresseIdx >= 0) matched.splice(adresseIdx, 1, ...derived);
+      else matched.push(...derived);
     } else {
       gebaeude_partial.strasse = addr;
+      if (adresseIdx >= 0) matched[adresseIdx] = { label: "Straße", value: addr, targetName: "gebaeude", key: "strasse" };
     }
     delete gebaeude_partial.strasse_full;
   }
@@ -232,6 +214,7 @@ export function parseEnergieausweisText(text) {
   // Wohnfläche heuristisch: GNF / 1.3 wenn nicht anders gegeben
   if (gebaeude_partial.gebaeudenutzflaeche && !gebaeude_partial.wohnflaeche) {
     gebaeude_partial.wohnflaeche = Math.round(gebaeude_partial.gebaeudenutzflaeche / 1.3);
+    matched.push({ label: "Wohnfläche (berechnet)", value: gebaeude_partial.wohnflaeche, targetName: "gebaeude", key: "wohnflaeche" });
   }
 
   return {
