@@ -20,6 +20,7 @@
   "devDependencies": {
     "@playwright/test": "^1.56.1",
     "jsdom": "^29.1.1",
+    "pdfjs-dist": "^3.11.174",
     "vitest": "^4.1.5"
   }
 }

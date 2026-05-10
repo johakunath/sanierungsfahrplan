@@ -4,6 +4,8 @@ const react = readFileSync('node_modules/react/umd/react.production.min.js', 'ut
 const reactDom = readFileSync('node_modules/react-dom/umd/react-dom.production.min.js', 'utf8');
 const tailwind = readFileSync('dist/tailwind.css', 'utf8');
 const app = readFileSync('dist/app.js', 'utf8');
+const pdfJs = readFileSync('node_modules/pdfjs-dist/build/pdf.min.js', 'utf8');
+const pdfWorker = readFileSync('node_modules/pdfjs-dist/build/pdf.worker.min.js', 'utf8');
 
 const html = `<!DOCTYPE html>
 <html lang="de">
@@ -12,9 +14,6 @@ const html = `<!DOCTYPE html>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>iSFP-Schnellcheck — Demonstrator EFH</title>
 <meta name="description" content="Demonstrator für einen individuellen Sanierungsfahrplan auf Basis des BEG 2026 und TABULA-Methodik.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..600&family=Geist:wght@300..700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 ${tailwind}
 
@@ -145,6 +144,8 @@ button:focus-visible { outline: 2px solid #B5623E; outline-offset: 2px; }
 <div id="root"></div>
 <script>${react}</script>
 <script>${reactDom}</script>
+<script>${pdfJs}</script>
+<script>window.__pdfWorkerSrc=${JSON.stringify(pdfWorker)};</script>
 <script>${app}</script>
 </body>
 </html>`;
@@ -155,6 +156,8 @@ writeFileSync('dist/index.html', html);
 const kb = (n) => (n / 1024).toFixed(1) + ' KB';
 console.log('React:    ', kb(react.length));
 console.log('ReactDOM: ', kb(reactDom.length));
+console.log('PDF.js:   ', kb(pdfJs.length));
+console.log('PDF worker:', kb(pdfWorker.length));
 console.log('Tailwind: ', kb(tailwind.length));
 console.log('App:      ', kb(app.length));
 console.log('Total:    ', kb(html.length));
