@@ -5,6 +5,7 @@ import { MASSNAHMENPAKETE, PAKET_FARBEN } from "../data.js";
 const MassnahmenEditor = ({ overrides, onUpdate, onReset,
   wirtschaftlichkeitOverrides = {}, heizkostenIstCalc = 0, heizkostenZielCalc = 0,
   wartungIstCalc = 0, wartungZielCalc = 0,
+  eskalationIstCalc = 2.5, eskalationZielCalc = 2.0,
   onUpdateWirtschaftlichkeit = () => {}, onResetWirtschaftlichkeit = () => {} }) => {
   const [open, setOpen] = useState(false);
   const allM = MASSNAHMENPAKETE.flatMap(paket => paket.massnahmen.map(massnahme => ({ ...massnahme, paketFarbe: paket.farbe })));
@@ -98,11 +99,13 @@ const MassnahmenEditor = ({ overrides, onUpdate, onReset,
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
               {[
-                { key: "heizkostenIst",  label: "Heizkosten IST",  calc: heizkostenIstCalc,  hint: "Energie IST €/J" },
-                { key: "heizkostenZiel", label: "Heizkosten ZIEL", calc: heizkostenZielCalc, hint: "Energie ZIEL €/J" },
-                { key: "wartungIst",     label: "Wartung IST",     calc: wartungIstCalc,     hint: "Wartung IST €/J" },
-                { key: "wartungZiel",    label: "Wartung ZIEL",    calc: wartungZielCalc,    hint: "Wartung ZIEL €/J" },
-              ].map(({ key, label, calc }) => {
+                { key: "heizkostenIst",  label: "Heizkosten IST",            calc: heizkostenIstCalc,   unit: "€" },
+                { key: "heizkostenZiel", label: "Heizkosten ZIEL",           calc: heizkostenZielCalc,  unit: "€" },
+                { key: "wartungIst",     label: "Wartung IST",               calc: wartungIstCalc,      unit: "€" },
+                { key: "wartungZiel",    label: "Wartung ZIEL",              calc: wartungZielCalc,     unit: "€" },
+                { key: "eskalationIst",  label: "Energiepreis-Anstieg IST",  calc: eskalationIstCalc,   unit: "%/J", isEsk: true },
+                { key: "eskalationZiel", label: "Energiepreis-Anstieg ZIEL", calc: eskalationZielCalc,  unit: "%/J", isEsk: true },
+              ].map(({ key, label, calc, unit, isEsk }) => {
                 const ov = wirtschaftlichkeitOverrides[key];
                 const val = ov !== undefined ? ov : calc;
                 const changed = ov !== undefined;
@@ -110,16 +113,25 @@ const MassnahmenEditor = ({ overrides, onUpdate, onReset,
                   <div key={key} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
                     <div style={{ fontSize: 10.5, color: "var(--body)", fontFamily: "'Geist Mono', monospace" }}>{label}</div>
                     <div style={{ fontSize: 9.5, color: "var(--sec)", fontFamily: "'Geist Mono', monospace", marginBottom: 2 }}>
-                      berechnet: {Math.round(calc).toLocaleString("de-DE")} €/J
+                      {isEsk
+                        ? `Standard: ${Number(calc).toFixed(1)} %/J`
+                        : `berechnet: ${Math.round(calc).toLocaleString("de-DE")} €/J`}
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                      <input type="number" min={0} step={50} value={val}
-                        onChange={e => onUpdateWirtschaftlichkeit(key, Math.max(0, parseInt(e.target.value, 10) || 0))}
+                      <input type="number" min={0} max={isEsk ? 10 : undefined} step={isEsk ? 0.5 : 50}
+                        value={isEsk ? Number(val).toFixed(1) : val}
+                        onChange={e => {
+                          const raw = isEsk ? parseFloat(e.target.value) : parseInt(e.target.value, 10);
+                          const clamped = isEsk
+                            ? Math.max(0, Math.min(10, isNaN(raw) ? 0 : raw))
+                            : Math.max(0, isNaN(raw) ? 0 : raw);
+                          onUpdateWirtschaftlichkeit(key, clamped);
+                        }}
                         style={{ width: 90, fontFamily: "'Geist Mono', monospace", fontSize: 12.5, textAlign: "right",
                           background: changed ? "var(--highlight)" : "transparent",
                           color: "var(--txt)",
                           border: "1px solid var(--bdr)", borderRadius: 2, padding: "3px 6px", outline: "none" }} />
-                      <span style={{ fontSize: 11, color: "var(--sec)" }}>€</span>
+                      <span style={{ fontSize: 11, color: "var(--sec)" }}>{unit}</span>
                       {changed && (
                         <button onClick={() => onResetWirtschaftlichkeit(key)} title="Standardwert wiederherstellen"
                           style={{ fontSize: 14, color: "var(--acc)", background: "transparent", border: "1px solid var(--bdr)",

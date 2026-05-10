@@ -2199,6 +2199,11 @@ export default function App() {
   const effHeizkostenZiel = wirtschaftlichkeitOverrides.heizkostenZiel ?? k.heizkosten_gesamt;
   const effWartungIst  = wirtschaftlichkeitOverrides.wartungIst  ?? wartungIstCalc;
   const effWartungZiel = wirtschaftlichkeitOverrides.wartungZiel ?? wartungZielCalc;
+  const isFossil = /Heizöl|Erdgas|Fernwärme/i.test(gebaeude.heizung_typ || "");
+  const DEFAULT_ESKAL_IST  = isFossil ? 2.5 : 2.0;
+  const DEFAULT_ESKAL_ZIEL = 2.0;
+  const effEskalIst  = wirtschaftlichkeitOverrides.eskalationIst  ?? DEFAULT_ESKAL_IST;
+  const effEskalZiel = wirtschaftlichkeitOverrides.eskalationZiel ?? DEFAULT_ESKAL_ZIEL;
   const bewertung = useMemo(() =>
     bewerteMassnahmen(effectivePakete.flatMap(p => p.massnahmen), effectiveBauteilState, gebaeude),
     [effectivePakete, effectiveBauteilState, gebaeude]
@@ -2479,53 +2484,68 @@ export default function App() {
 
           <EnergieVerlaufChart ist={ist} kumuliert={kumuliert} />
 
-          {/* 20-Jahr-Bilanz */}
+          {/* 20-Jahr-Kostenvergleich */}
           {effHeizkostenIst > 0 && effHeizkostenZiel > 0 && (() => {
             const H = 20;
             const hasPV_20 = aktiveMassnahmen.includes("M6");
             const hatWP_20 = aktiveMassnahmen.includes("M4");
             const pvRevenue20J = hasPV_20 ? berechnePvErtrag(hatWP_20).gesamtEur * H : 0;
-            const ohneEur  = Math.round((effHeizkostenIst + effWartungIst) * H);
-            const mitEur   = Math.round(k.eigenanteil + (effHeizkostenZiel + effWartungZiel) * H - pvRevenue20J);
+            // Compound sum: annual × ((1+r)^n − 1) / r; flat for r=0
+            const sumGrowth = (annual, rPct, n) =>
+              rPct === 0 ? annual * n
+                         : annual * ((Math.pow(1 + rPct / 100, n) - 1) / (rPct / 100));
+            const ohneEur = Math.round(sumGrowth(effHeizkostenIst + effWartungIst, effEskalIst, H));
+            const mitEur  = Math.round(k.eigenanteil
+                              + sumGrowth(effHeizkostenZiel + effWartungZiel, effEskalZiel, H)
+                              - pvRevenue20J);
             const delta    = mitEur - ohneEur;
             const annualNetSaving = (effHeizkostenIst + effWartungIst) - (effHeizkostenZiel + effWartungZiel) + pvRevenue20J / H;
             const breakevenJ = annualNetSaving > 0
               ? Math.round(k.eigenanteil / annualNetSaving) : null;
+            const eskalHeader = (effEskalIst === 0 && effEskalZiel === 0)
+              ? "statische Preise"
+              : `IST +${Number(effEskalIst).toFixed(1)} % / ZIEL +${Number(effEskalZiel).toFixed(1)} %/J`;
             return (
               <div style={{ marginTop: 8, marginBottom: 32 }}>
                 <div style={{ fontSize: 9, letterSpacing: "0.18em", textTransform: "uppercase",
                               fontFamily: "var(--mono)", color: "var(--acc)", marginBottom: 10 }}>
-                  20-Jahr-Bilanz · statische Energiepreise
+                  20-Jahr-Kostenvergleich · {eskalHeader}
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginBottom: 8 }}>
-                  <div style={{ background: "var(--surface2)", border: "1.25px solid var(--bdr)", borderRadius: 3, padding: "10px 12px" }}>
-                    <div style={{ fontSize: 8, fontFamily: "var(--mono)", letterSpacing: "0.1em",
-                                  textTransform: "uppercase", color: "var(--sec)", marginBottom: 4 }}>Ohne Sanierung</div>
-                    <div style={{ fontSize: 16, fontWeight: 600, fontFamily: "var(--mono)",
-                                  color: "var(--neg)", marginBottom: 2 }}>{fmtEur(ohneEur)}</div>
-                    <div style={{ fontSize: 9, fontFamily: "var(--mono)", color: "var(--sec)" }}>
-                      {H} × {fmtEur(Math.round(effHeizkostenIst))}/J Energie + {H} × {fmtEur(effWartungIst)}/J Wartung
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginBottom: 6 }}>
+                  <div>
+                    <div style={{ background: "var(--surface2)", border: "1.25px solid var(--bdr)", borderRadius: 3, padding: "10px 12px" }}>
+                      <div style={{ fontSize: 8, fontFamily: "var(--mono)", letterSpacing: "0.1em",
+                                    textTransform: "uppercase", color: "var(--sec)", marginBottom: 4 }}>Betriebskosten IST · 20 J</div>
+                      <div style={{ fontSize: 16, fontWeight: 600, fontFamily: "var(--mono)",
+                                    color: "var(--neg)", marginBottom: 2 }}>{fmtEur(ohneEur)}</div>
+                      <div style={{ fontSize: 9, fontFamily: "var(--mono)", color: "var(--sec)" }}>
+                        {fmtEur(Math.round(effHeizkostenIst))}/J Energie + {fmtEur(effWartungIst)}/J Wartung · +{Number(effEskalIst).toFixed(1)}%/J
+                      </div>
+                    </div>
+                    <div style={{ fontSize: 9.5, fontFamily: "var(--mono)", color: "var(--sec)",
+                                  lineHeight: 1.5, marginTop: 5, fontStyle: "italic" }}>
+                      Nur laufende Kosten. Nicht enthalten: Heizungsersatz (ca. 12–18 T€), GEG-Pflichten
+                      bei Eigentümerwechsel (§71 GEG: 65 % EE), EEK-Wertverlust (F/G: bis −10 % Marktwert).
                     </div>
                   </div>
                   <div style={{ background: "var(--surface)", border: "1.25px solid var(--bdr)", borderRadius: 3, padding: "10px 12px" }}>
                     <div style={{ fontSize: 8, fontFamily: "var(--mono)", letterSpacing: "0.1em",
-                                  textTransform: "uppercase", color: "var(--sec)", marginBottom: 4 }}>Mit Sanierung</div>
+                                  textTransform: "uppercase", color: "var(--sec)", marginBottom: 4 }}>Eigenanteil + Betrieb ZIEL · 20 J</div>
                     <div style={{ fontSize: 16, fontWeight: 600, fontFamily: "var(--mono)",
                                   color: delta < 0 ? "var(--pos)" : "var(--body)", marginBottom: 2 }}>{fmtEur(mitEur)}</div>
                     <div style={{ fontSize: 9, fontFamily: "var(--mono)", color: "var(--sec)" }}>
                       {fmtEur(k.eigenanteil)} Eigenanteil
-                      {` + ${H} × ${fmtEur(Math.round(effHeizkostenZiel))}/J Energie`}
-                      {` + ${H} × ${fmtEur(effWartungZiel)}/J Wartung`}
-                      {pvRevenue20J > 0 && ` − ${H} × ${fmtEur(Math.round(pvRevenue20J / H))}/J PV`}
+                      {` + ${fmtEur(Math.round(effHeizkostenZiel))}/J Energie`}
+                      {` + ${fmtEur(effWartungZiel)}/J Wartung · +${Number(effEskalZiel).toFixed(1)}%/J`}
+                      {pvRevenue20J > 0 && ` − ${fmtEur(Math.round(pvRevenue20J / H))}/J PV`}
                     </div>
                   </div>
                 </div>
                 <div style={{ fontSize: 11, fontFamily: "var(--mono)", color: "var(--sec)", lineHeight: 1.5 }}>
                   {delta < 0
-                    ? `Sanierung spart über ${H} Jahre ${fmtEur(Math.abs(delta))} gegenüber Nicht-Sanieren.`
-                    : `Bei statischen Preisen nach ${H} Jahren noch ${fmtEur(delta)} Mehraufwand.`}
+                    ? `Sanierung spart über ${H} Jahre ${fmtEur(Math.abs(delta))}.`
+                    : `Investitionsüberhang nach ${H} Jahren: ${fmtEur(delta)}. Nicht-sanieren bedeutet höhere laufende Kosten und ggf. spätere Pflichtinvestitionen.`}
                   {breakevenJ && ` Amortisation bei ~${breakevenJ} Jahren.`}
-                  {" "}Heizungstausch bei Nicht-Sanierung nicht einkalkuliert.
                 </div>
               </div>
             );
@@ -2587,6 +2607,8 @@ export default function App() {
             heizkostenZielCalc={k.heizkosten_gesamt}
             wartungIstCalc={wartungIstCalc}
             wartungZielCalc={wartungZielCalc}
+            eskalationIstCalc={DEFAULT_ESKAL_IST}
+            eskalationZielCalc={DEFAULT_ESKAL_ZIEL}
             onUpdateWirtschaftlichkeit={updateWirtschaftlichkeit}
             onResetWirtschaftlichkeit={resetWirtschaftlichkeit} />
 
