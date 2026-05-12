@@ -1003,7 +1003,7 @@ const PaketBlock = ({ paket, aktiv, onToggle, onToggleMassnahme = () => {}, akti
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4, minWidth: 140 }}>
                   {massnahme.co2_reduktion > 0 && (
-                    <div style={{ fontFamily: "'Geist Mono', monospace", fontSize: 11.5, color: "var(--sec)", textAlign: "right" }}>
+                    <div title="Grobe Maßnahmenwirkung. Der finale CO₂-Zielwert wird aus Ziel-Endenergie × Energieträger-Emissionsfaktor berechnet." style={{ fontFamily: "'Geist Mono', monospace", fontSize: 11.5, color: "var(--sec)", textAlign: "right" }}>
                       CO₂ −{massnahme.co2_reduktion} kg/(m²·a)
                     </div>
                   )}
@@ -1459,12 +1459,12 @@ const MergedTable = ({ kumuliert, ist, heizkosten = 0 }) => {
               </Tooltip>
             </th>
             <th className="text-right py-2.5 font-medium">
-              <Tooltip content="Gesamtenergieeinsatz inkl. Vorkette. Basis für die Energieeffizienzklasse.">
+              <Tooltip content="Primärenergie = Endenergie × Primärenergiefaktor nach GEG Anlage 4. Der Zielwert wird aus der verbleibenden Endenergie und dem aktiven Energieträger berechnet.">
                 <span style={{ color: "var(--acc)", display: "inline-flex", verticalAlign: "middle" }}><InfoIcon size={11} /></span><span style={{ marginLeft: 5 }}>Primärenergie</span>
               </Tooltip>
             </th>
             <th className="text-right py-2.5 font-medium">
-              <Tooltip content="CO₂-Emissionen in kg pro m² und Jahr.">
+              <Tooltip content="CO₂ = Endenergie × Emissionsfaktor des Energieträgers nach GEG Anlage 9. Der Zielwert wird nach jedem Paket aus der verbleibenden Endenergie und dem dann aktiven Energieträger neu berechnet; einzelne Maßnahmenlabels sind nur grobe Hinweise.">
                 <span style={{ color: "var(--acc)", display: "inline-flex", verticalAlign: "middle" }}><InfoIcon size={11} /></span><span style={{ marginLeft: 5 }}>CO₂</span>
               </Tooltip>
             </th>
@@ -1624,12 +1624,12 @@ const KumuliertTabelle = ({ kumuliert, ist, heizkostenIst }) => (
             </Tooltip>
           </th>
           <th className="text-right py-2.5 font-medium">
-            <Tooltip content="Gesamtenergieeinsatz inkl. Gewinnung und Transport des Energieträgers (Primärenergiefaktor). Basis für die Energieeffizienzklasse nach GEG §86.">
+            <Tooltip content="Primärenergie = Endenergie × Primärenergiefaktor nach GEG Anlage 4. Der Zielwert wird aus der verbleibenden Endenergie und dem aktiven Energieträger berechnet.">
               <span style={{ color: "var(--acc)", display: "inline-flex", verticalAlign: "middle" }}><InfoIcon size={11} /></span><span style={{ marginLeft: 6 }}>Primärenergie</span>
             </Tooltip>
           </th>
           <th className="text-right py-2.5 font-medium">
-            <Tooltip content="CO₂-Emissionen aus dem Heizenergieverbrauch in kg pro m² Wohnfläche und Jahr. Inkl. Vorkette des Energieträgers.">
+            <Tooltip content="CO₂ = Endenergie × Emissionsfaktor des Energieträgers nach GEG Anlage 9. Der Zielwert wird nach jedem Paket aus der verbleibenden Endenergie und dem dann aktiven Energieträger neu berechnet; einzelne Maßnahmenlabels sind nur grobe Hinweise.">
               <span style={{ color: "var(--acc)", display: "inline-flex", verticalAlign: "middle" }}><InfoIcon size={11} /></span><span style={{ marginLeft: 6 }}>CO₂</span>
             </Tooltip>
           </th>
@@ -1806,7 +1806,9 @@ const WieFunktioniertSection = () => {
             Sie geben Gebäudedaten ein — Baujahr, Heizung, Wohnfläche, Bauteil-Zustand — und erhalten einen priorisierten Sanierungsfahrplan mit Energiekennzahlen, Kosten und BEG-Förderung. Das Tool ist kein BAFA-zertifizierter iSFP, sondern ein Demonstrator auf Basis realer Marktdaten 2026.
           </Sub>
           <Sub title="Woher kommen die Energiezahlen?">
-            <b>Endenergie</b> ist die dem Gebäude zugeführte Energie (Öl, Gas, Strom). <b>Primärenergie</b> = Endenergie × Primärenergiefaktor — berücksichtigt die Verluste bei Gewinnung und Transport des Energieträgers. Die <b>Effizienzklasse A+–H</b> basiert auf der Primärenergie nach GEG §86. Die Bauteil-Stufen 1–7 beschreiben den Sanierungsstand; sie bestimmen, wie groß die Einsparung jeder Maßnahme für Ihr Haus konkret ist.
+            <b>Endenergie</b> ist die dem Gebäude zugeführte Energie (Öl, Gas, Strom). Die Maßnahmen schätzen zuerst die Endenergie-Änderung. <b>Primärenergie</b> = Endenergie × Primärenergiefaktor nach GEG Anlage 4; <b>CO₂</b> = Endenergie × Emissionsfaktor nach GEG Anlage 9. Die <b>Effizienzklasse A+–H</b> basiert auf der Primärenergie nach GEG §86. Fernwärme nutzt Demo-Fallbackwerte, weil reale Energieausweise netzspezifische Faktoren verwenden.
+            <br /><br />
+            Für den Zielzustand werden PE und CO₂ nach jedem Paket neu aus der verbleibenden Endenergie und dem dann aktiven Energieträger berechnet. Bei Wärmepumpen-Szenarien wechselt der Ziel-Energieträger auf WP-Strom; bei Fernwärme bleiben die Werte bewusst als Demo-Fallback markiert, weil Netzbetreiber-Faktoren im echten Energieausweis abweichen können. Die kompakten CO₂-Hinweise an einzelnen Maßnahmen zeigen nur die grobe Richtung, nicht die verbindliche Endsumme.
           </Sub>
           <Sub title="Wie wird die Reihenfolge der Maßnahmen bestimmt?">
             Jede Maßnahme erhält eine Punktzahl: Netto-Investition ÷ eingesparte Primärenergie [€/kWh PE]. Niedrig = wirtschaftlich sinnvoll. Die Pakete werden nach dieser Punktzahl sortiert und aktualisieren sich automatisch, wenn Sie Gebäudedaten oder Bauteil-Stufen ändern. Die <b>★ Empfohlen</b>-Markierung zeigt Maßnahmen mit Score unter 10,5 €/kWh PE — besonders wirtschaftlich für Ihr Gebäude. <b>✕ Nicht empfohlen</b> kennzeichnet Maßnahmen mit Score über 20 €/kWh PE oder ohne messbaren Primärenergie-Effekt.
@@ -1826,10 +1828,10 @@ Fahrplan Schritt 3 — Wärmepumpe (nach Dach- & Fensterdämmung):
   ZIEL-Heizkosten: 68 × 145 m² × 0,22 €/kWh (WP-Sondertarif) = 2.170 €/Jahr (−37 %)
   Investition 32.000 €  ·  Förderung KfW 458 bis 13.500 €
 
-Gesamtfahrplan — alle 6 Maßnahmen:
-  Primärenergie ZIEL  78 kWh/(m²·a)  →  Klasse C
-  CO₂:  63 → 20 kg/(m²·a)  (−68 %)
-  Investition 130.800 €  ·  Förderung ca. 21.000 €`}</pre>
+Gesamtfahrplan — alle Maßnahmen:
+  Primärenergie ZIEL  62 kWh/(m²·a)  →  Klasse B
+  CO₂:  63 → 19 kg/(m²·a)  (−70 %)
+  Investition 142.800 €  ·  Förderung ca. 25.950 €`}</pre>
           </Sub>
           <Sub title="Wie wird die Amortisation berechnet?">
             <b>Gesamt-Amortisation</b> (Sidebar-KPI): Eigenanteil ÷ (IST-Heizkosten − ZIEL-Heizkosten) bei statischen Energiepreisen. Bei einer vollständigen Sanierung mit Wärmepumpe liegt die rechnerische Amortisation oft bei 30–50 Jahren — das ist ehrlich. Mit realistischer Energiepreissteigerung von 2–3 %/Jahr halbiert sich dieser Wert typisch auf 15–25 Jahre. <b>PV-Ertrag</b>: angenommen 10 kWp · 950 kWh/kWp. Eigenverbrauchsquote 35 % (ohne WP) bzw. 60 % (mit WP + Speicher). Eigenverbrauch bewertet zu 0,31 €/kWh (Haushaltstarif), Einspeisung zu 0,082 €/kWh (EEG 2024). Daraus ergibt sich ein Jahresertrag von ca. 1.330–2.020 €, Amortisation ~9–14 Jahre.

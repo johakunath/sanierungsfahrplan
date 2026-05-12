@@ -99,13 +99,25 @@ Applying a preset resets all state. efh70er has `bauteile_overrides: { fenster: 
 
 | | IST | ZIEL |
 |--|-----|------|
-| Primärenergie | 236 kWh/(m²·a) | 86 kWh/(m²·a) |
-| EEK | G | C |
+| Primärenergie | 236 kWh/(m²·a) | 62 kWh/(m²·a) |
+| CO₂ | 63 kg/(m²·a) | 19 kg/(m²·a) |
+| EEK | G | B |
 | Investition | 142.800 € | |
 | BEG-Förderung | 25.950 € (incl. +10 % Klimageschwindigkeitsbonus on M4) | |
 | Eigenanteil | 116.850 € | |
 
-Pinned by `data.test.js`. Update both together when changing impact functions or presets.
+Pinned by `data.test.js`. Update both together when changing impact functions, factors, or presets.
+
+### Primary energy and CO₂ factors
+
+Measure impact tables estimate the end-energy delta. Target Primärenergie and CO₂ are then recalculated from the resulting end energy and the active energy carrier:
+
+- `Primärenergie = Endenergie × ENERGIE_TRAEGER_FAKTOREN[carrier].primaerenergie`
+- `CO₂ = Endenergie × ENERGIE_TRAEGER_FAKTOREN[carrier].co2KgProKwh`
+- Defaults follow GEG Anlage 4 for non-renewable primary energy factors and GEG Anlage 9 for emissions factors.
+- Heat pumps and direct electric heating use net electricity defaults: PE factor `1.8`, CO₂ `0.560 kg/kWh`.
+- Oil uses PE `1.1`, CO₂ `0.310 kg/kWh`; gas uses PE `1.1`, CO₂ `0.240 kg/kWh`; pellets/wood use PE `0.2`, CO₂ `0.020 kg/kWh`.
+- Fernwärme remains a demonstrator fallback because real energy certificates require network-specific factors.
 
 ### PV revenue model (`berechnePvErtrag` in data.js)
 
@@ -193,8 +205,8 @@ After every task, verify the following invariants are still satisfied:
 |------|---------------|
 | Subsidy amounts | Fixed Förderquoten; no income test, no Förderdeckel, no bonus-combination rules |
 | Wohnfläche | Heuristic GNF / 1.3 when not from PDF |
-| WP COP | Wärmeverteilung informational only; WP savings use fixed PE factor + envelope malus |
-| CO₂ values | Per-measure CO₂ reductions are static estimates |
+| WP COP | Wärmeverteilung affects WP impact through variant multipliers and flow-temperature malus, but no full hourly COP model |
+| CO₂ values | Target CO₂ is factor-based from Endenergie and carrier; per-measure CO₂ labels are still static hints |
 | Multi-WE | Treats ZFH/DHH/RH identically to EFH |
 | Amortisation | Static energy prices only; no real energy price escalation (typically 2–3 %/year) |
 | PV revenue | Fixed 10 kWp assumed; no shading, orientation, or roof-area checks |
