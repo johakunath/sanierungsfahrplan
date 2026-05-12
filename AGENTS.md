@@ -44,7 +44,7 @@ MCP `push_files` works for small files (≤~50 KB) but is unreliable for large o
 
 1. **Never edit the root `index.html` directly** — it is overwritten by every build.
 2. **effectivePakete rule**: all downstream calculations use `effectivePakete` (the override-merged memo in App.jsx). The three `MASSNAHMENPAKETE` direct usages in App.jsx carry `// intentional:` comments — do not "fix" them.
-3. **Calculation reference**: `berechneNachMassnahmen(allIds, efhNachkrieg)` must produce PE=86, EEK=C, Eigenanteil=116,850 (incl. +10 % Klimageschwindigkeitsbonus on M4). If your change shifts these, update `data.test.js` and CLAUDE.md together.
+3. **Calculation reference**: `berechneNachMassnahmen(allIds, efhNachkrieg)` with the app heat-pump path must produce PE=62, CO₂=19, EEK=B, Eigenanteil=116,850 (incl. +10 % Klimageschwindigkeitsbonus on M4). PE/CO₂ are factor-based from target Endenergie and carrier, with PV as a separate credit; if your change shifts these, update `data.test.js` and CLAUDE.md together.
 4. **One build per PR**: verify `npm run build && npm test` both pass before pushing.
 5. **German naming is intentional**: `bauteile_state`, `effectivePakete`, `bewerteMassnahmen`, etc. Keep it consistent.
 

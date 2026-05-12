@@ -1,7 +1,12 @@
 import * as esbuild from 'esbuild';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const here = dirname(fileURLToPath(import.meta.url));
 
 await esbuild.build({
-  entryPoints: ['src/index.js'],
+  absWorkingDir: here,
+  entryPoints: [join(here, 'src/index.js')],
   bundle: true,
   format: 'iife',
   target: 'es2020',
@@ -19,10 +24,10 @@ await esbuild.build({
   define: {
     'process.env.NODE_ENV': '"production"',
   },
-  outfile: 'dist/app.js',
+  outfile: join(here, 'dist/app.js'),
   alias: {
-    'react': './src/react-shim.js',
-    'react-dom/client': './src/react-dom-shim.js',
+    'react': join(here, 'src/react-shim.js'),
+    'react-dom/client': join(here, 'src/react-dom-shim.js'),
   },
 });
 

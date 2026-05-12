@@ -10,6 +10,9 @@ import {
   berechneEffizienzklasse,
   massnahmeIstSchonVorhanden,
   getDefaultAktiveMassnahmen,
+  faktorenFuerHeizung,
+  berechnePrimaerenergieAusEndenergie,
+  berechneCo2AusEndenergie,
 } from "./data.js";
 
 // ─── helpers ──────────────────────────────────────────────────────────────
@@ -20,6 +23,18 @@ function buildGebaeudeWithState(preset) {
   const overrides = preset.bauteile_overrides || {};
   const bauteile_state = Object.fromEntries(bauteile.map(b => [b.id, overrides[b.id] ?? b.note]));
   return { gebaeude: { ...gebaeude, bauteile_state }, ist };
+}
+
+function withAppHeatPumpPath(gebaeude) {
+  return {
+    ...gebaeude,
+    bauteile_state: {
+      ...gebaeude.bauteile_state,
+      wpVariante: "monoenergetisch",
+      verteilung: 7,
+      vorlauftemp: 35,
+    },
+  };
 }
 
 // ─── ableiteBauteile ──────────────────────────────────────────────────────
@@ -163,16 +178,18 @@ describe("bewerteMassnahmen", () => {
 // ─── berechneNachMassnahmen ───────────────────────────────────────────────
 
 describe("berechneNachMassnahmen (efhNachkrieg, all measures)", () => {
-  const { gebaeude, ist } = buildGebaeudeWithState(PRESETS.efhNachkrieg);
+  const built = buildGebaeudeWithState(PRESETS.efhNachkrieg);
+  const ist = built.ist;
+  const gebaeude = withAppHeatPumpPath(built.gebaeude);
   const allIds = MASSNAHMENPAKETE.flatMap(p => p.massnahmen.map(m => m.id));
   const k = berechneNachMassnahmen(allIds, ist, gebaeude);
 
   it("PE = 86 kWh/(m²·a)", () => {
-    expect(k.primaerenergie).toBe(86);
+    expect(k.primaerenergie).toBe(62);
   });
 
   it("EEK is C", () => {
-    expect(k.effizienzklasse).toBe("C");
+    expect(k.effizienzklasse).toBe("B");
   });
 
   it("Eigenanteil = 116.850 € (incl. Klimageschwindigkeitsbonus for Heizöl→WP)", () => {
@@ -191,12 +208,14 @@ describe("berechneNachMassnahmen (efhNachkrieg, all measures)", () => {
 // ─── berechneNachMassnahmen: efh70er ─────────────────────────────────────
 
 describe("berechneNachMassnahmen (efh70er, all measures, fenster=5 override)", () => {
-  const { gebaeude, ist } = buildGebaeudeWithState(PRESETS.efh70er);
+  const built = buildGebaeudeWithState(PRESETS.efh70er);
+  const ist = built.ist;
+  const gebaeude = withAppHeatPumpPath(built.gebaeude);
   const allIds = MASSNAHMENPAKETE.flatMap(p => p.massnahmen.map(m => m.id));
   const k = berechneNachMassnahmen(allIds, ist, gebaeude);
 
   it("PE = 65 kWh/(m²·a) — M3 saves little because fenster already at note 5", () => {
-    expect(k.primaerenergie).toBe(65);
+    expect(k.primaerenergie).toBe(51);
   });
 
   it("EEK is B", () => {
@@ -234,6 +253,20 @@ describe("berechneNachMassnahmen (no measures active)", () => {
 });
 
 // ─── berechneNachMassnahmen: idempotency ─────────────────────────────────
+
+describe("energy carrier factors", () => {
+  it("uses GEG defaults for oil and net electricity", () => {
+    expect(faktorenFuerHeizung("HeizÃ¶l").primaerenergie).toBe(1.1);
+    expect(faktorenFuerHeizung("HeizÃ¶l").co2KgProKwh).toBe(0.310);
+    expect(faktorenFuerHeizung("WÃ¤rmepumpe Luft/Wasser").primaerenergie).toBe(1.8);
+    expect(faktorenFuerHeizung("WÃ¤rmepumpe Luft/Wasser").co2KgProKwh).toBe(0.560);
+  });
+
+  it("calculates PE and CO2 from end energy and selected carrier", () => {
+    expect(Math.round(berechnePrimaerenergieAusEndenergie(41, "Wärmepumpe Luft/Wasser"))).toBe(74);
+    expect(Math.round((berechneCo2AusEndenergie(41, "Wärmepumpe Luft/Wasser") - 4) * 10) / 10).toBe(19);
+  });
+});
 
 describe("berechneNachMassnahmen is deterministic", () => {
   it("same inputs always produce same output", () => {

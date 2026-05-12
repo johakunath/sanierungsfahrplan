@@ -257,6 +257,19 @@ export const ENERGIEPREISE = {
   // strom_wp = WP Wärmestromtarif (Sondertarif) — typisch 2026 Deutschland
 };
 
+// GEG factor defaults used for target-state recalculation.
+// Primary energy: GEG Anlage 4 (non-renewable share). CO2e: GEG Anlage 9.
+// Fernwaerme is network-specific in real certificates; these are documented fallback values.
+export const ENERGIE_TRAEGER_FAKTOREN = {
+  heizoel:              { primaerenergie: 1.1, co2KgProKwh: 0.310, label: "Heizoel" },
+  erdgas:               { primaerenergie: 1.1, co2KgProKwh: 0.240, label: "Erdgas" },
+  strom_netz:           { primaerenergie: 1.8, co2KgProKwh: 0.560, label: "Strom netzbezogen" },
+  strom_wp:             { primaerenergie: 1.8, co2KgProKwh: 0.560, label: "WP-Strom netzbezogen" },
+  biomasse:             { primaerenergie: 0.2, co2KgProKwh: 0.020, label: "Holz / Pellets" },
+  fernwaerme_gas_kwk:   { primaerenergie: 0.7, co2KgProKwh: 0.180, label: "Fernwaerme Gas-KWK (Fallback)" },
+  fernwaerme_erneuerbar:{ primaerenergie: 0.2, co2KgProKwh: 0.040, label: "Fernwaerme erneuerbar (Fallback)" },
+};
+
 export const PV_KWP               = 10;
 export const PV_SPEZ_ERTRAG       = 950;   // kWh/kWp/year, mittlerer dt. Standort
 export const STROMPREIS_HAUSHALT  = 0.31;  // €/kWh Haushaltstarif 2026
@@ -405,7 +418,7 @@ export const MASSNAHMENPAKETE = [
         kostenherleitung: "~2.700 €/kW Leistung EFH-typisch · 16 % davon sind Ersatz der alten Heizung (nicht förderfähig). Grundförderung 30 % + Klimageschwindigkeit 20 % möglich → max. 50 %",
         impact: bs => {
           const variante = WP_VARIANTEN[(bs||{}).wpVariante] || WP_VARIANTEN.monovalent;
-          const base = _imp([[-75,-60,24],[-70,-55,22],[-55,-43,17],[-40,-32,12],[-20,-16,6],[-8,-6,2],[0,0,0]], (bs||{}).heizung);
+          const base = _imp([[-115,-60,24],[-105,-55,22],[-88,-43,17],[-70,-32,12],[-42,-16,6],[-15,-6,2],[0,0,0]], (bs||{}).heizung);
           // Use actual flow temperature from Wärmeverteilung dropdown; M7 (floor heating) overrides to 35 °C.
           const distrib = (bs||{}).verteilung || 2;
           const vorlaufTemp = distrib >= 6 ? 35 : ((bs||{}).vorlauftemp || 65);
@@ -490,6 +503,31 @@ export function traegerFuerHeizung(typ) {
   return "Fernwärme";
 }
 
+export function faktorKeyFuerHeizung(typ) {
+  const t = (typ || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  if (!typ) return "fernwaerme_gas_kwk";
+  if (t.includes("fernwarme") && t.includes("erneuerbar")) return "fernwaerme_erneuerbar";
+  if (t.includes("fernwarme")) return "fernwaerme_gas_kwk";
+  if (t.includes("warmepumpe") || t.includes("rmepumpe")) return "strom_wp";
+  if (t.includes("elektro")) return "strom_netz";
+  if (t.includes("heizol") || t.includes("heiz")) return "heizoel";
+  if (t.includes("erdgas") || t.includes("gas")) return "erdgas";
+  if (t.includes("biomasse") || t.includes("pellets")) return "biomasse";
+  return "fernwaerme_gas_kwk";
+}
+
+export function faktorenFuerHeizung(typ) {
+  return ENERGIE_TRAEGER_FAKTOREN[faktorKeyFuerHeizung(typ)] || ENERGIE_TRAEGER_FAKTOREN.fernwaerme_gas_kwk;
+}
+
+export function berechnePrimaerenergieAusEndenergie(endenergie, heizungTyp) {
+  return Math.max(20, endenergie * faktorenFuerHeizung(heizungTyp).primaerenergie);
+}
+
+export function berechneCo2AusEndenergie(endenergie, heizungTyp) {
+  return Math.max(2, endenergie * faktorenFuerHeizung(heizungTyp).co2KgProKwh);
+}
+
 export function berechneHeizkosten(endenergie, wohnflaeche, heizungTyp) {
   return Math.round(endenergie * wohnflaeche * preisFuerHeizung(heizungTyp));
 }
@@ -498,8 +536,8 @@ export function berechneHeizkosten(endenergie, wohnflaeche, heizungTyp) {
 // gebaeude.bauteile_state = { waende, dach, fenster, keller, heizung, warmwasser } (stufe 1–7)
 export function berechneNachMassnahmen(aktiveMassnahmen, ist, gebaeude, pakete = MASSNAHMENPAKETE) {
   let endenergie = ist.endenergie;
-  let primaerenergie = ist.primaerenergie;
-  let co2 = ist.co2;
+  let primaerenergieCredit = 0;
+  let co2Credit = 0;
   let invest_gesamt = 0;
   let instand_gesamt = 0;
   let foerderung_gesamt = 0;
@@ -510,8 +548,10 @@ export function berechneNachMassnahmen(aktiveMassnahmen, ist, gebaeude, pakete =
       if (!aktiveMassnahmen.includes(m.id)) return;
       const imp = m.impact ? m.impact(bs) : { endenergie_delta: m.endenergie_delta, primaerenergie_delta: m.primaerenergie_delta, co2_reduktion: m.co2_reduktion };
       endenergie     += imp.endenergie_delta;
-      primaerenergie += imp.primaerenergie_delta;
-      co2            -= imp.co2_reduktion;
+      if ((imp.endenergie_delta || 0) === 0) {
+        primaerenergieCredit += Math.max(0, -(imp.primaerenergie_delta || 0));
+        co2Credit += Math.max(0, imp.co2_reduktion || 0);
+      }
       invest_gesamt  += m.investition;
       instand_gesamt += m.ohnehin_anteil;
       const netto = m.investition - m.ohnehin_anteil;
@@ -524,11 +564,15 @@ export function berechneNachMassnahmen(aktiveMassnahmen, ist, gebaeude, pakete =
   });
 
   endenergie = Math.max(endenergie, 25);
-  primaerenergie = Math.max(primaerenergie, 20);
-  co2 = Math.max(co2, 2);
 
   const hatWP = aktiveMassnahmen.includes("M4");
   const heizungTyp = hatWP ? "Wärmepumpe Luft/Wasser" : gebaeude.heizung_typ;
+  const primaerenergie = aktiveMassnahmen.length === 0
+    ? ist.primaerenergie
+    : Math.max(20, berechnePrimaerenergieAusEndenergie(endenergie, heizungTyp) - primaerenergieCredit);
+  const co2 = aktiveMassnahmen.length === 0
+    ? ist.co2
+    : Math.max(2, berechneCo2AusEndenergie(endenergie, heizungTyp) - co2Credit);
   const heizkosten_gesamt = berechneHeizkosten(endenergie, gebaeude.wohnflaeche, heizungTyp);
 
   return {
@@ -567,8 +611,13 @@ export function bewerteMassnahmen(massnahmen, bauteile_state, gebaeude) {
   const wf = (gebaeude && gebaeude.wohnflaeche) || 150;
   const bs = bauteile_state || {};
   const scored = massnahmen.map(m => {
-    const impact = m.impact ? m.impact(bs) : { primaerenergie_delta: m.primaerenergie_delta || 0 };
-    const pe_saved = Math.abs(impact.primaerenergie_delta) * wf;
+    const impact = m.impact ? m.impact(bs) : { endenergie_delta: m.endenergie_delta || 0, primaerenergie_delta: m.primaerenergie_delta || 0 };
+    const heizungTyp = m.id === "M4" ? "Wärmepumpe Luft/Wasser" : (gebaeude && gebaeude.heizung_typ);
+    const factorPe = faktorenFuerHeizung(heizungTyp).primaerenergie;
+    const peDelta = impact.endenergie_delta
+      ? impact.endenergie_delta * factorPe
+      : impact.primaerenergie_delta || 0; // PV has no heat end-energy delta; keep its electricity credit estimate.
+    const pe_saved = Math.abs(peDelta) * wf;
     const invest_netto = m.investition - m.ohnehin_anteil;
     const score = pe_saved > 0 ? invest_netto / pe_saved : Infinity;
     return { id: m.id, score, pe_saved, invest_netto };
