@@ -1686,41 +1686,71 @@ const EEK_ZONEN = [
   { klasse: "H",  von: 250, bis: 9999 },
 ];
 
-const EnergieVerlaufChart = ({ ist, kumuliert }) => {
+const EnergieVerlaufChart = ({ ist, kumuliert, heizkosten = 0 }) => {
+  const [metric, setMetric] = useState("pe");
   const W = 620, H = 320;
   const PAD = { top: 60, right: 36, bottom: 40, left: 52 };
   const pw = W - PAD.left - PAD.right;
   const ph = H - PAD.top - PAD.bottom;
 
+  const METRICS = {
+    pe:         { label: "Primärenergie", unit: "kWh/(m²·a)", istVal: ist.primaerenergie,
+                  valFn: r => r.primaerenergie, fmtVal: v => `${Math.round(v)}`,
+                  ySnap: 25, yMin: 100, showEEK: true },
+    co2:        { label: "CO₂", unit: "kg/(m²·a)", istVal: ist.co2,
+                  valFn: r => r.co2, fmtVal: v => `${Number(v).toFixed(1)}`,
+                  ySnap: 10, yMin: 20, showEEK: false },
+    heizkosten: { label: "Heizkosten", unit: "€/J", istVal: heizkosten,
+                  valFn: r => r.heizkosten_gesamt,
+                  fmtVal: v => v >= 1000 ? `${Math.round(v / 100) / 10}k` : `${Math.round(v)}`,
+                  ySnap: 500, yMin: 1000, showEEK: false },
+  };
+  const cfg = METRICS[metric];
+
   const punkte = [
-    { label: "Heute", pe: ist.primaerenergie, bg: "#6E2E1E", klasse: berechneEffizienzklasse(ist.primaerenergie) },
+    { label: "Heute", val: cfg.istVal, bg: "#6E2E1E", klasse: berechneEffizienzklasse(ist.primaerenergie) },
     ...kumuliert.map(r => ({
       label: r.paket.titel,
-      pe: r.nachher.primaerenergie,
+      val: cfg.valFn(r.nachher),
       bg: PAKET_FARBEN[r.paket.farbe].bg,
       klasse: r.nachher.effizienzklasse,
     })),
   ];
 
-  const yMax = Math.max(Math.ceil(ist.primaerenergie * 1.18 / 25) * 25, 100);
+  const yMax = Math.max(Math.ceil(cfg.istVal * 1.18 / cfg.ySnap) * cfg.ySnap, cfg.yMin);
   const toY = v => PAD.top + ph * (1 - Math.min(v, yMax) / yMax);
   const toX = i => PAD.left + (punkte.length > 1 ? pw * i / (punkte.length - 1) : pw / 2);
 
-  const visibleZonen = EEK_ZONEN.filter(z => z.von < yMax).map(z => ({ ...z, bis: Math.min(z.bis, yMax) }));
-  const gridLines = [0, 30, 50, 75, 100, 130, 160, 200, 250].filter(v => v > 0 && v <= yMax);
+  const visibleZonen = cfg.showEEK
+    ? EEK_ZONEN.filter(z => z.von < yMax).map(z => ({ ...z, bis: Math.min(z.bis, yMax) }))
+    : [];
+  const gridLines = cfg.showEEK
+    ? [0, 30, 50, 75, 100, 130, 160, 200, 250].filter(v => v > 0 && v <= yMax)
+    : (() => { const ls = []; for (let v = cfg.ySnap; v <= yMax; v += cfg.ySnap) ls.push(v); return ls; })();
 
-  const pathD = punkte.map((p, i) =>
-    i === 0 ? `M ${toX(i)} ${toY(p.pe)}` : `H ${toX(i)} V ${toY(p.pe)}`
+  const pathD = punkte.map((pt, i) =>
+    i === 0 ? `M ${toX(i)} ${toY(pt.val)}` : `H ${toX(i)} V ${toY(pt.val)}`
   ).join(" ");
   const areaD = pathD + ` V ${toY(0)} H ${toX(0)} Z`;
 
   return (
     <div style={{ background: "var(--surface)", border: "1.25px solid var(--bdr)", borderRadius: 3, padding: "24px 28px", marginTop: 32 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 14 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
         <div style={{ fontSize: 11, letterSpacing: "0.22em", textTransform: "uppercase", color: "var(--acc)", fontFamily: "'Geist Mono', monospace" }}>
-          Primärenergie-Verlauf
+          {cfg.label}-Verlauf
         </div>
-        <div style={{ fontSize: 10, color: "var(--sec)", fontFamily: "'Geist Mono', monospace" }}>kWh/(m²·a)</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+          {[["pe", "PE"], ["co2", "CO₂"], ["heizkosten", "Kosten"]].map(([key, lbl]) => (
+            <button key={key} onClick={() => setMetric(key)}
+              style={{ fontSize: 9.5, fontFamily: "'Geist Mono', monospace", padding: "2px 7px",
+                       borderRadius: 2, border: "1px solid var(--bdr)", cursor: "pointer",
+                       background: metric === key ? "var(--acc)" : "transparent",
+                       color: metric === key ? "#FFF" : "var(--sec)" }}>
+              {lbl}
+            </button>
+          ))}
+          <span style={{ fontSize: 10, color: "var(--sec)", fontFamily: "'Geist Mono', monospace", marginLeft: 4 }}>{cfg.unit}</span>
+        </div>
       </div>
       <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", display: "block", aspectRatio: "620/320", minHeight: 180 }}>
         <defs>
@@ -1744,7 +1774,7 @@ const EnergieVerlaufChart = ({ ist, kumuliert }) => {
         {[0, ...gridLines].map(v => (
           <text key={v} x={PAD.left - 6} y={toY(v) + 3.5}
             textAnchor="end" fontSize={9} fill="#9B8E82"
-            fontFamily="'Geist Mono', monospace">{v}</text>
+            fontFamily="'Geist Mono', monospace">{cfg.showEEK ? v : cfg.fmtVal(v)}</text>
         ))}
         {visibleZonen.map(z => {
           const yMid = (toY(z.von) + toY(z.bis)) / 2;
@@ -1762,15 +1792,22 @@ const EnergieVerlaufChart = ({ ist, kumuliert }) => {
         <path d={pathD} fill="none" stroke="var(--txt)" strokeWidth={2}
           strokeLinejoin="round" strokeLinecap="round" clipPath="url(#evc-clip)" />
         {punkte.map((pt, i) => {
-          const x = toX(i), y = toY(pt.pe);
+          const x = toX(i), y = toY(pt.val);
           return (
             <g key={i}>
-              <text x={x} y={y - 36} textAnchor="middle" fontSize={8.5} fill="#3A332B"
-                fontFamily="'Geist Mono', monospace" fontWeight={500}>{pt.pe}</text>
-              <rect x={x - 12} y={y - 33} width={24} height={20} rx={2}
-                fill={EFFIZIENZ_FARBEN[pt.klasse]} />
-              <text x={x} y={y - 18} textAnchor="middle" fontSize={12} fontWeight={700}
-                fontFamily="'Fraunces', serif" fill={textColorFor(pt.klasse)}>{pt.klasse}</text>
+              {cfg.showEEK ? (
+                <>
+                  <text x={x} y={y - 36} textAnchor="middle" fontSize={8.5} fill="#3A332B"
+                    fontFamily="'Geist Mono', monospace" fontWeight={500}>{cfg.fmtVal(pt.val)}</text>
+                  <rect x={x - 12} y={y - 33} width={24} height={20} rx={2}
+                    fill={EFFIZIENZ_FARBEN[pt.klasse]} />
+                  <text x={x} y={y - 18} textAnchor="middle" fontSize={12} fontWeight={700}
+                    fontFamily="'Fraunces', serif" fill={textColorFor(pt.klasse)}>{pt.klasse}</text>
+                </>
+              ) : (
+                <text x={x} y={y - 18} textAnchor="middle" fontSize={8.5} fill="#3A332B"
+                  fontFamily="'Geist Mono', monospace" fontWeight={500}>{cfg.fmtVal(pt.val)}</text>
+              )}
               <circle cx={x} cy={y} r={5.5} fill={pt.bg} stroke="#FFF" strokeWidth={2} />
               <text x={x} y={14} textAnchor="middle" fontSize={8.5} fill={pt.bg}
                 fontFamily="'Geist Mono', monospace" fontWeight={600}>{pt.label}</text>
@@ -2436,7 +2473,7 @@ export default function App() {
             <MergedTable kumuliert={kumuliert} ist={ist} heizkosten={heizkosten} />
           </div>
 
-          <EnergieVerlaufChart ist={ist} kumuliert={kumuliert} />
+          <EnergieVerlaufChart ist={ist} kumuliert={kumuliert} heizkosten={heizkosten} />
 
           {/* 20-Jahr-Kostenvergleich */}
           {effHeizkostenIst > 0 && effHeizkostenZiel > 0 && (() => {
