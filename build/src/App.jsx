@@ -1003,7 +1003,7 @@ const PaketBlock = ({ paket, aktiv, onToggle, onToggleMassnahme = () => {}, akti
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4, minWidth: 140 }}>
                   {massnahme.co2_reduktion > 0 && (
-                    <div title="Grobe Maßnahmenwirkung. Der finale CO₂-Zielwert wird aus Ziel-Endenergie × Energieträger-Emissionsfaktor berechnet." style={{ fontFamily: "'Geist Mono', monospace", fontSize: 11.5, color: "var(--sec)", textAlign: "right" }}>
+                    <div style={{ fontFamily: "'Geist Mono', monospace", fontSize: 11.5, color: "var(--sec)", textAlign: "right" }}>
                       CO₂ −{massnahme.co2_reduktion} kg/(m²·a)
                     </div>
                   )}
@@ -1459,12 +1459,12 @@ const MergedTable = ({ kumuliert, ist, heizkosten = 0 }) => {
               </Tooltip>
             </th>
             <th className="text-right py-2.5 font-medium">
-              <Tooltip content="Primärenergie = Endenergie × Primärenergiefaktor nach GEG Anlage 4. Der Zielwert wird aus der verbleibenden Endenergie und dem aktiven Energieträger berechnet.">
+              <Tooltip content="Gesamtenergieeinsatz inkl. Vorkette. Basis für die Energieeffizienzklasse.">
                 <span style={{ color: "var(--acc)", display: "inline-flex", verticalAlign: "middle" }}><InfoIcon size={11} /></span><span style={{ marginLeft: 5 }}>Primärenergie</span>
               </Tooltip>
             </th>
             <th className="text-right py-2.5 font-medium">
-              <Tooltip content="CO₂ = Endenergie × Emissionsfaktor des Energieträgers nach GEG Anlage 9. Der Zielwert wird nach jedem Paket aus der verbleibenden Endenergie und dem dann aktiven Energieträger neu berechnet; einzelne Maßnahmenlabels sind nur grobe Hinweise.">
+              <Tooltip content="CO₂-Emissionen in kg pro m² und Jahr.">
                 <span style={{ color: "var(--acc)", display: "inline-flex", verticalAlign: "middle" }}><InfoIcon size={11} /></span><span style={{ marginLeft: 5 }}>CO₂</span>
               </Tooltip>
             </th>
@@ -1624,12 +1624,12 @@ const KumuliertTabelle = ({ kumuliert, ist, heizkostenIst }) => (
             </Tooltip>
           </th>
           <th className="text-right py-2.5 font-medium">
-            <Tooltip content="Primärenergie = Endenergie × Primärenergiefaktor nach GEG Anlage 4. Der Zielwert wird aus der verbleibenden Endenergie und dem aktiven Energieträger berechnet.">
+            <Tooltip content="Gesamtenergieeinsatz inkl. Gewinnung und Transport des Energieträgers (Primärenergiefaktor). Basis für die Energieeffizienzklasse nach GEG §86.">
               <span style={{ color: "var(--acc)", display: "inline-flex", verticalAlign: "middle" }}><InfoIcon size={11} /></span><span style={{ marginLeft: 6 }}>Primärenergie</span>
             </Tooltip>
           </th>
           <th className="text-right py-2.5 font-medium">
-            <Tooltip content="CO₂ = Endenergie × Emissionsfaktor des Energieträgers nach GEG Anlage 9. Der Zielwert wird nach jedem Paket aus der verbleibenden Endenergie und dem dann aktiven Energieträger neu berechnet; einzelne Maßnahmenlabels sind nur grobe Hinweise.">
+            <Tooltip content="CO₂-Emissionen aus dem Heizenergieverbrauch in kg pro m² Wohnfläche und Jahr. Inkl. Vorkette des Energieträgers.">
               <span style={{ color: "var(--acc)", display: "inline-flex", verticalAlign: "middle" }}><InfoIcon size={11} /></span><span style={{ marginLeft: 6 }}>CO₂</span>
             </Tooltip>
           </th>
@@ -1782,72 +1782,6 @@ const EnergieVerlaufChart = ({ ist, kumuliert }) => {
   );
 };
 
-const WieFunktioniertSection = () => {
-  const [open, setOpen] = useState(false);
-  const Sub = ({ title, children }) => (
-    <div style={{ marginBottom: 22 }}>
-      <div className="text-[10px] tracking-[0.2em] uppercase mb-2" style={{ color: "var(--acc)", fontFamily: "'Geist Mono', monospace" }}>{title}</div>
-      <div style={{ fontSize: 13.5, color: "var(--body)", lineHeight: 1.65 }}>{children}</div>
-    </div>
-  );
-  return (
-    <div className="print-hide" style={{ marginTop: 32, border: "1.25px solid var(--bdr)", borderRadius: 3, background: "var(--surface)" }}>
-      <button onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center justify-between"
-        style={{ padding: "16px 24px", background: "transparent", border: "none", cursor: "pointer", textAlign: "left" }}>
-        <span className="text-[11px] tracking-[0.2em] uppercase" style={{ color: "var(--sec)", fontFamily: "'Geist Mono', monospace" }}>
-          Wie funktioniert dieser Rechner?
-        </span>
-        <span style={{ color: "var(--acc)", fontSize: 13 }}>{open ? "▲ Schließen" : "▼ Anzeigen"}</span>
-      </button>
-      {open && (
-        <div style={{ borderTop: "1.25px solid var(--bdr)", padding: "24px 24px 32px" }}>
-          <Sub title="Was macht dieses Tool?">
-            Sie geben Gebäudedaten ein — Baujahr, Heizung, Wohnfläche, Bauteil-Zustand — und erhalten einen priorisierten Sanierungsfahrplan mit Energiekennzahlen, Kosten und BEG-Förderung. Das Tool ist kein BAFA-zertifizierter iSFP, sondern ein Demonstrator auf Basis realer Marktdaten 2026.
-          </Sub>
-          <Sub title="Woher kommen die Energiezahlen?">
-            <b>Endenergie</b> ist die dem Gebäude zugeführte Energie (Öl, Gas, Strom). Die Maßnahmen schätzen zuerst die Endenergie-Änderung. <b>Primärenergie</b> = Endenergie × Primärenergiefaktor nach GEG Anlage 4; <b>CO₂</b> = Endenergie × Emissionsfaktor nach GEG Anlage 9. Die <b>Effizienzklasse A+–H</b> basiert auf der Primärenergie nach GEG §86. Fernwärme nutzt Demo-Fallbackwerte, weil reale Energieausweise netzspezifische Faktoren verwenden.
-            <br /><br />
-            Für den Zielzustand werden PE und CO₂ nach jedem Paket neu aus der verbleibenden Endenergie und dem dann aktiven Energieträger berechnet. Bei Wärmepumpen-Szenarien wechselt der Ziel-Energieträger auf WP-Strom; bei Fernwärme bleiben die Werte bewusst als Demo-Fallback markiert, weil Netzbetreiber-Faktoren im echten Energieausweis abweichen können. Die kompakten CO₂-Hinweise an einzelnen Maßnahmen zeigen nur die grobe Richtung, nicht die verbindliche Endsumme.
-          </Sub>
-          <Sub title="Wie wird die Reihenfolge der Maßnahmen bestimmt?">
-            Jede Maßnahme erhält eine Punktzahl: Netto-Investition ÷ eingesparte Primärenergie [€/kWh PE]. Niedrig = wirtschaftlich sinnvoll. Die Pakete werden nach dieser Punktzahl sortiert und aktualisieren sich automatisch, wenn Sie Gebäudedaten oder Bauteil-Stufen ändern. Die <b>★ Empfohlen</b>-Markierung zeigt Maßnahmen mit Score unter 10,5 €/kWh PE — besonders wirtschaftlich für Ihr Gebäude. <b>✕ Nicht empfohlen</b> kennzeichnet Maßnahmen mit Score über 20 €/kWh PE oder ohne messbaren Primärenergie-Effekt.
-          </Sub>
-          <Sub title="Wie werden die Förderungen berechnet?">
-            <b>BEG EM (BAFA)</b>: 15 % Grundförderung auf den energetisch bedingten Mehraufwand (Investition minus Sowieso-Kosten). <b>Wärmepumpe (KfW 458)</b>: bis zu 50 % (30 % Grundförderung + 20 % Klimageschwindigkeits-Bonus möglich). <b>iSFP-Bonus</b>: +5 % auf alle Maßnahmen, die im Fahrplan hinterlegt sind — das ist der Kern des iSFP-Verfahrens.
-          </Sub>
-          <Sub title="Beispielrechnung — EFH Nachkriegszeit 1965">
-            <pre style={{ fontFamily: "'Geist Mono', monospace", fontSize: 11.5, lineHeight: 1.7, whiteSpace: "pre-wrap", color: "var(--body)", margin: 0 }}>{`Haus: EFH 1965 · 145 m² · Heizöl · Klasse G  (PE 236 kWh/(m²·a))
-IST-Heizkosten:  215 kWh/m² × 145 m² × 0,11 €/kWh (Heizöl) = 3.429 €/Jahr
-
-Fahrplan Schritt 1 — Hydraulischer Abgleich (Heute):
-  Investition 1.800 €  ·  Förderung BEG EM ca. 270 €  ·  PE −14 kWh/(m²·a)
-
-Fahrplan Schritt 3 — Wärmepumpe (nach Dach- & Fensterdämmung):
-  Endenergie sinkt auf 68 kWh/(m²·a) — Strom statt Öl (COP ~2,5)
-  ZIEL-Heizkosten: 68 × 145 m² × 0,22 €/kWh (WP-Sondertarif) = 2.170 €/Jahr (−37 %)
-  Investition 32.000 €  ·  Förderung KfW 458 bis 13.500 €
-
-Gesamtfahrplan — alle Maßnahmen:
-  Primärenergie ZIEL  62 kWh/(m²·a)  →  Klasse B
-  CO₂:  63 → 19 kg/(m²·a)  (−70 %)
-  Investition 142.800 €  ·  Förderung ca. 25.950 €`}</pre>
-          </Sub>
-          <Sub title="Wie wird die Amortisation berechnet?">
-            <b>Gesamt-Amortisation</b> (Sidebar-KPI): Eigenanteil ÷ (IST-Heizkosten − ZIEL-Heizkosten) bei statischen Energiepreisen. Bei einer vollständigen Sanierung mit Wärmepumpe liegt die rechnerische Amortisation oft bei 30–50 Jahren — das ist ehrlich. Mit realistischer Energiepreissteigerung von 2–3 %/Jahr halbiert sich dieser Wert typisch auf 15–25 Jahre. <b>PV-Ertrag</b>: angenommen 10 kWp · 950 kWh/kWp. Eigenverbrauchsquote 35 % (ohne WP) bzw. 60 % (mit WP + Speicher). Eigenverbrauch bewertet zu 0,31 €/kWh (Haushaltstarif), Einspeisung zu 0,082 €/kWh (EEG 2024). Daraus ergibt sich ein Jahresertrag von ca. 1.330–2.020 €, Amortisation ~9–14 Jahre.
-          </Sub>
-          <Sub title="Wie wird die 20-Jahr-Bilanz gebildet?">
-            „Ohne Sanierung": 20 × aktuelle Heizkosten (IST). „Mit Sanierung": Eigenanteil + 20 × ZIEL-Heizkosten. Beide Seiten nutzen <b>statische Energiepreise</b> — kein Preisanstieg einkalkuliert. Das macht den Vergleich nachvollziehbar, unterschätzt aber die Wirtschaftlichkeit der Sanierung, da Energiepreise historisch steigen.
-          </Sub>
-          <div style={{ marginTop: 8, fontSize: 11.5, color: "var(--sec)", fontStyle: "italic", lineHeight: 1.6 }}>
-            Alle Werte sind Richtwerte auf Basis realistischer Marktpreise und BEG-Konditionen Stand April 2026. Dieser Rechner ist ein Demonstrator und ersetzt keine zertifizierte iSFP-Beratung nach BAFA-Anforderungen.
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
 // ═══ MAIN APP ══════════════════════════════════════════════════════════
 
 export default function App() {
@@ -1890,7 +1824,8 @@ export default function App() {
   const [activeTab, setActiveTab] = useState("gebaeude");
   const [darkMode, setDarkMode] = useState(false);
   const [wirtschaftlichkeitOverrides, setWirtschaftlichkeitOverrides] = useState({});
-  const [foerderannahmenOffen, setFoerderannahmenOffen] = useState(false);
+  const [hintergruendeOffen, setHintergruendeOffen] = useState(false);
+  const [sanierungsstandOffen, setSanierungsstandOffen] = useState(false);
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", darkMode ? "dark" : "light");
@@ -2347,28 +2282,45 @@ export default function App() {
               <SelectInput label="Wärmeverteilung"   value={gebaeude.waermeverteilung || OPTIONS_WAERMEVERTEILUNG[0]} onChange={v => updateGebaeude("waermeverteilung", v)} options={OPTIONS_WAERMEVERTEILUNG}
                 tooltip="Bestimmt Vorlauftemperatur und empfohlene WP-Betriebsart (Monovalent / Monoenergetic / Bivalent)." />
               <div style={{ marginTop: 14 }}>
-                <div style={{ fontSize: 11, color: "var(--sec)", marginBottom: 6, fontFamily: "'Geist Mono', monospace", textTransform: "uppercase", letterSpacing: "0.1em" }}>
-                  Sanierungsstand Hülle
-                  
-                </div>
-                <div>
-                  {SANIERUNGSSTAND_BAUTEILE.map(({ id, label }) => {
-                    const selVal = sanierungsstandProBauteil[id] || "unsaniert";
-                    const selNote = SANIERUNGSSTAND_OPTIONS.find(o => o.value === selVal)?.note;
-                    return (
-                      <div key={id}>
-                        <SelectInput
-                          label={label}
-                          value={selVal}
-                          onChange={v => applySanierungsstandFuerBauteil(id, v)}
-                          options={SANIERUNGSSTAND_OPTIONS}
-                          tooltip={SANIERUNGSSTAND_BAUTEIL_TOOLTIPS[id]}
-                        />
-                        {selNote && <div style={{ fontSize: 10, color: "var(--sec)", paddingLeft: 12, marginTop: 3, marginBottom: 6 }}>{selNote}</div>}
-                      </div>
-                    );
-                  })}
-                </div>
+                <button onClick={() => setSanierungsstandOffen(o => !o)}
+                  style={{ display: "flex", alignItems: "center", justifyContent: "space-between",
+                           width: "100%", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+                  <div style={{ fontSize: 11, color: "var(--sec)", fontFamily: "'Geist Mono', monospace",
+                                textTransform: "uppercase", letterSpacing: "0.1em" }}>
+                    Sanierungsstand Hülle
+                  </div>
+                  <span style={{ fontSize: 11, color: "var(--acc)" }}>
+                    {sanierungsstandOffen ? "▲" : "▼"}
+                  </span>
+                </button>
+                {!sanierungsstandOffen && (
+                  <div style={{ fontSize: 10, color: "var(--sec)", marginTop: 3, lineHeight: 1.4 }}>
+                    {SANIERUNGSSTAND_BAUTEILE.map(({ id, label }) => {
+                      const v = sanierungsstandProBauteil[id] || "unsaniert";
+                      return `${label}: ${SANIERUNGSSTAND_OPTIONS.find(o => o.value === v)?.label || v}`;
+                    }).join(" · ")}
+                  </div>
+                )}
+                {sanierungsstandOffen && (
+                  <div style={{ marginTop: 8 }}>
+                    {SANIERUNGSSTAND_BAUTEILE.map(({ id, label }) => {
+                      const selVal = sanierungsstandProBauteil[id] || "unsaniert";
+                      const selNote = SANIERUNGSSTAND_OPTIONS.find(o => o.value === selVal)?.note;
+                      return (
+                        <div key={id}>
+                          <SelectInput
+                            label={label}
+                            value={selVal}
+                            onChange={v => applySanierungsstandFuerBauteil(id, v)}
+                            options={SANIERUNGSSTAND_OPTIONS}
+                            tooltip={SANIERUNGSSTAND_BAUTEIL_TOOLTIPS[id]}
+                          />
+                          {selNote && <div style={{ fontSize: 10, color: "var(--sec)", paddingLeft: 12, marginTop: 3, marginBottom: 6 }}>{selNote}</div>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </Card>
 
@@ -2553,56 +2505,6 @@ export default function App() {
             );
           })()}
 
-          <div className="mt-10">
-            <div style={{ background: "var(--surface2)", border: "1.25px solid var(--bdr)", borderRadius: 3 }}>
-              <button onClick={() => setFoerderannahmenOffen(o => !o)}
-                style={{ width: "100%", padding: "14px 20px", background: "transparent", border: "none", cursor: "pointer",
-                         display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <div className="text-[11px] tracking-[0.22em] uppercase" style={{ color: "var(--acc)", fontFamily: "'Geist Mono', monospace" }}>
-                  Förderannahmen dieser Demo
-                  {k.invest_gesamt > 0 && (
-                    <span style={{ marginLeft: 10, color: "var(--pos)", fontWeight: 600 }}>
-                      {Math.round(k.foerderung_gesamt / k.invest_gesamt * 100)} %
-                    </span>
-                  )}
-                </div>
-                <span style={{ fontSize: 11, color: "var(--sec)", fontFamily: "'Geist Mono', monospace" }}>
-                  {foerderannahmenOffen ? "▲ Schließen" : "▼ Details"}
-                </span>
-              </button>
-              {foerderannahmenOffen && (
-                <div style={{ borderTop: "1.25px solid var(--bdr)", padding: "16px 20px" }}>
-                  <div className="text-[12px] leading-relaxed mb-4" style={{ color: "var(--sec)" }}>
-                    Diese Vorabschätzung nutzt vereinfachte Förderannahmen je Maßnahmentyp. Die konkrete Förderung wird in der Maßnahmenübersicht und Kostenaufstellung je Paket berücksichtigt.
-                  </div>
-                  <div className="space-y-2 mb-4">
-                    {[
-                      ["Gebäudehülle · Fenster · Optimierung", "BEG EM + iSFP-Bonus (Demo-Logik)"],
-                      ["Heizungstausch · Wärmepumpe", "vereinfachte KfW-/BEG-Annahme"],
-                      ["PV · Eigenstrom", "kein Direktzuschuss — Ertrag aus Eigenverbrauch (0,31 €/kWh) + Einspeisung (0,082 €/kWh EEG 2024)"],
-                    ].map(([cat, note], i) => (
-                      <div key={i} style={{ paddingBottom: 8, borderBottom: "1px solid var(--bdr)" }}>
-                        <div style={{ fontSize: 11.5, fontWeight: 500, color: "var(--txt)", marginBottom: 1 }}>{cat}</div>
-                        <div style={{ fontSize: 11, color: "var(--sec)", fontFamily: "'Geist Mono', monospace" }}>{note}</div>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="flex items-baseline justify-between gap-3 mb-3">
-                    <span style={{ fontSize: 12, fontWeight: 500, color: "var(--txt)" }}>Förderanteil (von Gesamtinvestition)</span>
-                    <span style={{ fontSize: 20, fontFamily: "'Fraunces', serif", color: "var(--pos)", fontVariantNumeric: "tabular-nums" }}>
-                      {k.invest_gesamt > 0
-                        ? `${Math.round(k.foerderung_gesamt / k.invest_gesamt * 100)} %`
-                        : "—"}
-                    </span>
-                  </div>
-                  <div style={{ fontSize: 10.5, color: "var(--sec)", lineHeight: 1.5 }}>
-                    Keine Förderzusage. Förderdeckel, Eigentümerstatus, Bonuskombinationen, technische Mindestanforderungen und Antragspflichten müssen im echten Prozess geprüft werden.
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
           <MassnahmenEditor overrides={massnahmenOverrides} onUpdate={updateMassnahme} onReset={resetMassnahme}
             wirtschaftlichkeitOverrides={wirtschaftlichkeitOverrides}
             heizkostenIstCalc={heizkosten}
@@ -2614,7 +2516,116 @@ export default function App() {
             onUpdateWirtschaftlichkeit={updateWirtschaftlichkeit}
             onResetWirtschaftlichkeit={resetWirtschaftlichkeit} />
 
-          <WieFunktioniertSection />
+          <div className="mt-10 print-hide" style={{ border: "1.25px solid var(--bdr)", borderRadius: 3, background: "var(--surface2)" }}>
+            <button onClick={() => setHintergruendeOffen(o => !o)}
+              style={{ width: "100%", padding: "14px 20px", background: "transparent", border: "none", cursor: "pointer",
+                       display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div className="text-[11px] tracking-[0.22em] uppercase" style={{ color: "var(--acc)", fontFamily: "'Geist Mono', monospace" }}>
+                Hintergründe &amp; Annahmen
+              </div>
+              <span style={{ fontSize: 11, color: "var(--sec)", fontFamily: "'Geist Mono', monospace" }}>
+                {hintergruendeOffen ? "▲ Schließen" : "▼ Details"}
+              </span>
+            </button>
+            {hintergruendeOffen && (
+              <div style={{ borderTop: "1.25px solid var(--bdr)", padding: "16px 20px" }}>
+                {/* Förderannahmen */}
+                <div style={{ fontSize: 10, letterSpacing: "0.15em", textTransform: "uppercase",
+                              fontFamily: "'Geist Mono', monospace", color: "var(--acc)", marginBottom: 10 }}>
+                  Förderannahmen
+                  {k.invest_gesamt > 0 && (
+                    <span style={{ marginLeft: 10, color: "var(--pos)", fontWeight: 600 }}>
+                      {Math.round(k.foerderung_gesamt / k.invest_gesamt * 100)} %
+                    </span>
+                  )}
+                </div>
+                <div className="text-[12px] leading-relaxed mb-4" style={{ color: "var(--sec)" }}>
+                  Diese Vorabschätzung nutzt vereinfachte Förderannahmen je Maßnahmentyp. Die konkrete Förderung wird in der Maßnahmenübersicht und Kostenaufstellung je Paket berücksichtigt.
+                </div>
+                <div className="space-y-2 mb-4">
+                  {[
+                    ["Gebäudehülle · Fenster · Optimierung", "BEG EM + iSFP-Bonus (Demo-Logik)"],
+                    ["Heizungstausch · Wärmepumpe", "vereinfachte KfW-/BEG-Annahme"],
+                    ["PV · Eigenstrom", "kein Direktzuschuss — Ertrag aus Eigenverbrauch (0,31 €/kWh) + Einspeisung (0,082 €/kWh EEG 2024)"],
+                  ].map(([cat, note], i) => (
+                    <div key={i} style={{ paddingBottom: 8, borderBottom: "1px solid var(--bdr)" }}>
+                      <div style={{ fontSize: 11.5, fontWeight: 500, color: "var(--txt)", marginBottom: 1 }}>{cat}</div>
+                      <div style={{ fontSize: 11, color: "var(--sec)", fontFamily: "'Geist Mono', monospace" }}>{note}</div>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex items-baseline justify-between gap-3 mb-3">
+                  <span style={{ fontSize: 12, fontWeight: 500, color: "var(--txt)" }}>Förderanteil (von Gesamtinvestition)</span>
+                  <span style={{ fontSize: 20, fontFamily: "'Fraunces', serif", color: "var(--pos)", fontVariantNumeric: "tabular-nums" }}>
+                    {k.invest_gesamt > 0
+                      ? `${Math.round(k.foerderung_gesamt / k.invest_gesamt * 100)} %`
+                      : "—"}
+                  </span>
+                </div>
+                <div style={{ fontSize: 10.5, color: "var(--sec)", lineHeight: 1.5 }}>
+                  Keine Förderzusage. Förderdeckel, Eigentümerstatus, Bonuskombinationen, technische Mindestanforderungen und Antragspflichten müssen im echten Prozess geprüft werden.
+                </div>
+
+                {/* Wie funktioniert dieser Rechner */}
+                {(() => {
+                  const Sub = ({ title, children }) => (
+                    <div style={{ marginBottom: 22 }}>
+                      <div className="text-[10px] tracking-[0.2em] uppercase mb-2" style={{ color: "var(--acc)", fontFamily: "'Geist Mono', monospace" }}>{title}</div>
+                      <div style={{ fontSize: 13.5, color: "var(--body)", lineHeight: 1.65 }}>{children}</div>
+                    </div>
+                  );
+                  return (
+                    <div style={{ marginTop: 20, borderTop: "1px solid var(--div)", paddingTop: 16 }}>
+                      <div style={{ fontSize: 10, letterSpacing: "0.15em", textTransform: "uppercase",
+                                    fontFamily: "'Geist Mono', monospace", color: "var(--acc)", marginBottom: 16 }}>
+                        Wie funktioniert dieser Rechner?
+                      </div>
+                      <Sub title="Was macht dieses Tool?">
+                        Sie geben Gebäudedaten ein — Baujahr, Heizung, Wohnfläche, Bauteil-Zustand — und erhalten einen priorisierten Sanierungsfahrplan mit Energiekennzahlen, Kosten und BEG-Förderung. Das Tool ist kein BAFA-zertifizierter iSFP, sondern ein Demonstrator auf Basis realer Marktdaten 2026.
+                      </Sub>
+                      <Sub title="Woher kommen die Energiezahlen?">
+                        <b>Endenergie</b> ist die dem Gebäude zugeführte Energie (Öl, Gas, Strom). Die Maßnahmen schätzen zuerst die Endenergie-Änderung. <b>Primärenergie</b> = Endenergie × Primärenergiefaktor nach GEG Anlage 4; <b>CO₂</b> = Endenergie × Emissionsfaktor nach GEG Anlage 9. Die <b>Effizienzklasse A+–H</b> basiert auf der Primärenergie nach GEG §86. Fernwärme nutzt Demo-Fallbackwerte, weil reale Energieausweise netzspezifische Faktoren verwenden.
+                        <br /><br />
+                        Für den Zielzustand werden PE und CO₂ nach jedem Paket neu aus der verbleibenden Endenergie und dem dann aktiven Energieträger berechnet. Bei Wärmepumpen-Szenarien wechselt der Ziel-Energieträger auf WP-Strom; bei Fernwärme bleiben die Werte bewusst als Demo-Fallback markiert, weil Netzbetreiber-Faktoren im echten Energieausweis abweichen können. Die kompakten CO₂-Hinweise an einzelnen Maßnahmen zeigen nur die grobe Richtung, nicht die verbindliche Endsumme.
+                      </Sub>
+                      <Sub title="Wie wird die Reihenfolge der Maßnahmen bestimmt?">
+                        Jede Maßnahme erhält eine Punktzahl: Netto-Investition ÷ eingesparte Primärenergie [€/kWh PE]. Niedrig = wirtschaftlich sinnvoll. Die Pakete werden nach dieser Punktzahl sortiert und aktualisieren sich automatisch, wenn Sie Gebäudedaten oder Bauteil-Stufen ändern. Die <b>★ Empfohlen</b>-Markierung zeigt Maßnahmen mit Score unter 10,5 €/kWh PE — besonders wirtschaftlich für Ihr Gebäude. <b>✕ Nicht empfohlen</b> kennzeichnet Maßnahmen mit Score über 20 €/kWh PE oder ohne messbaren Primärenergie-Effekt.
+                      </Sub>
+                      <Sub title="Wie werden die Förderungen berechnet?">
+                        <b>BEG EM (BAFA)</b>: 15 % Grundförderung auf den energetisch bedingten Mehraufwand (Investition minus Sowieso-Kosten). <b>Wärmepumpe (KfW 458)</b>: bis zu 50 % (30 % Grundförderung + 20 % Klimageschwindigkeits-Bonus möglich). <b>iSFP-Bonus</b>: +5 % auf alle Maßnahmen, die im Fahrplan hinterlegt sind — das ist der Kern des iSFP-Verfahrens.
+                      </Sub>
+                      <Sub title="Beispielrechnung — EFH Nachkriegszeit 1965">
+                        <pre style={{ fontFamily: "'Geist Mono', monospace", fontSize: 11.5, lineHeight: 1.7, whiteSpace: "pre-wrap", color: "var(--body)", margin: 0 }}>{`Haus: EFH 1965 · 145 m² · Heizöl · Klasse G  (PE 236 kWh/(m²·a))
+IST-Heizkosten:  215 kWh/m² × 145 m² × 0,11 €/kWh (Heizöl) = 3.429 €/Jahr
+
+Fahrplan Schritt 1 — Hydraulischer Abgleich (Heute):
+  Investition 1.800 €  ·  Förderung BEG EM ca. 270 €  ·  PE −14 kWh/(m²·a)
+
+Fahrplan Schritt 3 — Wärmepumpe (nach Dach- & Fensterdämmung):
+  Endenergie sinkt auf 68 kWh/(m²·a) — Strom statt Öl (COP ~2,5)
+  ZIEL-Heizkosten: 68 × 145 m² × 0,22 €/kWh (WP-Sondertarif) = 2.170 €/Jahr (−37 %)
+  Investition 32.000 €  ·  Förderung KfW 458 bis 13.500 €
+
+Gesamtfahrplan — alle Maßnahmen:
+  Primärenergie ZIEL  62 kWh/(m²·a)  →  Klasse B
+  CO₂:  63 → 19 kg/(m²·a)  (−70 %)
+  Investition 142.800 €  ·  Förderung ca. 25.950 €`}</pre>
+                      </Sub>
+                      <Sub title="Wie wird die Amortisation berechnet?">
+                        <b>Gesamt-Amortisation</b> (Sidebar-KPI): Eigenanteil ÷ (IST-Heizkosten − ZIEL-Heizkosten) bei statischen Energiepreisen. Bei einer vollständigen Sanierung mit Wärmepumpe liegt die rechnerische Amortisation oft bei 30–50 Jahren — das ist ehrlich. Mit realistischer Energiepreissteigerung von 2–3 %/Jahr halbiert sich dieser Wert typisch auf 15–25 Jahre. <b>PV-Ertrag</b>: angenommen 10 kWp · 950 kWh/kWp. Eigenverbrauchsquote 35 % (ohne WP) bzw. 60 % (mit WP + Speicher). Eigenverbrauch bewertet zu 0,31 €/kWh (Haushaltstarif), Einspeisung zu 0,082 €/kWh (EEG 2024). Daraus ergibt sich ein Jahresertrag von ca. 1.330–2.020 €, Amortisation ~9–14 Jahre.
+                      </Sub>
+                      <Sub title="Wie wird die 20-Jahr-Bilanz gebildet?">
+                        „Ohne Sanierung": 20 × aktuelle Heizkosten (IST) inkl. Wartung, mit Energiepreis-Eskalation. „Mit Sanierung": Eigenanteil + 20 × ZIEL-Betriebskosten, ebenfalls mit Eskalation. Die Eskalationsrate ist in den Overrides oben anpassbar — Standard: IST fossil 2,5 %/J, ZIEL Strom 2,0 %/J.
+                      </Sub>
+                      <div style={{ marginTop: 8, fontSize: 11.5, color: "var(--sec)", fontStyle: "italic", lineHeight: 1.6 }}>
+                        Alle Werte sind Richtwerte auf Basis realistischer Marktpreise und BEG-Konditionen Stand April 2026. Dieser Rechner ist ein Demonstrator und ersetzt keine zertifizierte iSFP-Beratung nach BAFA-Anforderungen.
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+          </div>
         </Section>
 
         </div>{/* end left column */}
