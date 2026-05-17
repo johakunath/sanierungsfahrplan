@@ -1432,10 +1432,10 @@ const MergedTable = ({ kumuliert, ist, heizkosten = 0 }) => {
         </Tooltip>
       </div>
       <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
-      <table className="w-full text-[13px]" style={{ fontVariantNumeric: "tabular-nums", minWidth: 760 }}>
+      <table className="w-full text-[12.5px]" style={{ fontVariantNumeric: "tabular-nums" }}>
         <thead>
           <tr style={{ borderBottom: "1.25px solid var(--txt)" }}>
-            <th className="text-left py-2.5 font-medium">Schritt</th>
+            <th className="text-left py-2.5 font-medium" style={{ width: 180 }}>Schritt</th>
             <th className="text-right py-2.5 font-medium">
               <Tooltip content="Tatsächlich gelieferter Energieträger in kWh pro m² Wohnfläche und Jahr.">
                 <span style={{ color: "var(--acc)", display: "inline-flex", verticalAlign: "middle" }}><InfoIcon size={11} /></span><span style={{ marginLeft: 5 }}>Endenergie</span>
@@ -1468,41 +1468,41 @@ const MergedTable = ({ kumuliert, ist, heizkosten = 0 }) => {
         </thead>
         <tbody>
           <tr style={{ borderBottom: "1px solid var(--div)", background: "var(--surface2)" }}>
-            <td className="py-3">
+            <td className="py-2.5" style={{ maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
               <span className="text-[11px] tracking-[0.18em] uppercase mr-2" style={{ color: "var(--sec)", fontFamily: "'Geist Mono', monospace" }}>0</span>
               Ausgangszustand
             </td>
-            <td className="text-right py-3">
+            <td className="text-right py-2.5">
               <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2 }}>
                 <span style={{ fontFamily: "'Geist Mono', monospace" }}>{ist.endenergie}</span>
-                <div style={{ width: 52, height: 4, background: "var(--div)", borderRadius: 2 }}>
+                <div style={{ width: 40, height: 3, background: "var(--div)", borderRadius: 2 }}>
                   <div style={{ height: "100%", width: "100%", background: EFFIZIENZ_FARBEN[berechneEffizienzklasse(ist.primaerenergie)] || "var(--sec)", borderRadius: 2 }} />
                 </div>
               </div>
             </td>
-            <td className="text-right py-3">
+            <td className="text-right py-2.5">
               <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2 }}>
                 <span style={{ fontFamily: "'Geist Mono', monospace" }}>{ist.primaerenergie}</span>
-                <div style={{ width: 52, height: 4, background: "var(--div)", borderRadius: 2 }}>
+                <div style={{ width: 40, height: 3, background: "var(--div)", borderRadius: 2 }}>
                   <div style={{ height: "100%", width: "100%", background: EFFIZIENZ_FARBEN[berechneEffizienzklasse(ist.primaerenergie)] || "var(--sec)", borderRadius: 2 }} />
                 </div>
               </div>
             </td>
-            <td className="text-right py-3">
+            <td className="text-right py-2.5">
               <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2 }}>
                 <span style={{ fontFamily: "'Geist Mono', monospace" }}>{ist.co2}</span>
-                <div style={{ width: 52, height: 4, background: "var(--div)", borderRadius: 2 }}>
+                <div style={{ width: 40, height: 3, background: "var(--div)", borderRadius: 2 }}>
                   <div style={{ height: "100%", width: "100%", background: EFFIZIENZ_FARBEN[berechneEffizienzklasse(ist.primaerenergie)] || "var(--sec)", borderRadius: 2 }} />
                 </div>
               </div>
             </td>
-            <td className="text-right py-3">
+            <td className="text-right py-2.5">
               <EffizienzBadge klasse={berechneEffizienzklasse(ist.primaerenergie)} size="sm" />
             </td>
-            <td className="text-right py-3" style={{ color: "var(--sec)", fontFamily: "'Geist Mono', monospace" }}>—</td>
-            <td className="text-right py-3" style={{ color: "var(--sec)", fontFamily: "'Geist Mono', monospace" }}>—</td>
-            <td className="text-right py-3" style={{ color: "var(--sec)", fontFamily: "'Geist Mono', monospace" }}>—</td>
-            <td className="text-right py-3" style={{ color: "var(--sec)", fontFamily: "'Geist Mono', monospace" }}>—</td>
+            <td className="text-right py-2.5" style={{ color: "var(--sec)", fontFamily: "'Geist Mono', monospace" }}>—</td>
+            <td className="text-right py-2.5" style={{ color: "var(--sec)", fontFamily: "'Geist Mono', monospace" }}>—</td>
+            <td className="text-right py-2.5" style={{ color: "var(--sec)", fontFamily: "'Geist Mono', monospace" }}>—</td>
+            <td className="text-right py-2.5" style={{ color: "var(--sec)", fontFamily: "'Geist Mono', monospace" }}>—</td>
           </tr>
           {kumuliert.map((r, i) => {
             const prevInvest = i === 0 ? 0 : kumuliert[i-1].nachher.invest_gesamt;
@@ -1523,46 +1523,46 @@ const MergedTable = ({ kumuliert, ist, heizkosten = 0 }) => {
             const coW = Math.round(Math.min(r.nachher.co2 / maxCO2, 1) * 100);
             return (
               <tr key={r.paket.id} style={{ borderBottom: i < kumuliert.length - 1 ? "1px solid var(--div)" : "none" }}>
-                <td className="py-3">
+                <td className="py-2.5" style={{ maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   <div className="flex items-center gap-2">
-                    <span style={{ width: 10, height: 10, borderRadius: 100, background: PAKET_FARBEN[r.paket.farbe]?.bg, display: "inline-block", flexShrink: 0 }} />
-                    <span className="text-[11px] tracking-[0.18em] uppercase" style={{ color: "var(--sec)", fontFamily: "'Geist Mono', monospace" }}>P{r.paket.nummer}</span>
-                    <span style={{ color: "var(--txt)" }}>{r.paket.titel}</span>
+                    <span style={{ width: 8, height: 8, borderRadius: 100, background: PAKET_FARBEN[r.paket.farbe]?.bg, display: "inline-block", flexShrink: 0 }} />
+                    <span className="text-[11px] tracking-[0.18em] uppercase" style={{ color: "var(--sec)", fontFamily: "'Geist Mono', monospace", flexShrink: 0 }}>P{r.paket.nummer}</span>
+                    <span style={{ color: "var(--txt)", overflow: "hidden", textOverflow: "ellipsis" }}>{r.paket.titel}</span>
                   </div>
                 </td>
-                <td className="text-right py-3">
+                <td className="text-right py-2.5">
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2 }}>
                     <span style={{ fontFamily: "'Geist Mono', monospace" }}>{r.nachher.endenergie}</span>
-                    <div style={{ width: 52, height: 4, background: "var(--div)", borderRadius: 2 }}>
+                    <div style={{ width: 40, height: 3, background: "var(--div)", borderRadius: 2 }}>
                       <div style={{ height: "100%", width: `${eeW}%`, background: barColor, borderRadius: 2 }} />
                     </div>
                   </div>
                 </td>
-                <td className="text-right py-3">
+                <td className="text-right py-2.5">
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2 }}>
                     <span style={{ fontFamily: "'Geist Mono', monospace" }}>{r.nachher.primaerenergie}</span>
-                    <div style={{ width: 52, height: 4, background: "var(--div)", borderRadius: 2 }}>
+                    <div style={{ width: 40, height: 3, background: "var(--div)", borderRadius: 2 }}>
                       <div style={{ height: "100%", width: `${peW}%`, background: barColor, borderRadius: 2 }} />
                     </div>
                   </div>
                 </td>
-                <td className="text-right py-3">
+                <td className="text-right py-2.5">
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2 }}>
                     <span style={{ fontFamily: "'Geist Mono', monospace" }}>{r.nachher.co2}</span>
-                    <div style={{ width: 52, height: 4, background: "var(--div)", borderRadius: 2 }}>
+                    <div style={{ width: 40, height: 3, background: "var(--div)", borderRadius: 2 }}>
                       <div style={{ height: "100%", width: `${coW}%`, background: barColor, borderRadius: 2 }} />
                     </div>
                   </div>
                 </td>
-                <td className="text-right py-3">
+                <td className="text-right py-2.5">
                   <EffizienzBadge klasse={r.nachher.effizienzklasse} size="sm" />
                 </td>
-                <td className="text-right py-3" style={{ fontFamily: "'Geist Mono', monospace" }}>{stepInvest > 0 ? fmtEur(stepInvest) : "—"}</td>
-                <td className="text-right py-3" style={{ fontFamily: "'Geist Mono', monospace", color: stepFoerd > 0 ? "var(--pos)" : "var(--sec)" }}>
+                <td className="text-right py-2.5" style={{ fontFamily: "'Geist Mono', monospace" }}>{stepInvest > 0 ? fmtEur(stepInvest) : "—"}</td>
+                <td className="text-right py-2.5" style={{ fontFamily: "'Geist Mono', monospace", color: stepFoerd > 0 ? "var(--pos)" : "var(--sec)" }}>
                   {stepFoerd > 0 ? `−${fmtEur(stepFoerd)}` : "—"}
                 </td>
-                <td className="text-right py-3" style={{ fontFamily: "'Geist Mono', monospace" }}>{stepEigen > 0 ? fmtEur(stepEigen) : "—"}</td>
-                <td className="text-right py-3" style={{ fontFamily: "'Geist Mono', monospace", color: amortYears ? (amortYears <= 20 ? "var(--pos)" : "var(--gold)") : "var(--sec)" }}>
+                <td className="text-right py-2.5" style={{ fontFamily: "'Geist Mono', monospace" }}>{stepEigen > 0 ? fmtEur(stepEigen) : "—"}</td>
+                <td className="text-right py-2.5" style={{ fontFamily: "'Geist Mono', monospace", color: amortYears ? (amortYears <= 20 ? "var(--pos)" : "var(--gold)") : "var(--sec)" }}>
                   {amortYears ? `~${amortYears} J` : "—"}
                 </td>
               </tr>
@@ -1571,13 +1571,13 @@ const MergedTable = ({ kumuliert, ist, heizkosten = 0 }) => {
         </tbody>
         <tfoot>
           <tr style={{ borderTop: "1.5px solid var(--txt)", background: "var(--surface2)" }}>
-            <td className="py-3 font-medium" colSpan={5}>Gesamt</td>
-            <td className="text-right py-3 font-medium" style={{ fontFamily: "'Geist Mono', monospace" }}>{fmtEur(totalInvest)}</td>
-            <td className="text-right py-3 font-medium" style={{ fontFamily: "'Geist Mono', monospace", color: totalFoerd > 0 ? "var(--pos)" : "var(--sec)" }}>
+            <td className="py-2.5 font-medium" colSpan={5}>Gesamt</td>
+            <td className="text-right py-2.5 font-medium" style={{ fontFamily: "'Geist Mono', monospace" }}>{fmtEur(totalInvest)}</td>
+            <td className="text-right py-2.5 font-medium" style={{ fontFamily: "'Geist Mono', monospace", color: totalFoerd > 0 ? "var(--pos)" : "var(--sec)" }}>
               {totalFoerd > 0 ? `−${fmtEur(totalFoerd)}` : "—"}
             </td>
-            <td className="text-right py-3 font-medium" style={{ fontFamily: "'Geist Mono', monospace" }}>{fmtEur(totalInvest - totalFoerd)}</td>
-            <td className="text-right py-3" style={{ color: "var(--sec)", fontFamily: "'Geist Mono', monospace" }}>—</td>
+            <td className="text-right py-2.5 font-medium" style={{ fontFamily: "'Geist Mono', monospace" }}>{fmtEur(totalInvest - totalFoerd)}</td>
+            <td className="text-right py-2.5" style={{ color: "var(--sec)", fontFamily: "'Geist Mono', monospace" }}>—</td>
           </tr>
         </tfoot>
       </table>
