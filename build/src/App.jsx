@@ -2233,7 +2233,7 @@ export default function App() {
       <main className="mx-auto max-w-[1400px] print-hide px-5 md:px-10" style={{ paddingTop: 36, paddingBottom: 80 }}>
 
         {/* 2-col layout on xl+: left=scrollable content, right=sticky Ergebnis sidebar */}
-        <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-8 lg:items-start">
+        <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
         <div>
 
 
@@ -2650,7 +2650,7 @@ Gesamtfahrplan — alle Maßnahmen:
 
         {/* Sidebar — sticky right column on lg+; hidden on mobile (replaced by MobileResultsDrawer) */}
         <aside className="hidden lg:block print:hidden lg:sticky lg:top-[92px] lg:max-h-[calc(100vh-110px)] lg:overflow-y-auto"
-               style={{ scrollbarWidth: "thin", paddingBottom: 24 }}>
+               style={{ scrollbarWidth: "thin", paddingBottom: 24, paddingTop: 20, paddingLeft: 24, paddingRight: 20, background: "var(--surface)", borderLeft: "1.25px solid var(--bdr)" }}>
           <div className="text-[9.5px] tracking-[0.18em] uppercase mb-3"
                style={{ color: "var(--acc)", fontFamily: "'Geist Mono', monospace" }}>Ergebnis · Live</div>
 
