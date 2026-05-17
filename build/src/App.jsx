@@ -229,7 +229,7 @@ const MobileResultsDrawer = ({ effizienzklasse, k, ist, heizkosten, aktiveEmpfoh
                       >{m.kurztitel}</span>
                       {istEmpf && (
                         <Tooltip content={<span><b>Warum empfohlen:</b><br />{warum.grund}</span>}>
-                          <span style={{ fontSize: 9, padding: "1px 4px", borderRadius: 2, background: "#F6D400", color: "var(--txt)", fontFamily: "'Geist Mono', monospace", fontWeight: 600, flexShrink: 0 }}>★</span>
+                          <span style={{ fontSize: 9, padding: "1px 4px", borderRadius: 2, background: "#F6D400", color: "#1E1A15", fontFamily: "'Geist Mono', monospace", fontWeight: 600, flexShrink: 0 }}>★</span>
                         </Tooltip>
                       )}
                       {istNichtEmpf && (
@@ -972,7 +972,7 @@ const PaketBlock = ({ paket, aktiv, onToggle, onToggleMassnahme = () => {}, akti
                       )}
                     </span>
                   }>
-                    <span className="print-hide" style={{ background: "#F6D400", color: "var(--txt)", padding: "1px 8px", borderRadius: 100, fontSize: 10, fontFamily: "'Geist Mono', monospace", fontWeight: 600, letterSpacing: "0.06em", flexShrink: 0, cursor: "help" }}>
+                    <span className="print-hide" style={{ background: "#F6D400", color: "#1E1A15", padding: "1px 8px", borderRadius: 100, fontSize: 10, fontFamily: "'Geist Mono', monospace", fontWeight: 600, letterSpacing: "0.06em", flexShrink: 0, cursor: "help" }}>
                       ★ Empfohlen
                     </span>
                   </Tooltip>
@@ -1071,7 +1071,7 @@ const PaketBlock = ({ paket, aktiv, onToggle, onToggleMassnahme = () => {}, akti
                       const isSelected = key === resolvedWpVariante;
                       const isAuto = key === autoKey;
                       return (
-                        <label key={key} style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", padding: "4px 8px", borderRadius: 3, background: isSelected ? "#E8F4F2" : "transparent", border: isSelected ? "1px solid #8CBDB5" : "1px solid transparent" }}>
+                        <label key={key} style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", padding: "4px 8px", borderRadius: 3, background: isSelected ? "rgba(42,139,122,0.15)" : "transparent", border: isSelected ? "1px solid var(--acc)" : "1px solid transparent" }}>
                           <input type="radio" name={`wp-${paket.id}`} value={key} checked={isSelected} onChange={() => onWpVarianteChange(key)} style={{ accentColor: "#2A8B7A" }} />
                           <span style={{ color: "var(--txt)", fontWeight: isSelected ? 600 : 400 }}>{v.label}</span>
                           {isAuto && <span style={{ fontSize: 10, color: "#2A8B7A", fontFamily: "'Geist Mono', monospace" }}>empfohlen</span>}
@@ -2685,7 +2685,7 @@ Gesamtfahrplan — alle Maßnahmen:
                         „Ohne Sanierung": 20 × aktuelle Heizkosten (IST) inkl. Wartung, mit Energiepreis-Eskalation. „Mit Sanierung": Eigenanteil + 20 × ZIEL-Betriebskosten, ebenfalls mit Eskalation. Die Eskalationsrate ist in den Overrides oben anpassbar — Standard: IST fossil 2,5 %/J, ZIEL Strom 2,0 %/J.
                       </Sub>
                       <div style={{ marginTop: 8, fontSize: 11.5, color: "var(--sec)", fontStyle: "italic", lineHeight: 1.6 }}>
-                        Alle Werte sind Richtwerte auf Basis realistischer Marktpreise und BEG-Konditionen Stand April 2026. Dieser Rechner ist ein Demonstrator und ersetzt keine zertifizierte iSFP-Beratung nach BAFA-Anforderungen.
+                        Alle Werte sind Richtwerte auf Basis realistischer Marktpreise und BEG-Konditionen Stand Mai 2026. Dieser Rechner ist ein Demonstrator und ersetzt keine zertifizierte iSFP-Beratung nach BAFA-Anforderungen.
                       </div>
                     </div>
                   );
@@ -2759,7 +2759,7 @@ Gesamtfahrplan — alle Maßnahmen:
                         >{m.kurztitel}</span>
                         {istEmpf && (
                           <Tooltip content={<span><b>Warum empfohlen:</b><br />{warum.grund}</span>}>
-                            <span style={{ fontSize: 9, padding: "1px 4px", borderRadius: 2, background: "#F6D400", color: "var(--txt)", fontFamily: "'Geist Mono', monospace", fontWeight: 600, flexShrink: 0 }}>★</span>
+                            <span style={{ fontSize: 9, padding: "1px 4px", borderRadius: 2, background: "#F6D400", color: "#1E1A15", fontFamily: "'Geist Mono', monospace", fontWeight: 600, flexShrink: 0 }}>★</span>
                           </Tooltip>
                         )}
                         {istNichtEmpf && (
@@ -2897,13 +2897,13 @@ Gesamtfahrplan — alle Maßnahmen:
         <div className="mx-auto max-w-[1400px] flex items-center justify-between flex-wrap gap-4 text-[11.5px]"
              style={{ color: "var(--sec)", fontFamily: "'Geist Mono', monospace", letterSpacing: "0.05em" }}>
           <span>Demonstrator · keine rechtsverbindliche Energieberatung</span>
-          <span>Stand April 2026 · BEG + GEG · TABULA-Baseline</span>
+          <span>Stand Mai 2026 · BEG + GEG · TABULA-Baseline</span>
         </div>
       </footer>
 
       {/* Print-Footer */}
       <div className="print-only" style={{ padding: "24px 40px", borderTop: "1px solid var(--bdr)", fontSize: 10, color: "var(--sec)", fontFamily: "'Geist Mono', monospace", textAlign: "center" }}>
-        Demonstrator — kein BAFA-iSFP. Stand April 2026.
+        Demonstrator — kein BAFA-iSFP. Stand Mai 2026.
       </div>
     </div>
   );
