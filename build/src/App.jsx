@@ -964,7 +964,14 @@ const PaketBlock = ({ paket, aktiv, onToggle, onToggleMassnahme = () => {}, akti
                   </span>
                 )}
                 {empfohleneMassnahmen.includes(massnahme.id) && (
-                  <Tooltip content={<span><b>Warum empfohlen:</b><br />{warum.grund}</span>}>
+                  <Tooltip content={
+                    <span>
+                      <b>Warum empfohlen:</b><br />{warum.grund}
+                      {massnahme.rolle === "synergie" && aktiveMassnahmen.includes("M4") && (
+                        <><br /><br />⚡ <b>Synergie mit Wärmepumpe:</b> Eigenstrom deckt WP-Betrieb — senkt Betriebskosten und verbessert CO₂-Bilanz.</>
+                      )}
+                    </span>
+                  }>
                     <span className="print-hide" style={{ background: "#F6D400", color: "var(--txt)", padding: "1px 8px", borderRadius: 100, fontSize: 10, fontFamily: "'Geist Mono', monospace", fontWeight: 600, letterSpacing: "0.06em", flexShrink: 0, cursor: "help" }}>
                       ★ Empfohlen
                     </span>
@@ -981,11 +988,6 @@ const PaketBlock = ({ paket, aktiv, onToggle, onToggleMassnahme = () => {}, akti
                       ✕ Nicht empfohlen
                     </span>
                   </Tooltip>
-                )}
-                {massnahme.rolle === "synergie" && aktiveMassnahmen.includes("M4") && (
-                  <span className="print-hide" title="PV kombiniert sich mit Wärmepumpe: Eigenstrom deckt WP-Betrieb, senkt Betriebskosten und verbessert CO₂-Bilanz." style={{ background: "#DBEAFE", color: "#1D4ED8", padding: "1px 8px", borderRadius: 100, fontSize: 10, fontFamily: "'Geist Mono', monospace", fontWeight: 600, letterSpacing: "0.06em", flexShrink: 0, cursor: "help" }}>
-                    ⚡ Synergie mit WP
-                  </span>
                 )}
                 <Tooltip content={
                   <div>
