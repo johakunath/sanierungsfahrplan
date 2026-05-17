@@ -2478,43 +2478,91 @@ export default function App() {
             const eskalHeader = (effEskalIst === 0 && effEskalZiel === 0)
               ? "statische Preise"
               : `IST +${Number(effEskalIst).toFixed(1)} % / ZIEL +${Number(effEskalZiel).toFixed(1)} %/J`;
+            // Break-even chart vars
+            const pvAnnual    = pvRevenue20J / H;
+            const annual_ist  = effHeizkostenIst  + effWartungIst;
+            const annual_ziel = effHeizkostenZiel + effWartungZiel;
+            const cumIst  = t => sumGrowth(annual_ist,  effEskalIst,  t);
+            const cumZiel = t => k.eigenanteil + sumGrowth(annual_ziel, effEskalZiel, t) - pvAnnual * t;
+            const maxT = breakevenJ ? Math.min(Math.ceil(breakevenJ * 1.35), 40) : 30;
+            const CW = 560, CH = 200;
+            const CP = { top: 18, right: 18, bottom: 34, left: 52 };
+            const cpw = CW - CP.left - CP.right, cph = CH - CP.top - CP.bottom;
+            const pts_t = Array.from({ length: maxT + 1 }, (_, t) => t);
+            const yMax_c = Math.ceil(Math.max(...pts_t.flatMap(t => [cumIst(t), cumZiel(t)])) / 25000) * 25000 || 1;
+            const toXc = t => CP.left + cpw * t / maxT;
+            const toYc = v => CP.top + cph * (1 - Math.max(v, 0) / yMax_c);
+            const fmtK = v => `${Math.round(v / 1000)}k`;
+            const istPts  = pts_t.map(t => `${toXc(t)},${toYc(cumIst(t))}`).join(' ');
+            const zielPts = pts_t.map(t => `${toXc(t)},${toYc(cumZiel(t))}`).join(' ');
+            const yStep_c = yMax_c >= 200000 ? 50000 : 25000;
+            const yLines_c = Array.from({ length: Math.ceil(yMax_c / yStep_c) }, (_, i) => (i + 1) * yStep_c).filter(v => v <= yMax_c);
+            const xTicks_c = [5, 10, 15, 20, 25, 30, 35, 40].filter(t => t > 0 && t <= maxT);
+            const bx = breakevenJ && breakevenJ <= maxT ? toXc(breakevenJ) : null;
+            const by_cross = bx ? toYc(cumIst(breakevenJ)) : null;
             return (
               <div style={{ marginTop: 8, marginBottom: 32 }}>
-                <div style={{ fontSize: 9, letterSpacing: "0.18em", textTransform: "uppercase",
-                              fontFamily: "var(--mono)", color: "var(--acc)", marginBottom: 10 }}>
-                  20-Jahr-Kostenvergleich · {eskalHeader}
-                </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginBottom: 6 }}>
-                  <div>
-                    <div style={{ background: "var(--surface2)", border: "1.25px solid var(--bdr)", borderRadius: 3, padding: "10px 12px" }}>
-                      <div style={{ fontSize: 8, fontFamily: "var(--mono)", letterSpacing: "0.1em",
-                                    textTransform: "uppercase", color: "var(--sec)", marginBottom: 4 }}>Betriebskosten IST · 20 J</div>
-                      <div style={{ fontSize: 16, fontWeight: 600, fontFamily: "var(--mono)",
-                                    color: "var(--neg)", marginBottom: 2 }}>{fmtEur(ohneEur)}</div>
-                      <div style={{ fontSize: 9, fontFamily: "var(--mono)", color: "var(--sec)" }}>
-                        {fmtEur(Math.round(effHeizkostenIst))}/J Energie + {fmtEur(effWartungIst)}/J Wartung · +{Number(effEskalIst).toFixed(1)}%/J
-                      </div>
-                    </div>
-                    <div style={{ fontSize: 9.5, fontFamily: "var(--mono)", color: "var(--sec)",
-                                  lineHeight: 1.5, marginTop: 5, fontStyle: "italic" }}>
-                      Nur laufende Kosten. Nicht enthalten: Heizungsersatz (ca. 12–18 T€), GEG-Pflichten
-                      bei Eigentümerwechsel (§71 GEG: 65 % EE), EEK-Wertverlust (F/G: bis −10 % Marktwert).
-                    </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+                  <div style={{ fontSize: 9, letterSpacing: "0.18em", textTransform: "uppercase",
+                                fontFamily: "var(--mono)", color: "var(--acc)" }}>
+                    20-Jahr-Kostenvergleich · {eskalHeader}
                   </div>
-                  <div style={{ background: "var(--surface)", border: "1.25px solid var(--bdr)", borderRadius: 3, padding: "10px 12px" }}>
-                    <div style={{ fontSize: 8, fontFamily: "var(--mono)", letterSpacing: "0.1em",
-                                  textTransform: "uppercase", color: "var(--sec)", marginBottom: 4 }}>Eigenanteil + Betrieb ZIEL · 20 J</div>
-                    <div style={{ fontSize: 16, fontWeight: 600, fontFamily: "var(--mono)",
-                                  color: delta < 0 ? "var(--pos)" : "var(--body)", marginBottom: 2 }}>{fmtEur(mitEur)}</div>
-                    <div style={{ fontSize: 9, fontFamily: "var(--mono)", color: "var(--sec)" }}>
-                      {fmtEur(k.eigenanteil)} Eigenanteil
-                      {` + ${fmtEur(Math.round(effHeizkostenZiel))}/J Energie`}
-                      {` + ${fmtEur(effWartungZiel)}/J Wartung · +${Number(effEskalZiel).toFixed(1)}%/J`}
-                      {pvRevenue20J > 0 && ` − ${fmtEur(Math.round(pvRevenue20J / H))}/J PV`}
-                    </div>
+                  <Tooltip content={<span>Nur laufende Kosten. Nicht enthalten: Heizungsersatz (ca. 12–18 T€), GEG-Pflichten bei Eigentümerwechsel (§71 GEG: 65 % EE), EEK-Wertverlust (F/G: bis −10 % Marktwert).</span>}>
+                    <span style={{ color: "var(--acc)", cursor: "help" }}><InfoIcon size={11} /></span>
+                  </Tooltip>
+                </div>
+                <div style={{ background: "var(--surface)", border: "1.25px solid var(--bdr)", borderRadius: 3, padding: "14px 18px" }}>
+                  <svg viewBox={`0 0 ${CW} ${CH}`} style={{ width: "100%", display: "block", aspectRatio: `${CW}/${CH}` }}>
+                    {/* Y grid */}
+                    <text x={CP.left - 5} y={toYc(0) + 3.5} textAnchor="end" fontSize={8.5} fill="var(--sec)" fontFamily="'Geist Mono', monospace">0</text>
+                    {yLines_c.map(v => (
+                      <g key={v}>
+                        <line x1={CP.left} y1={toYc(v)} x2={CP.left + cpw} y2={toYc(v)} stroke="var(--div)" strokeWidth={0.75} strokeDasharray="4 3" />
+                        <text x={CP.left - 5} y={toYc(v) + 3.5} textAnchor="end" fontSize={8.5} fill="var(--sec)" fontFamily="'Geist Mono', monospace">{fmtK(v)}</text>
+                      </g>
+                    ))}
+                    {/* X baseline */}
+                    <line x1={CP.left} y1={CP.top + cph} x2={CP.left + cpw} y2={CP.top + cph} stroke="var(--bdr)" strokeWidth={0.75} />
+                    {/* X ticks */}
+                    {xTicks_c.map(t => (
+                      <g key={t}>
+                        <line x1={toXc(t)} y1={CP.top + cph} x2={toXc(t)} y2={CP.top + cph + 3} stroke="var(--sec)" strokeWidth={0.75} />
+                        <text x={toXc(t)} y={CP.top + cph + 13} textAnchor="middle" fontSize={8.5} fill="var(--sec)" fontFamily="'Geist Mono', monospace">{t}</text>
+                      </g>
+                    ))}
+                    <text x={CP.left + cpw} y={CP.top + cph + 13} textAnchor="end" fontSize={8} fill="var(--sec)" fontFamily="'Geist Mono', monospace">J</text>
+                    {/* Year-20 reference */}
+                    <line x1={toXc(20)} y1={CP.top} x2={toXc(20)} y2={CP.top + cph} stroke="var(--acc)" strokeWidth={0.75} strokeDasharray="3 3" opacity={0.45} />
+                    <text x={toXc(20)} y={CP.top - 5} textAnchor="middle" fontSize={8} fill="var(--acc)" fontFamily="'Geist Mono', monospace" opacity={0.7}>20 J</text>
+                    {/* Lines */}
+                    <polyline points={istPts}  fill="none" stroke="var(--neg)" strokeWidth={1.75} strokeLinejoin="round" />
+                    <polyline points={zielPts} fill="none" stroke="var(--pos)" strokeWidth={1.75} strokeLinejoin="round" />
+                    {/* Crossover */}
+                    {bx && by_cross && (
+                      <>
+                        <circle cx={bx} cy={by_cross} r={3.5} fill="var(--acc)" />
+                        <text x={bx + 6} y={by_cross - 4} fontSize={8.5} fill="var(--acc)" fontFamily="'Geist Mono', monospace" fontWeight={600}>~{breakevenJ} J</text>
+                      </>
+                    )}
+                  </svg>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 14, fontSize: 10, fontFamily: "var(--mono)", color: "var(--sec)", marginTop: 8 }}>
+                    <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                      <svg width={14} height={3} style={{ flexShrink: 0 }}><line x1={0} y1={1.5} x2={14} y2={1.5} stroke="var(--neg)" strokeWidth={2} /></svg>
+                      Ohne Sanierung · {fmtEur(ohneEur)} nach 20 J
+                    </span>
+                    <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                      <svg width={14} height={3} style={{ flexShrink: 0 }}><line x1={0} y1={1.5} x2={14} y2={1.5} stroke="var(--pos)" strokeWidth={2} /></svg>
+                      Mit Sanierung · {fmtEur(mitEur)} nach 20 J
+                    </span>
+                    {breakevenJ && (
+                      <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                        <span style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--acc)", display: "inline-block", flexShrink: 0 }} />
+                        Amortisation ~{breakevenJ} J
+                      </span>
+                    )}
                   </div>
                 </div>
-                <div style={{ fontSize: 11, fontFamily: "var(--mono)", color: "var(--sec)", lineHeight: 1.5 }}>
+                <div style={{ fontSize: 11, fontFamily: "var(--mono)", color: "var(--sec)", lineHeight: 1.5, marginTop: 6 }}>
                   {delta < 0
                     ? `Sanierung spart über ${H} Jahre ${fmtEur(Math.abs(delta))}.`
                     : `Investitionsüberhang nach ${H} Jahren: ${fmtEur(delta)}. Nicht-sanieren bedeutet höhere laufende Kosten und ggf. spätere Pflichtinvestitionen.`}
