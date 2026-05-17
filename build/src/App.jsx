@@ -1671,7 +1671,7 @@ const EEK_ZONEN = [
 
 const EnergieVerlaufChart = ({ ist, kumuliert, heizkosten = 0 }) => {
   const [metric, setMetric] = useState("pe");
-  const W = 620, H = 320;
+  const W = 620, H = 380;
   const PAD = { top: 60, right: 36, bottom: 40, left: 52 };
   const pw = W - PAD.left - PAD.right;
   const ph = H - PAD.top - PAD.bottom;
@@ -1718,24 +1718,23 @@ const EnergieVerlaufChart = ({ ist, kumuliert, heizkosten = 0 }) => {
 
   return (
     <div style={{ background: "var(--surface)", border: "1.25px solid var(--bdr)", borderRadius: 3, padding: "24px 28px", marginTop: 32 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-        <div style={{ fontSize: 11, letterSpacing: "0.22em", textTransform: "uppercase", color: "var(--acc)", fontFamily: "'Geist Mono', monospace" }}>
-          {cfg.label}-Verlauf
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 5, flexShrink: 0 }}>
           {[["pe", "PE"], ["co2", "CO₂"], ["heizkosten", "Kosten"]].map(([key, lbl]) => (
             <button key={key} onClick={() => setMetric(key)}
-              style={{ fontSize: 9.5, fontFamily: "'Geist Mono', monospace", padding: "2px 7px",
+              style={{ fontSize: 10, fontFamily: "'Geist Mono', monospace", padding: "3px 9px",
                        borderRadius: 2, border: "1px solid var(--bdr)", cursor: "pointer",
                        background: metric === key ? "var(--acc)" : "transparent",
                        color: metric === key ? "#FFF" : "var(--sec)" }}>
               {lbl}
             </button>
           ))}
-          <span style={{ fontSize: 10, color: "var(--sec)", fontFamily: "'Geist Mono', monospace", marginLeft: 4 }}>{cfg.unit}</span>
+        </div>
+        <div style={{ fontSize: 11, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--sec)", fontFamily: "'Geist Mono', monospace" }}>
+          {cfg.label} · {cfg.unit}
         </div>
       </div>
-      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", display: "block", aspectRatio: "620/320", minHeight: 180 }}>
+      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", display: "block", aspectRatio: "620/380", minHeight: 220 }}>
         <defs>
           <clipPath id="evc-clip">
             <rect x={PAD.left} y={PAD.top} width={pw} height={ph} />
