@@ -1077,42 +1077,23 @@ const PaketBlock = ({ paket, aktiv, onToggle, onToggleMassnahme = () => {}, akti
                       );
                     })}
                   </div>
-                  {m7Geplant && <div style={{ color: "#2A8B7A", fontSize: 11, marginBottom: 4 }}>✓ Heizkreisumbau (M7) geplant — niedrige Vorlauftemperatur erreichbar</div>}
-                  {!m7Geplant && autoKey !== "monovalent" && (
-                    <div style={{ color: "#2A8B7A", fontSize: 11, marginBottom: 4 }}>
-                      💡 Maßnahme „Erneuerung Wärmeverteilung" (M7) aktivieren — senkt Vorlauftemperatur und ermöglicht Monovalent-Betrieb.
-                    </div>
-                  )}
-                  <div style={{ color: "var(--sec)", fontSize: 11.5 }}>Vorlauftemperatur: {vt} °C · {m7Geplant ? "Fußbodenheizung" : (gebaeude.waermeverteilung || "–")}</div>
-                  <div style={{ color: "var(--body)", marginTop: 4, fontStyle: "italic" }}>→ {currentV.beschreibung}</div>
                   {hybridMitOel && (
-                    <div style={{ color: "var(--acc)", fontSize: 11.5, marginTop: 8, padding: "6px 8px", background: "#FEF2E8", borderRadius: 3, border: "1px solid #F5C09A" }}>
-                      ⚠ Bei Ölheizung schafft Hybrid-Gas neue fossile Infrastruktur. Monovalent oder Monoenergetisch bevorzugen.
-                    </div>
-                  )}
-                  {isOverriding && !hybridMitOel && (
-                    <div style={{ color: "var(--acc)", fontSize: 11, marginTop: 6 }}>
-                      ⚠ Abweichung von Empfehlung ({WP_VARIANTEN[autoKey]?.label})
-                      <button onClick={() => onWpVarianteChange("auto")} style={{ marginLeft: 8, fontSize: 10, color: "var(--sec)", background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" }}>zurücksetzen</button>
-                    </div>
-                  )}
-                  {resolvedWpVariante === "monoenergetisch" && (
-                    <div style={{ fontSize: 11, color: "var(--sec)", marginTop: 6, fontStyle: "italic" }}>
-                      ℹ️ Heizstab deckt ~5 % der Jahresheizlast (Spitzenlast, COP = 1). Geschätzte Mehrkosten: ~200–400 €/Jahr gegenüber monovalentem Betrieb.
+                    <div style={{ color: "var(--acc)", fontSize: 11.5, marginTop: 2, marginBottom: 6, padding: "5px 8px", background: "#FEF2E8", borderRadius: 3, border: "1px solid #F5C09A" }}>
+                      ⚠ Hybrid-Gas schafft neue fossile Infrastruktur beim Ölgebäude. Monovalent oder Monoenergetisch bevorzugen.
                     </div>
                   )}
                   {/* HP-Eignungseinschätzung */}
                   <div style={{
-                    marginTop: 10, fontSize: 11.5, padding: "7px 10px", borderRadius: 3,
+                    marginTop: 6, fontSize: 11.5, padding: "7px 10px", borderRadius: 3,
                     background: vt <= 50 && envAvg >= 4 ? "rgba(27,104,58,0.08)" : "var(--surface2)",
                     color: "var(--body)",
                     border: `1px solid ${vt <= 50 && envAvg >= 4 ? "#8CBDB5" : "var(--bdr)"}`,
                   }}>
                     {vt <= 50 && envAvg >= 4
-                      ? `✓ Thermisch sehr gut geeignet (VT ${vt} °C, Hülle gut) — Monovalent-Betrieb mit COP 4–5 realistisch.`
+                      ? `✓ Thermisch sehr gut geeignet (VT ${vt} °C) — Monovalent-Betrieb realistisch.`
                       : vt <= 55
-                      ? `Thermisch geeignet bei VT ${vt} °C — ${WP_VARIANTEN[autoKey]?.label} sinnvoll. Praktische Eignung vorbehaltlich Vor-Ort-Klärung.`
-                      : `Vorlauftemperatur ${vt} °C derzeit zu hoch — Hüllsanierung und/oder M7 (Wärmeverteilung) vor WP-Einbau empfohlen.`
+                      ? `Thermisch geeignet bei VT ${vt} °C — ${WP_VARIANTEN[autoKey]?.label} empfohlen.`
+                      : `VT ${vt} °C zu hoch — erst Hülle sanieren und/oder M7 (Wärmeverteilung) aktivieren.`
                     }
                   </div>
                   {/* Vor-Ort-Klärung */}
